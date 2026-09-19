@@ -110,7 +110,7 @@ export default function App() {
         </div>
 
         {/* Sidebar Nav Items */}
-        <nav className="flex-1 space-y-2">
+        <nav className="flex-1 space-y-2 overflow-y-auto drawer-scroll">
           {[
             ...NAV_TABS,
           ].map((item) => {

@@ -138,6 +138,20 @@ describe('theme gradient tokens', () => {
         }
     });
 
+    it('never declares position on .glass', () => {
+        // This file's rules come after @tailwind utilities, so a `position` on
+        // .glass has the same specificity as Tailwind's .fixed / .absolute but
+        // wins on source order. That silently un-fixed the desktop sidebar and
+        // the mobile drawer, which both combine .glass with a positioning
+        // utility. Anything needing a containing block declares it on its own
+        // opt-in class.
+        const glassRules = css.match(/\.glass\s*\{[^}]*\}/g) || [];
+        expect(glassRules.length).toBeGreaterThan(0);
+        for (const rule of glassRules) {
+            expect(rule, 'position must not be set on .glass').not.toMatch(/position\s*:/);
+        }
+    });
+
     it('honours prefers-reduced-motion', () => {
         expect(css).toContain('prefers-reduced-motion');
     });

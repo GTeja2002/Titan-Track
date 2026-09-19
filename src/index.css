@@ -943,8 +943,13 @@ body::before {
  * along the top edge that makes a card read as a raised surface, plus a
  * consistent lift on hover.
  */
+/* NOTE: do not set `position` here. This file's rules come after
+ * @tailwind utilities, so a `position` on .glass has the same specificity as
+ * Tailwind's .fixed / .absolute but wins on source order — which silently
+ * un-fixed the desktop sidebar and the mobile drawer, both of which combine
+ * .glass with a positioning utility. Anything needing a positioned ancestor
+ * declares it on its own opt-in class instead (see .card-edge). */
 .glass {
-  position: relative;
   transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
               box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -963,7 +968,12 @@ body::before {
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.13);
 }
 
-/* A hairline of accent along the top edge of a feature card. */
+/* A hairline of accent along the top edge of a feature card. It is opt-in and
+ * only used on static cards, so establishing a containing block here is safe. */
+.card-edge {
+  position: relative;
+}
+
 .card-edge::before {
   content: '';
   position: absolute;

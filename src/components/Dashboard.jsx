@@ -393,7 +393,7 @@ export function Dashboard({
             some colour depth behind it without anything competing with the
             text. Each is keyed to a metric hue already used below. */}
         <div
-          className="absolute inset-0 pointer-events-none opacity-70"
+          className="absolute inset-0 z-0 pointer-events-none opacity-60"
           style={{
             background:
               'radial-gradient(circle at 88% 12%, var(--m-streak-soft), transparent 42%),' +
@@ -402,7 +402,11 @@ export function Dashboard({
           }}
         />
 
-        <div className="lg:col-span-6 space-y-4">
+        {/* relative z-10: the wash above is absolutely positioned, and
+            positioned elements paint after non-positioned inline content, so
+            without this it sits on top of the headline and button and washes
+            them out. */}
+        <div className="relative z-10 lg:col-span-6 space-y-4">
           <span className="inline-block text-xs font-semibold px-3 py-1 bg-primary-soft text-primary rounded-full">
             Welcome back, {displayName}! 👋
           </span>
@@ -438,7 +442,7 @@ export function Dashboard({
             wider than the bowl: the bowl centres inside it and the badges sit
             in the margin, overlapping the artwork only slightly and never
             leaving the card. */}
-        <div className="lg:col-span-6 flex justify-center items-center relative mt-6 lg:mt-0">
+        <div className="relative z-10 lg:col-span-6 flex justify-center items-center mt-6 lg:mt-0">
           <div className="relative w-full max-w-md px-10 sm:px-14 py-10 flex justify-center items-center">
             {/* Main Salad Bowl image from projects assets */}
             <div className="relative w-52 h-52 sm:w-64 sm:h-64 rounded-full flex items-center justify-center p-3 animate-scale-in"
