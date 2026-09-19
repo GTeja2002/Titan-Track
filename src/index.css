@@ -103,13 +103,14 @@
      
      Three tokens per metric, for the same reason the accent has two ramps:
      --m-x       vivid, for fills, bars and gradients
-     --m-x-ink   darkened to at least 4.5:1 on white, for text and icons
+     --m-x-ink   darkened to at least 4.5:1 against its OWN soft tint,
+                 which is the stricter case and covers white too
      --m-x-soft  a pale tint, for bar tracks and card washes
      Amber and gold are simply not readable as text at their vivid value. */
   --m-calories: #D9743F;
   --m-calories-lift: #EFA274;
   --m-calories-soft: #FDF0E8;
-  --m-calories-ink: #C0561F;
+  --m-calories-ink: #B4511D;
 
   --m-protein: #7C5CA8;
   --m-protein-lift: #A68BC9;
@@ -119,17 +120,17 @@
   --m-water: #3E8ECC;
   --m-water-lift: #7FB8E4;
   --m-water-soft: #E9F2FB;
-  --m-water-ink: #2A7BB9;
+  --m-water-ink: #2772AB;
 
   --m-steps: #C49B45;
   --m-steps-lift: #E0C077;
   --m-steps-soft: #FBF4E4;
-  --m-steps-ink: #937129;
+  --m-steps-ink: #8B6B27;
 
   --m-streak: #E0952F;
   --m-streak-lift: #F3BE72;
   --m-streak-soft: #FDF3E4;
-  --m-streak-ink: #A76813;
+  --m-streak-ink: #9D6212;
 
   --grad-calories: linear-gradient(135deg, var(--m-calories), var(--m-calories-lift));
   --grad-metric-protein: linear-gradient(135deg, var(--m-protein), var(--m-protein-lift));
@@ -1288,4 +1289,31 @@ body.dark {
     rgba(14, 46, 34, 0.42) 62%,
     rgba(14, 46, 34, 0) 84%
   );
+}
+
+/* ---- Hydration panel ---------------------------------------------------
+ * A blue-tinted card rather than a plain white one, so the hydration block
+ * reads as the water metric's own surface, matching its card in the row above.
+ */
+.hydration-card {
+  background: linear-gradient(150deg, var(--m-water-soft) 0%, var(--surface-solid) 62%);
+  border: 1px solid var(--m-water-edge);
+  box-shadow: 0 2px 14px rgba(20, 35, 50, 0.05);
+}
+
+/* Number inputs in the panel: hide the spinners, which crowd the "ml" suffix. */
+.hydration-card input[type='number']::-webkit-outer-spin-button,
+.hydration-card input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.hydration-card input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.hydration-card input:focus {
+  border-color: var(--m-water) !important;
+  box-shadow: 0 0 0 3px var(--m-water-glow);
 }

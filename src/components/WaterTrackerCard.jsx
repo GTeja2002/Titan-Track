@@ -1,7 +1,10 @@
 /* ---------------- components/WaterTrackerCard.jsx ---------------- */
 import { useState } from 'react';
-import { Droplet, Plus, Minus, Edit3, Sparkles, Check } from 'lucide-react';
+import { Droplet, Minus, Edit3 } from 'lucide-react';
 import { normalizeWaterMl } from '../lib/calculations.js';
+
+/** Quick-add amounts; the last one renders as the filled primary button. */
+const QUICK_ADD_ML = [150, 250, 330, 500];
 
 const MIN_TARGET_ML = 500;
 const MAX_TARGET_ML = 10000;
@@ -65,6 +68,16 @@ export default function WaterTrackerCard({
         setTimeout(() => setSuccessToast(''), 2500);
     };
 
+    // Undo shares the same delta path but must not announce itself as an
+    // addition of a negative amount.
+    const handleUndoMl = (mlToRemove) => {
+        const actual = Math.min(mlToRemove, currentMl);
+        if (actual <= 0) return;
+        onWaterChange(-actual);
+        setSuccessToast(`Removed ${actual.toLocaleString()} ml`);
+        setTimeout(() => setSuccessToast(''), 2500);
+    };
+
     const handleOpenEdit = () => {
         setTempTarget(safeTarget.toString());
         setErrorMsg('');
@@ -124,207 +137,179 @@ export default function WaterTrackerCard({
                 </div>
             )}
 
-            {/* Variant B: Embedded Full Hydration Tracker Card (Placed under Daily Motivation) */}
+            {/* Variant B: the full hydration panel, to the supplied design. */}
             {variant === 'widget' && (
-                <div className="bg-white dark:bg-[#1C211E] rounded-3xl p-6 border border-[#E7E6E0] dark:border-[#2C332E] shadow-sm space-y-4 text-left">
-                    {/* Header */}
-                    <div className="flex justify-between items-center pb-3 border-b border-[#EEEEEA] dark:border-[#2C332E]">
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                                <Droplet size={18} />
-                            </div>
+                <div className="hydration-card rounded-[26px] p-5 text-left">
+                    {/* Header: disc, label, reading, edit target */}
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <span
+                                className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl shrink-0"
+                                style={{ background: 'var(--surface-solid)', boxShadow: '0 4px 14px var(--m-water-glow)' }}
+                            >
+                                <Droplet size={26} style={{ color: 'var(--m-water)' }} className="fill-current" />
+                            </span>
                             <div>
-                                <span className="text-[10px] uppercase font-bold tracking-wider text-blue-500 block">
+                                <span className="block text-[11px] font-black uppercase tracking-[0.08em]" style={{ color: 'var(--m-water-ink)' }}>
                                     Hydration Tracker
                                 </span>
-                                <h4 className="text-base font-extrabold text-[#171817] dark:text-[#F4F5F2] leading-none mt-0.5">
-                                    {currentMl.toLocaleString()} <span className="text-xs font-semibold text-[#858982]">/ {safeTarget.toLocaleString()} ml</span>
-                                </h4>
+                                <div className="mt-0.5 flex items-baseline gap-1.5">
+                                    <span className="text-[26px] font-black leading-none tracking-tight" style={{ color: 'var(--text)' }}>
+                                        {currentMl.toLocaleString()}
+                                    </span>
+                                    <span className="text-[15px] font-semibold" style={{ color: 'var(--text-dim)' }}>
+                                        / {safeTarget.toLocaleString()} ml
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
                         <button
                             type="button"
                             onClick={handleOpenEdit}
-                            aria-label="Edit daily water target"
-                            className="p-2 rounded-xl text-[#858982] hover:text-blue-500 hover:bg-blue-500/10 transition flex items-center gap-1 text-[11px] font-bold"
-                            title="Edit Water Target"
+                            className="flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[12px] font-bold transition hover:scale-[1.03] active:scale-95 shrink-0"
+                            style={{
+                                background: 'var(--surface-solid)',
+                                color: 'var(--m-water-ink)',
+                                border: '1px solid var(--m-water-edge)',
+                            }}
                         >
-                            <Edit3 size={15} /> Edit Target
+                            <Edit3 size={13} />
+                            Edit Target
                         </button>
                     </div>
 
-                    {/* Progress Bar & Stats */}
-                    <div className="space-y-1.5">
-                        <div className="flex justify-between text-xs font-bold text-[#555954] dark:text-[#B3BAB4]">
-                            <span>Progress ({percentage}%)</span>
-                            <span className="text-[#858982] font-medium">
-                                {remainingMl > 0 ? `${remainingMl.toLocaleString()} ml remaining` : (
-                                    <span className="text-emerald-500 font-bold flex items-center gap-1">
-                                        <Sparkles size={12} /> Target Met!
-                                    </span>
-                                )}
+                    {/* Progress */}
+                    <div className="mt-4 h-2 w-full rounded-full overflow-hidden" style={{ background: 'var(--m-water-track)' }}>
+                        <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{ width: `${progressVisual}%`, background: 'var(--grad-water)' }}
+                        />
+                    </div>
+
+                    <div className="mt-2 flex items-center justify-between text-[13px]">
+                        <span className="font-bold" style={{ color: 'var(--text)' }}>Progress ({percentage}%)</span>
+                        <span className="font-medium" style={{ color: 'var(--text-dim)' }}>
+                            {remainingMl > 0 ? `${remainingMl.toLocaleString()} ml remaining` : statusMessage}
+                        </span>
+                    </div>
+
+                    {/* Custom amount */}
+                    <span className="mt-4 block text-[11px] font-bold uppercase tracking-[0.06em]" style={{ color: 'var(--text-dim)' }}>
+                        Log Custom Water Amount
+                    </span>
+
+                    <form onSubmit={handleAddCustomMl} className="mt-2 flex items-center gap-2.5">
+                        <div className="relative flex-1">
+                            <input
+                                type="number"
+                                min="1"
+                                value={customMlInput}
+                                onChange={(e) => setCustomMlInput(e.target.value)}
+                                placeholder="Enter amount (e.g. 10, 330, 400)"
+                                aria-label="Custom water amount in millilitres"
+                                className="w-full rounded-xl py-2.5 pl-3.5 pr-10 text-[13px] outline-none transition"
+                                style={{
+                                    background: 'var(--surface-solid)',
+                                    border: '1px solid var(--m-water-edge)',
+                                    color: 'var(--text)',
+                                }}
+                            />
+                            <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[12px] font-semibold" style={{ color: 'var(--text-faint)' }}>
+                                ml
                             </span>
                         </div>
-
-                        <div className="h-2.5 w-full bg-[#EAF4FA] dark:bg-[#1D252E] rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-blue-500 rounded-full transition-all duration-500"
-                                style={{ width: `${progressVisual}%` }}
-                            />
-                        </div>
-
-                        <p className="text-[10px] text-[#858982] font-medium pt-0.5">{statusMessage}</p>
-                    </div>
-
-                    {/* Inline Custom Exact mL Text Input Logger */}
-                    <form onSubmit={handleAddCustomMl} className="space-y-2 pt-2 border-t border-[#EEEEEA] dark:border-[#2C332E]">
-                        <label htmlFor="widget-water-input" className="text-[10px] font-bold uppercase tracking-wider text-[#555954] dark:text-[#B3BAB4] block">
-                            Log Custom Water Amount
-                        </label>
-                        <div className="flex gap-2">
-                            <div className="relative flex-1">
-                                <input
-                                    id="widget-water-input"
-                                    type="number"
-                                    min="1"
-                                    max="3000"
-                                    step="1"
-                                    value={customMlInput}
-                                    onChange={(e) => setCustomMlInput(e.target.value)}
-                                    placeholder="Enter amount (e.g. 10, 330, 400)"
-                                    className="w-full py-2.5 px-3 pr-10 text-xs font-bold rounded-2xl bg-[#F7F7F3] dark:bg-[#222823] border border-[#E7E6E0] dark:border-[#2C332E] text-[#171817] dark:text-[#F4F5F2] outline-none focus:border-blue-500"
-                                />
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#858982] font-semibold">
-                                    ml
-                                </span>
-                            </div>
-                            <button
-                                type="submit"
-                                disabled={!customMlInput || parseInt(customMlInput, 10) <= 0}
-                                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white rounded-2xl text-xs font-bold transition shadow-sm"
-                            >
-                                + Add
-                            </button>
-                        </div>
-
-                        {/* Toast Feedback */}
-                        {successToast && (
-                            <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 p-2 rounded-xl text-center flex items-center justify-center gap-1 animate-fade-in">
-                                <Check size={12} /> {successToast}
-                            </div>
-                        )}
+                        <button
+                            type="submit"
+                            className="rounded-xl px-4 py-2.5 text-[13px] font-bold text-white transition hover:brightness-105 active:scale-95 shrink-0"
+                            style={{ background: 'var(--grad-water)', boxShadow: '0 6px 16px var(--m-water-glow)' }}
+                        >
+                            + Add
+                        </button>
                     </form>
 
-                    {/* Quick Preset Buttons */}
-                    <div className="grid grid-cols-4 gap-2 pt-1">
-                        <button
-                            type="button"
-                            onClick={() => handleQuickAddMl(150)}
-                            className="py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 transition font-bold text-[10px]"
-                        >
-                            +150 ml
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => handleQuickAddMl(250)}
-                            className="py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 transition font-bold text-[10px]"
-                        >
-                            +250 ml
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => handleQuickAddMl(330)}
-                            className="py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 transition font-bold text-[10px]"
-                        >
-                            +330 ml
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => handleQuickAddMl(500)}
-                            className="py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition font-bold text-[10px] shadow-sm"
-                        >
-                            +500 ml
-                        </button>
-                    </div>
-
-                    {/* Undo button */}
-                    <div className="flex justify-between items-center pt-2 border-t border-[#EEEEEA] dark:border-[#2C332E]">
-                        <button
-                            type="button"
-                            onClick={() => onWaterChange(-250)}
-                            disabled={currentMl <= 0}
-                            className="text-[10px] font-bold text-red-500 hover:underline disabled:opacity-40 transition flex items-center gap-1"
-                        >
-                            <Minus size={12} /> Undo (-250 ml)
-                        </button>
-                        <span className="text-[10px] text-[#858982]">Target: {safeTarget.toLocaleString()} ml (~{glassesEquivalent} glasses)</span>
-                    </div>
-                </div>
-            )}
-
-            {/* Target Editor Modal */}
-            {isEditingTarget && (
-                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center animate-fade-in">
-                    <div className="bg-white dark:bg-[#1C211E] border border-[#E7E6E0] dark:border-[#2C332E] rounded-3xl p-6 w-full max-w-xs shadow-2xl text-center">
-                        <h4 className="text-sm font-bold text-[#171817] dark:text-[#F4F5F2] mb-1">Custom Daily Water Target</h4>
-                        <p className="text-[10px] text-[#858982] mb-3">
-                            Auto-calculated target for your body weight ({weight} kg) is{' '}
-                            <strong className="text-blue-500">{autoCalculatedTarget.toLocaleString()} ml</strong>.
-                        </p>
-
-                        <form onSubmit={handleSaveTarget} className="space-y-3">
-                            <div>
-                                <label htmlFor="embedded-water-target-input" className="sr-only">
-                                    Daily Water Target in milliliters
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        id="embedded-water-target-input"
-                                        type="number"
-                                        min={MIN_TARGET_ML}
-                                        max={MAX_TARGET_ML}
-                                        step={50}
-                                        value={tempTarget}
-                                        onChange={(e) => setTempTarget(e.target.value)}
-                                        className="w-full text-center py-2.5 px-3 text-sm font-bold rounded-2xl bg-[#F7F7F3] dark:bg-[#222823] border border-[#E7E6E0] dark:border-[#2C332E] text-[#171817] dark:text-[#F4F5F2] outline-none focus:border-blue-500"
-                                        placeholder="2500"
-                                        autoFocus
-                                    />
-                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[#858982] font-semibold">
-                                        ml
-                                    </span>
-                                </div>
-                                {errorMsg && (
-                                    <p className="text-[10px] text-red-500 font-medium mt-1.5">{errorMsg}</p>
-                                )}
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={handleResetToAutoTarget}
-                                className="text-[10px] font-bold text-blue-500 hover:underline block mx-auto"
-                            >
-                                Reset to Auto Target ({autoCalculatedTarget} ml)
-                            </button>
-
-                            <div className="flex gap-2 pt-2">
+                    {/* Quick amounts. The largest is the filled button, so there
+                        is one obvious primary action in the row. */}
+                    <div className="mt-2.5 grid grid-cols-4 gap-2">
+                        {QUICK_ADD_ML.map((ml, i) => {
+                            const primary = i === QUICK_ADD_ML.length - 1;
+                            return (
                                 <button
+                                    key={ml}
                                     type="button"
-                                    onClick={() => setIsEditingTarget(false)}
-                                    className="flex-1 py-2 text-xs font-bold text-[#858982] hover:bg-[#F7F7F3] dark:hover:bg-[#222823] rounded-xl transition"
+                                    onClick={() => handleQuickAddMl(ml)}
+                                    className="rounded-xl py-2.5 text-[12.5px] font-bold transition hover:scale-[1.03] active:scale-95"
+                                    style={primary
+                                        ? { background: 'var(--grad-water)', color: '#fff', boxShadow: '0 6px 16px var(--m-water-glow)' }
+                                        : { background: 'var(--m-water-soft)', color: 'var(--m-water-ink)' }}
                                 >
+                                    +{ml} ml
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Footer: undo and the target reference */}
+                    <div className="mt-3.5 flex items-center justify-between gap-3 text-[12px]">
+                        <button
+                            type="button"
+                            onClick={() => handleUndoMl(250)}
+                            disabled={currentMl <= 0}
+                            className="flex items-center gap-1.5 font-bold transition disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-90"
+                            style={{ color: 'var(--danger)' }}
+                        >
+                            <Minus size={13} />
+                            Undo (&minus;250 ml)
+                        </button>
+                        <span className="font-medium" style={{ color: 'var(--text-dim)' }}>
+                            Target: {safeTarget.toLocaleString()} ml (&asymp;{glassesEquivalent} glasses)
+                        </span>
+                    </div>
+
+                    {successToast && (
+                        <p className="mt-2.5 text-[11px] font-bold text-center rounded-xl py-1.5 animate-fade-in"
+                            style={{ background: 'var(--m-water-soft)', color: 'var(--m-water-ink)' }}>
+                            {successToast}
+                        </p>
+                    )}
+
+                    {/* Target editor */}
+                    {isEditingTarget && (
+                        <form onSubmit={handleSaveTarget} className="mt-3 rounded-2xl p-3.5 animate-fade-in"
+                            style={{ background: 'var(--surface-solid)', border: '1px solid var(--m-water-edge)' }}>
+                            <label className="block text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-dim)' }}>
+                                Daily target (ml)
+                            </label>
+                            <input
+                                type="number"
+                                value={tempTarget}
+                                onChange={(e) => setTempTarget(e.target.value)}
+                                min={MIN_TARGET_ML}
+                                max={MAX_TARGET_ML}
+                                autoFocus
+                                className="mt-1.5 w-full rounded-xl px-3 py-2 text-[13px] outline-none"
+                                style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                            />
+                            {errorMsg && <p className="mt-1.5 text-[11px] font-bold" style={{ color: 'var(--danger)' }}>{errorMsg}</p>}
+                            <div className="mt-2.5 flex gap-2">
+                                <button type="button" onClick={handleResetToAutoTarget}
+                                    className="flex-1 rounded-xl py-2 text-[12px] font-bold transition"
+                                    style={{ background: 'var(--chip-bg)', color: 'var(--text-dim)' }}>
+                                    Auto ({autoCalculatedTarget.toLocaleString()} ml)
+                                </button>
+                                <button type="button" onClick={() => setIsEditingTarget(false)}
+                                    className="flex-1 rounded-xl py-2 text-[12px] font-bold transition"
+                                    style={{ background: 'var(--chip-bg)', color: 'var(--text-dim)' }}>
                                     Cancel
                                 </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition shadow"
-                                >
-                                    Save Goal
+                                <button type="submit"
+                                    className="flex-1 rounded-xl py-2 text-[12px] font-bold text-white transition"
+                                    style={{ background: 'var(--grad-water)' }}>
+                                    Save
                                 </button>
                             </div>
                         </form>
-                    </div>
+                    )}
                 </div>
             )}
         </>

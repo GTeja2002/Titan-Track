@@ -116,6 +116,21 @@ describe('theme gradient tokens', () => {
         }
     });
 
+    it('keeps every metric ink readable on its own soft tint', () => {
+        // The stricter case, and the one that actually ships: the hydration
+        // quick-add buttons and every soft-tinted chip put ink on the tint,
+        // not on white. Water was 4.01:1 that way while passing on white.
+        const b = block(ROOT_BLOCK);
+        for (const m of METRICS) {
+            const ink = token(b, `m-${m}-ink`);
+            const soft = token(b, `m-${m}-soft`);
+            const li = luminance(ink);
+            const ls = luminance(soft);
+            const ratio = (Math.max(li, ls) + 0.05) / (Math.min(li, ls) + 0.05);
+            expect(ratio, `${m} ink on ${m} soft`).toBeGreaterThanOrEqual(4.5);
+        }
+    });
+
     it('keeps every metric soft tint pale enough to sit under content', () => {
         const b = block(ROOT_BLOCK);
         for (const m of METRICS) {
