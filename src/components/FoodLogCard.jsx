@@ -123,7 +123,7 @@ export function FoodLogCard({ state, update }) {
   const fiberTarget = state.gender === 'female' ? 25 : 30;
 
   return (
-    <div className="glass h-full rounded-3xl p-6 flex flex-col" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
+    <div className="glass card-lift card-edge h-full rounded-3xl p-6 flex flex-col" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
           <Utensils size={14} style={{ color: 'var(--primary)' }} />
@@ -141,10 +141,10 @@ export function FoodLogCard({ state, update }) {
 
       {foods.length > 0 && (
         <div className="mb-4 flex flex-wrap gap-3 rounded-2xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-          <MacroBar label="Protein" value={totalProtein} target={proteinTarget} color="var(--info)" />
-          <MacroBar label="Carbs" value={totalCarbs} target={carbsTarget} color="var(--accent)" />
-          <MacroBar label="Fat" value={totalFat} target={fatTarget} color="var(--danger)" />
-          <MacroBar label="Fiber" value={totalFiber} target={fiberTarget} color="var(--primary)" />
+          <MacroBar label="Protein" value={totalProtein} target={proteinTarget} color="var(--macro-protein)" gradient="var(--grad-protein)" />
+          <MacroBar label="Carbs" value={totalCarbs} target={carbsTarget} color="var(--macro-carbs)" gradient="var(--grad-carbs)" />
+          <MacroBar label="Fat" value={totalFat} target={fatTarget} color="var(--macro-fat)" gradient="var(--grad-fat)" />
+          <MacroBar label="Fiber" value={totalFiber} target={fiberTarget} color="var(--macro-fiber)" gradient="var(--grad-fiber)" />
         </div>
       )}
 
@@ -305,7 +305,7 @@ export function FoodLogCard({ state, update }) {
         <button
           onClick={addFood}
           className="flex items-center justify-center rounded-xl px-3.5 py-2.5 text-white transition hover:scale-105 active:scale-95"
-          style={{ background: 'var(--primary)', boxShadow: '0 4px 14px var(--primary-glow)' }}
+          style={{ background: 'var(--grad-primary-cta)', boxShadow: '0 4px 14px var(--primary-glow)' }}
           aria-label="Add food"
         >
           <Plus size={18} />

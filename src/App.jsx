@@ -103,7 +103,7 @@ export default function App() {
       <aside className="hidden lg:flex flex-col fixed top-0 bottom-0 left-0 w-64 glass border-r z-50 p-6 flex-shrink-0 animate-fade-in" style={{ borderColor: 'var(--border)' }}>
         {/* Brand logo lockup */}
         <div className="flex items-center gap-2.5 mb-10 cursor-pointer" onClick={() => setActiveTab('Dashboard')}>
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: 'var(--primary)', boxShadow: '0 4px 14px var(--primary-glow)' }}>
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: 'var(--grad-primary-cta)', boxShadow: '0 4px 14px var(--primary-glow)' }}>
             <Activity size={18} color="#fff" />
           </div>
           <span className="text-sm font-bold uppercase tracking-[0.25em]" style={{ color: 'var(--primary)' }}>TitanTrack</span>
@@ -642,7 +642,7 @@ export default function App() {
                   <span className="text-[9px] font-bold tracking-wide">{item.label}</span>
                   <span
                     className="h-0.5 w-6 rounded-full transition"
-                    style={{ background: active ? 'var(--primary)' : 'transparent' }}
+                    style={{ background: active ? 'var(--grad-primary)' : 'transparent' }}
                   />
                 </button>
               );

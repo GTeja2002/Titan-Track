@@ -33,7 +33,7 @@ export function ActivityCard({ state, update }) {
   const walkBurn = calculateWalkCalories(log?.walk || 0, state.weight ?? 70);
 
   return (
-    <div className="glass h-full rounded-3xl p-6 flex flex-col" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
+    <div className="glass card-lift card-edge h-full rounded-3xl p-6 flex flex-col" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
           <Dumbbell size={14} style={{ color: 'var(--accent)' }} />
@@ -54,7 +54,7 @@ export function ActivityCard({ state, update }) {
         <button
           onClick={() => update((prev) => ({ ...prev, gymStarted: true }))}
           className="mb-4 flex items-center justify-center gap-2 rounded-2xl py-3.5 font-semibold text-white transition hover:scale-[1.02] active:scale-95"
-          style={{ background: 'var(--primary)', boxShadow: '0 4px 14px var(--primary-glow)' }}
+          style={{ background: 'var(--grad-primary-cta)', boxShadow: '0 4px 14px var(--primary-glow)' }}
         >
           <Flame size={18} /> Start Gym Journey
         </button>

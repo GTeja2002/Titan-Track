@@ -58,7 +58,7 @@ export function ConsistencyCard({ state }) {
         : 'Log anything to start a streak.';
 
   return (
-    <div className="glass h-full rounded-3xl p-6 flex flex-col" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
+    <div className="glass card-lift card-edge h-full rounded-3xl p-6 flex flex-col" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
           <Flame size={14} style={{ color: 'var(--primary)' }} />
@@ -70,13 +70,18 @@ export function ConsistencyCard({ state }) {
       </div>
 
       <div className="my-5 flex flex-1 flex-col items-center justify-center">
-        <div className="flex items-baseline gap-2">
-          <span className="text-6xl font-extrabold leading-none" style={{ color: 'var(--text)' }}>{streak}</span>
-          <span className="text-sm font-bold" style={{ color: 'var(--text-dim)' }}>
-            day{streak === 1 ? '' : 's'}
-          </span>
+        <div
+          className={`flex h-28 w-28 items-center justify-center rounded-full ${loggedToday || todayIsRest ? 'flow-pulse' : ''}`}
+          style={{ background: 'var(--grad-primary-soft)' }}
+        >
+          <div className="flex items-baseline gap-1">
+            <span className="text-5xl font-extrabold leading-none text-flow">{streak}</span>
+          </div>
         </div>
-        <span className="mt-2 text-xs font-semibold" style={{ color: 'var(--text-dim)' }}>{message}</span>
+        <span className="mt-3 text-sm font-bold" style={{ color: 'var(--text-dim)' }}>
+          day{streak === 1 ? '' : 's'} running
+        </span>
+        <span className="mt-1 text-xs font-semibold" style={{ color: 'var(--text-dim)' }}>{message}</span>
       </div>
 
       {/* Last seven days */}
@@ -89,7 +94,7 @@ export function ConsistencyCard({ state }) {
               <div
                 className="flex h-8 w-full items-center justify-center rounded-xl border transition"
                 style={{
-                  background: filled ? 'var(--primary)' : rest ? 'var(--bg-2)' : 'transparent',
+                  background: filled ? 'var(--grad-primary-cta)' : rest ? 'var(--bg-2)' : 'transparent',
                   borderColor: d.isToday ? 'var(--primary)' : 'var(--border)',
                   borderWidth: d.isToday ? 2 : 1,
                 }}

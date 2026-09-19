@@ -21,7 +21,7 @@ import {
 
 function WellnessCard({ icon, title, children }) {
   return (
-    <div className="glass h-full rounded-3xl p-6 flex flex-col" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
+    <div className="glass card-lift card-edge h-full rounded-3xl p-6 flex flex-col" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
       <div className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
         <span style={{ color: 'var(--primary)' }}>{icon}</span>
         {title}

@@ -1,0 +1,99 @@
+import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { ACCENTS, DEFAULT_ACCENT } from './accents.js';
+
+const css = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), '../index.css'), 'utf8'
+);
+
+function block(pattern) {
+    const m = css.match(pattern);
+    return m ? m[0] : null;
+}
+
+function token(blockText, name) {
+    if (!blockText) return null;
+    const m = blockText.match(new RegExp('--' + name + ':\\s*(#[0-9A-Fa-f]{6})'));
+    return m ? m[1] : null;
+}
+
+function luminance(hex) {
+    const n = hex.replace('#', '');
+    const ch = (c) => {
+        const v = parseInt(c, 16) / 255;
+        return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+    };
+    return 0.2126 * ch(n.slice(0, 2)) + 0.7152 * ch(n.slice(2, 4)) + 0.0722 * ch(n.slice(4, 6));
+}
+
+const contrastWithWhite = (hex) => 1.05 / (luminance(hex) + 0.05);
+
+const accentBlock = (id) =>
+    new RegExp("body\\[data-accent='" + id + "'\\] \\{[\\s\\S]*?\\n\\}");
+
+const darkAccentBlock = (id) =>
+    new RegExp("body\\.dark\\[data-accent='" + id + "'\\] \\{[\\s\\S]*?\\n\\}");
+
+const lightBlocks = [
+    [DEFAULT_ACCENT, /:root \{[\s\S]*?\n\}/],
+    ...ACCENTS.filter((a) => a.id !== DEFAULT_ACCENT).map((a) => [a.id, accentBlock(a.id)]),
+];
+
+describe('theme gradient tokens', () => {
+    // A plain loop rather than it.each, which does not pass a RegExp through
+    // its argument spreading intact.
+    for (const [id, pattern] of lightBlocks) {
+        it(`${id} defines both gradient companions`, () => {
+            const b = block(pattern);
+            expect(b, `${id} block not found`).toBeTruthy();
+            expect(token(b, 'color-primary-lift')).toMatch(/^#[0-9A-Fa-f]{6}$/);
+            expect(token(b, 'color-primary-cta-lift')).toMatch(/^#[0-9A-Fa-f]{6}$/);
+        });
+
+        // The whole point of the second token: white labels sit on
+        // --grad-primary-cta, so both ends of that ramp have to stay readable.
+        // The decorative ramp is deliberately allowed to be lighter.
+        it(`${id} keeps white text readable across the CTA gradient`, () => {
+            const b = block(pattern);
+            expect(contrastWithWhite(token(b, 'color-primary'))).toBeGreaterThanOrEqual(4.5);
+            expect(contrastWithWhite(token(b, 'color-primary-cta-lift'))).toBeGreaterThanOrEqual(4.5);
+        });
+
+        it(`${id} makes the decorative lift lighter than the primary`, () => {
+            const b = block(pattern);
+            expect(luminance(token(b, 'color-primary-lift')))
+                .toBeGreaterThan(luminance(token(b, 'color-primary')));
+        });
+    }
+
+    it('gives every non-default accent a dark-mode override', () => {
+        // body[data-accent] and body.dark have equal specificity and the accent
+        // blocks come later in the file, so without these the accent's light
+        // soft colour wins in dark mode and soft backgrounds turn nearly white.
+        const missing = ACCENTS
+            .filter((a) => a.id !== DEFAULT_ACCENT)
+            .filter((a) => !css.includes(`body.dark[data-accent='${a.id}']`))
+            .map((a) => a.id);
+        expect(missing).toEqual([]);
+    });
+
+    it('keeps dark-mode accent soft colours dark', () => {
+        for (const a of ACCENTS.filter((x) => x.id !== DEFAULT_ACCENT)) {
+            const b = block(darkAccentBlock(a.id));
+            expect(b, `${a.id} dark block not found`).toBeTruthy();
+            expect(luminance(token(b, 'color-primary-soft')), `${a.id} soft`).toBeLessThan(0.05);
+        }
+    });
+
+    it('defines the gradient tokens components rely on', () => {
+        for (const t of ['--grad-primary', '--grad-primary-cta', '--grad-primary-soft', '--grad-sheen', '--grad-edge']) {
+            expect(css).toContain(`${t}:`);
+        }
+    });
+
+    it('honours prefers-reduced-motion', () => {
+        expect(css).toContain('prefers-reduced-motion');
+    });
+});

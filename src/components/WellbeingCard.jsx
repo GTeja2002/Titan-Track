@@ -49,7 +49,7 @@ export function WellbeingCard({ state, update }) {
   };
 
   return (
-    <div className="glass h-full rounded-3xl p-6 flex flex-col" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
+    <div className="glass card-lift card-edge h-full rounded-3xl p-6 flex flex-col" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
           <Smile size={14} style={{ color: 'var(--primary)' }} />
@@ -76,7 +76,7 @@ export function WellbeingCard({ state, update }) {
                 aria-label={m.label}
                 className="flex flex-1 flex-col items-center gap-0.5 rounded-xl border py-2 transition hover:scale-105 active:scale-95"
                 style={{
-                  background: active ? 'var(--primary-soft)' : 'var(--surface)',
+                  background: active ? 'var(--grad-primary-soft)' : 'var(--surface)',
                   borderColor: active ? 'var(--primary)' : 'var(--border)',
                 }}
               >
@@ -104,7 +104,7 @@ export function WellbeingCard({ state, update }) {
                 onClick={() => setField('sleep', h)}
                 className="flex-1 rounded-xl border py-2 text-[11px] font-bold transition hover:scale-105 active:scale-95"
                 style={{
-                  background: active ? 'var(--primary)' : 'var(--surface)',
+                  background: active ? 'var(--grad-primary-cta)' : 'var(--surface)',
                   borderColor: active ? 'var(--primary)' : 'var(--border)',
                   color: active ? '#fff' : 'var(--text-dim)',
                 }}
@@ -131,7 +131,7 @@ export function WellbeingCard({ state, update }) {
                 aria-label={`Energy ${lvl} of 5`}
                 className="h-7 flex-1 rounded-lg border transition hover:scale-105 active:scale-95"
                 style={{
-                  background: active ? 'var(--primary)' : 'var(--surface)',
+                  background: active ? 'var(--grad-primary)' : 'var(--surface)',
                   borderColor: active ? 'var(--primary)' : 'var(--border)',
                 }}
               />
@@ -142,7 +142,7 @@ export function WellbeingCard({ state, update }) {
 
       {/* Cycle — only for people who turned it on */}
       {state.cycle?.enabled && (
-        <div className="mt-auto rounded-2xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+        <div className="panel-flow mt-auto rounded-2xl p-3">
           <div className="flex items-center justify-between gap-2">
             <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-faint)' }}>
               <Droplets size={11} style={{ color: 'var(--danger)' }} /> Cycle

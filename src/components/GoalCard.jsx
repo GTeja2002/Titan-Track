@@ -89,7 +89,7 @@ export function GoalCard({ state, update }) {
   };
 
   return (
-    <div className="glass h-full rounded-3xl p-6 flex flex-col" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
+    <div className="glass card-lift card-edge h-full rounded-3xl p-6 flex flex-col" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
           <TrendingDown size={14} style={{ color: 'var(--primary)' }} />
@@ -101,13 +101,21 @@ export function GoalCard({ state, update }) {
       <div className="my-4 flex flex-col items-center justify-center flex-1">
         <div className="relative" style={{ width: size, height: size }}>
           <svg width={size} height={size} className="-rotate-90">
+            {/* The progress arc runs through the accent gradient rather than a
+                flat fill, so the ring picks up whatever theme is active. */}
+            <defs>
+              <linearGradient id="goal-ring-flow" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="var(--primary)" />
+                <stop offset="100%" stopColor="var(--primary-lift)" />
+              </linearGradient>
+            </defs>
             <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--border)" strokeWidth={stroke} />
             <circle
               cx={size / 2}
               cy={size / 2}
               r={radius}
               fill="none"
-              stroke="var(--primary)"
+              stroke="url(#goal-ring-flow)"
               strokeWidth={stroke}
               strokeLinecap="round"
               strokeDasharray={circ}
@@ -117,7 +125,7 @@ export function GoalCard({ state, update }) {
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-4xl font-extrabold">{percent}%</span>
+            <span className="text-4xl font-extrabold text-flow">{percent}%</span>
             <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-dim)' }}>complete</span>
           </div>
         </div>

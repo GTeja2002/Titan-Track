@@ -257,7 +257,7 @@ export function LoginScreen({ onLogin }) {
               <button
                 type="submit"
                 className="w-full flex items-center justify-center gap-2 rounded-2xl py-3.5 font-bold text-white transition hover:scale-[1.02] active:scale-95 text-sm"
-                style={{ background: 'var(--primary)', boxShadow: '0 8px 24px var(--primary-glow)' }}
+                style={{ background: 'var(--grad-primary-cta)', boxShadow: '0 8px 24px var(--primary-glow)' }}
               >
                 <ShieldCheck size={16} /> <span>Verify & Continue</span>
               </button>
@@ -366,7 +366,7 @@ export function LoginScreen({ onLogin }) {
               <button
                 type="submit"
                 className="w-full flex items-center justify-center gap-2 rounded-2xl py-3.5 font-bold text-white transition hover:scale-[1.02] active:scale-95 text-sm"
-                style={{ background: 'var(--primary)', boxShadow: '0 8px 24px var(--primary-glow)' }}
+                style={{ background: 'var(--grad-primary-cta)', boxShadow: '0 8px 24px var(--primary-glow)' }}
               >
                 <LogIn size={16} /> <span>Load My Profile</span>
               </button>
