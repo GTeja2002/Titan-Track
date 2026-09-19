@@ -140,11 +140,19 @@ export function FoodLogCard({ state, update }) {
             className="w-full rounded-xl border bg-transparent px-3 py-2.5 text-sm outline-none"
             style={{ background: 'var(--bg-2)', borderColor: 'var(--border)', color: 'var(--text)' }}
           />
+          {/* z-50, not z-55: Tailwind's scale stops at 50 and the config does
+              not extend zIndex, so z-55 compiled to nothing and left this menu
+              at z-index:auto — the logged-food rows further down the card are
+              later siblings, so they painted over it. The background is the
+              solid surface token rather than .glass, whose translucent
+              rgba(255,255,255,0.7) let that same content show through. */}
           {isSelectOpen && suggestions.length > 0 && (
             <div
-              className="absolute left-0 right-0 top-full mt-2 z-55 max-h-60 overflow-y-auto rounded-3xl glass p-1.5 shadow-2xl flex flex-col gap-0.5"
+              className="absolute left-0 right-0 top-full mt-2 z-50 max-h-60 overflow-y-auto rounded-3xl border p-1.5 flex flex-col gap-0.5"
               style={{
-                boxShadow: '0 12px 36px rgba(0,0,0,0.15)',
+                background: 'var(--surface-solid)',
+                borderColor: 'var(--border)',
+                boxShadow: '0 12px 36px rgba(0,0,0,0.18)',
               }}
             >
               {suggestions.map((f) => (

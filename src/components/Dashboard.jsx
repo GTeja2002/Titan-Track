@@ -1150,7 +1150,7 @@ export function Dashboard({
                         className="w-full text-xs rounded-xl border border-[var(--border)] bg-[var(--bg-2)] text-[var(--text)] px-3 py-2 outline-none"
                       />
                       {(isSearchFocused || mealSearch.trim() !== '') && (
-                        <div className="absolute left-0 right-0 top-full mt-1.5 z-40 bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-xl max-h-48 overflow-y-auto p-1 text-left flex flex-col gap-0.5">
+                        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl shadow-xl max-h-48 overflow-y-auto p-1 text-left flex flex-col gap-0.5">
                           {(mealSearch.trim() === ''
                             ? FOOD_DB
                             : FOOD_DB.filter(f => f.name.toLowerCase().includes(mealSearch.toLowerCase()))
