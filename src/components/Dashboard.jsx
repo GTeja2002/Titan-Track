@@ -235,16 +235,27 @@ export function Dashboard({
     setSelectedPlanWeekday(getWeekdayName(state.currentDate));
   }, [state.currentDate]);
 
+  // weeklyPlan is two levels deep, so every write has to clone both levels.
+  // Writing into prev.weeklyPlan[weekday] directly would mutate previous state
+  // in place and leave state.weeklyPlan reference-equal, staling anything
+  // memoised on it.
+  const planDay = (s, weekday) => {
+    const day = (s.weeklyPlan && s.weeklyPlan[weekday]) || {};
+    return { meals: day.meals || [], workouts: day.workouts || [] };
+  };
+
+  const withPlanDay = (s, weekday, day) => ({
+    ...s,
+    weeklyPlan: { ...(s.weeklyPlan || {}), [weekday]: day },
+  });
+
   // Handle plan updates
   const handleDeletePlannedMeal = (weekday, mealIndex) => {
     update((prev) => {
-      const next = { ...prev };
-      next.weeklyPlan = next.weeklyPlan || {};
-      next.weeklyPlan[weekday] = next.weeklyPlan[weekday] || { meals: [], workouts: [] };
-      const newMeals = [...(next.weeklyPlan[weekday].meals || [])];
+      const day = planDay(prev, weekday);
+      const newMeals = [...day.meals];
       newMeals.splice(mealIndex, 1);
-      next.weeklyPlan[weekday].meals = newMeals;
-      return next;
+      return withPlanDay(prev, weekday, { ...day, meals: newMeals });
     });
   };
 
@@ -260,27 +271,19 @@ export function Dashboard({
       image: food.image || '/assets/placeholders/food.png'
     };
     update((prev) => {
-      const next = { ...prev };
-      next.weeklyPlan = next.weeklyPlan || {};
-      next.weeklyPlan[weekday] = next.weeklyPlan[weekday] || { meals: [], workouts: [] };
-      next.weeklyPlan[weekday].meals = [...(next.weeklyPlan[weekday].meals || []), newMeal];
-      return next;
+      const day = planDay(prev, weekday);
+      return withPlanDay(prev, weekday, { ...day, meals: [...day.meals, newMeal] });
     });
   };
 
   const handleTogglePlannedWorkout = (weekday, template) => {
     update((prev) => {
-      const next = { ...prev };
-      next.weeklyPlan = next.weeklyPlan || {};
-      next.weeklyPlan[weekday] = next.weeklyPlan[weekday] || { meals: [], workouts: [] };
-      let dayWorkouts = [...(next.weeklyPlan[weekday].workouts || [])];
-      if (dayWorkouts.some(w => w.id === template.id)) {
-        dayWorkouts = dayWorkouts.filter(w => w.id !== template.id);
-      } else {
-        dayWorkouts.push(template);
-      }
-      next.weeklyPlan[weekday].workouts = dayWorkouts;
-      return next;
+      const day = planDay(prev, weekday);
+      const isPlanned = day.workouts.some((w) => w.id === template.id);
+      const workouts = isPlanned
+        ? day.workouts.filter((w) => w.id !== template.id)
+        : [...day.workouts, template];
+      return withPlanDay(prev, weekday, { ...day, workouts });
     });
   };
 
