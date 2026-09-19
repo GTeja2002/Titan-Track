@@ -28,6 +28,7 @@ export default function App() {
     state,
     update,
     savedFlash,
+    storageFailed,
     login,
     logout,
     completeOnboarding,
@@ -47,6 +48,15 @@ export default function App() {
   const todayLabel = state.email && state.isOnboarded && state.currentDate === getLocalDateString()
     ? 'Today'
     : new Date((state.currentDate || getLocalDateString()) + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  // The indicator has to reflect what actually happened, not just whether
+  // Supabase is configured: storage can be blocked or full, in which case
+  // nothing was saved anywhere and the user needs to know.
+  const saveStatusLabel = storageFailed
+    ? 'could not save — storage full or blocked'
+    : supabase
+      ? 'synced to cloud'
+      : 'auto-saved locally';
 
   // Community Feed State & Mock data
   const [likes, setLikes] = useState({ 1: 24, 2: 15, 3: 42 });
@@ -551,9 +561,12 @@ export default function App() {
           </footer>
 
           {/* Sync notification banner */}
-          <footer className="mt-4 flex items-center justify-center gap-2 text-xs" style={{ color: 'var(--text-faint)' }}>
-            <span className="h-1.5 w-1.5 rounded-full animate-pulse-dot" style={{ background: 'var(--primary)' }} />
-            <span>{todayLabel} · {supabase ? 'synced to cloud' : 'auto-saved locally'}</span>
+          <footer className="mt-4 flex items-center justify-center gap-2 text-xs" style={{ color: storageFailed ? 'var(--danger)' : 'var(--text-faint)' }}>
+            <span
+              className="h-1.5 w-1.5 rounded-full animate-pulse-dot"
+              style={{ background: storageFailed ? 'var(--danger)' : 'var(--primary)' }}
+            />
+            <span>{todayLabel} · {saveStatusLabel}</span>
           </footer>
 
           {/* Drawer Overlay for Profile Entry */}

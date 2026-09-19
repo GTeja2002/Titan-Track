@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCalories } from './calculations.js';
 import { pushStateToSupabase, pullStateFromSupabase } from './supabaseClient.js';
 import { getLocalDateString } from './date.js';
+import { readLocal, readLocalJSON, writeLocal, removeLocal } from './storage.js';
 import { recordUserLogin, updateUserDirectoryRecord } from './userLogger.js';
 
 export const defaultState = {
@@ -163,16 +164,11 @@ export function createEmptyLog() {
 
 export function useAppState() {
   const [state, setState] = useState(() => {
-    const lastEmail = localStorage.getItem('titan_last_email') || '';
+    const lastEmail = readLocal('titan_last_email') || '';
     if (lastEmail) {
-      const saved = localStorage.getItem(`titan_user_${lastEmail.toLowerCase()}`);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          return { ...defaultState, ...parsed, email: lastEmail, isOnboarded: parsed.isOnboarded ?? false };
-        } catch {
-          // fallback
-        }
+      const parsed = readLocalJSON(`titan_user_${lastEmail.toLowerCase()}`);
+      if (parsed) {
+        return { ...defaultState, ...parsed, email: lastEmail, isOnboarded: parsed.isOnboarded ?? false };
       }
       return {
         ...defaultState,
@@ -188,6 +184,7 @@ export function useAppState() {
   });
 
   const [savedFlash, setSavedFlash] = useState(false);
+  const [storageFailed, setStorageFailed] = useState(false);
   const saveTimer = useRef(null);
 
   const persist = useCallback((next) => {
@@ -195,10 +192,15 @@ export function useAppState() {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       const userKey = `titan_user_${next.email.toLowerCase()}`;
-      localStorage.setItem(userKey, JSON.stringify(next));
-      localStorage.setItem('titan_last_email', next.email);
-      setSavedFlash(true);
-      setTimeout(() => setSavedFlash(false), 1000);
+      const wrote = writeLocal(userKey, JSON.stringify(next));
+      writeLocal('titan_last_email', next.email);
+      // Storage can be full or blocked. Surface that rather than flashing
+      // "saved" over a write that never happened.
+      setStorageFailed(!wrote);
+      if (wrote) {
+        setSavedFlash(true);
+        setTimeout(() => setSavedFlash(false), 1000);
+      }
       // Cloud sync is best-effort and never blocks the (already-instant) local save.
       pushStateToSupabase(userKey, next);
     }, 300);
@@ -267,16 +269,8 @@ export function useAppState() {
 
   const login = (email) => {
     const lowerEmail = email.trim().toLowerCase();
-    localStorage.setItem('titan_last_email', lowerEmail);
-    const saved = localStorage.getItem(`titan_user_${lowerEmail}`);
-    let loadedState = null;
-    if (saved) {
-      try {
-        loadedState = JSON.parse(saved);
-      } catch {
-        // fallback
-      }
-    }
+    writeLocal('titan_last_email', lowerEmail);
+    const loadedState = readLocalJSON(`titan_user_${lowerEmail}`);
     const finalState = loadedState
       ? { ...defaultState, ...loadedState, email: lowerEmail, isOnboarded: loadedState.isOnboarded ?? false }
       : {
@@ -294,7 +288,7 @@ export function useAppState() {
   };
 
   const logout = () => {
-    localStorage.removeItem('titan_last_email');
+    removeLocal('titan_last_email');
     pulledForEmailRef.current = null;
     setState({ ...defaultState, email: '', isOnboarded: false });
   };
@@ -386,6 +380,7 @@ export function useAppState() {
     state,
     update,
     savedFlash,
+    storageFailed,
     createEmptyLog,
     login,
     logout,
