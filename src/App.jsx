@@ -12,6 +12,7 @@ import { LoginScreen } from './components/LoginScreen.jsx';
 import { OnboardingScreen } from './components/OnboardingScreen.jsx';
 import { GoalCard } from './components/GoalCard.jsx';
 import { ConsistencyCard } from './components/ConsistencyCard.jsx';
+import { WellbeingCard } from './components/WellbeingCard.jsx';
 import { isScaleGoal } from './lib/goals.js';
 import { EnergyCard } from './components/EnergyCard.jsx';
 import { FoodLogCard } from './components/FoodLogCard.jsx';
@@ -358,6 +359,9 @@ export default function App() {
                       Turn on body composition
                     </button>
                   </div>
+                )}
+                {state.trackWellbeing !== false && (
+                  <WellbeingCard state={state} update={update} />
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <TrendCard state={state} />
