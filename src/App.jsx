@@ -25,6 +25,20 @@ import { Dashboard } from './components/Dashboard.jsx';
 import { PersonalizedPlanCard } from './components/PersonalizedPlanCard.jsx';
 import { getLocalDateString } from './lib/date.js';
 
+/** The one definition of the app's sections. The sidebar, the mobile drawer
+ *  and the bottom tab bar all read from this. */
+const NAV_TABS = [
+  { id: 'Dashboard', label: 'Dashboard', icon: Activity },
+  { id: 'Nutrition', label: 'Nutrition', icon: Utensils },
+  { id: 'Workouts', label: 'Workouts', icon: Dumbbell },
+  { id: 'Progress', label: 'Progress', icon: Scale },
+  { id: 'Community', label: 'Community', icon: Compass },
+  { id: 'Settings', label: 'Settings', icon: SettingsIcon },
+];
+
+/** Phones get five thumb-sized destinations; Settings stays in the drawer. */
+const BOTTOM_TABS = NAV_TABS.filter((t) => t.id !== 'Settings');
+
 export default function App() {
   const {
     state,
@@ -97,12 +111,7 @@ export default function App() {
         {/* Sidebar Nav Items */}
         <nav className="flex-1 space-y-2">
           {[
-            { id: 'Dashboard', label: 'Dashboard', icon: Activity },
-            { id: 'Nutrition', label: 'Nutrition', icon: Utensils },
-            { id: 'Workouts', label: 'Workouts', icon: Dumbbell },
-            { id: 'Progress', label: 'Progress', icon: Scale },
-            { id: 'Community', label: 'Community', icon: Compass },
-            { id: 'Settings', label: 'Settings', icon: SettingsIcon },
+            ...NAV_TABS,
           ].map((item) => {
             const Icon = item.icon;
             const active = activeTab === item.id;
@@ -158,12 +167,7 @@ export default function App() {
 
             <nav className="flex-1 space-y-1.5">
               {[
-                { id: 'Dashboard', label: 'Dashboard', icon: Activity },
-                { id: 'Nutrition', label: 'Nutrition', icon: Utensils },
-                { id: 'Workouts', label: 'Workouts', icon: Dumbbell },
-                { id: 'Progress', label: 'Progress', icon: Scale },
-                { id: 'Community', label: 'Community', icon: Compass },
-                { id: 'Settings', label: 'Settings', icon: SettingsIcon },
+                ...NAV_TABS,
               ].map((item) => {
                 const Icon = item.icon;
                 const active = activeTab === item.id;
@@ -602,6 +606,44 @@ export default function App() {
             />
             <span>{todayLabel} · {saveStatusLabel}</span>
           </footer>
+
+          {/* Bottom tab bar — phones only. A left sidebar behind a hamburger
+              puts every destination two taps and a reach away; this audience is
+              phone-first, so the sections belong under the thumb. The spacer
+              below keeps content clear of the fixed bar, and the safe-area
+              inset keeps it clear of the home indicator on notched phones. */}
+          <div className="h-20 lg:hidden" aria-hidden="true" />
+
+          <nav
+            className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch justify-around border-t lg:hidden"
+            style={{
+              background: 'var(--surface-solid)',
+              borderColor: 'var(--border)',
+              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+              boxShadow: '0 -4px 20px rgba(0,0,0,0.06)',
+            }}
+          >
+            {BOTTOM_TABS.map((item) => {
+              const Icon = item.icon;
+              const active = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  aria-current={active ? 'page' : undefined}
+                  className="flex flex-1 flex-col items-center justify-center gap-1 py-2.5 transition active:scale-95"
+                  style={{ color: active ? 'var(--primary)' : 'var(--text-faint)' }}
+                >
+                  <Icon size={19} />
+                  <span className="text-[9px] font-bold tracking-wide">{item.label}</span>
+                  <span
+                    className="h-0.5 w-6 rounded-full transition"
+                    style={{ background: active ? 'var(--primary)' : 'transparent' }}
+                  />
+                </button>
+              );
+            })}
+          </nav>
 
           {/* Drawer Overlay for Profile Entry */}
           <ProfileDrawer
