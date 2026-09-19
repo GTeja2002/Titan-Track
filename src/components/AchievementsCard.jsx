@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react';
 import {
     Trophy, Flame, Droplet, Star, Shield, Award, Sparkles, CheckCircle2,
-    Lock, Zap, Share2, Target, Dumbbell, Crown, ChevronRight, X, Heart
+    Zap, Share2, Target, Dumbbell, Crown, Heart
 } from 'lucide-react';
 import { getLocalDateString, shiftDateString } from '../lib/date.js';
 import { normalizeWaterMl } from '../lib/calculations.js';
@@ -518,11 +518,17 @@ export function AchievementsCard({ state, update }) {
                     const IconComp = ach.icon || Trophy;
                     const progressPercent = Math.min(100, Math.round((ach.currentProgress / ach.targetValue) * 100));
 
+                    const isOpen = selectedAchievement && selectedAchievement.id === ach.id;
+
                     return (
                         <div
                             key={ach.id}
-                            onClick={() => setSelectedAchievement(ach)}
-                            className={`relative rounded-3xl p-5 border text-left flex flex-col justify-between space-y-3 cursor-pointer transition duration-300 group hover:-translate-y-1 shadow-sm overflow-hidden ${ach.isUnlocked
+                            onClick={() => setSelectedAchievement(isOpen ? null : ach)}
+                            aria-expanded={Boolean(isOpen)}
+                            className={`relative rounded-3xl p-5 border text-left flex flex-col justify-between space-y-3 cursor-pointer transition duration-300 group shadow-sm overflow-hidden ${isOpen
+                                ? 'col-span-2 sm:col-span-3 lg:col-span-4 ring-2 ring-amber-500/60 shadow-xl'
+                                : 'hover:-translate-y-1'
+                                } ${ach.isUnlocked
                                 ? 'bg-white dark:bg-[#1C211E] border-amber-500/30 dark:border-amber-400/30'
                                 : 'bg-[#FAF9F5]/70 dark:bg-[#161B18]/70 border-[#E7E6E0] dark:border-[#2C332E] opacity-75 hover:opacity-100'
                                 }`}
@@ -569,90 +575,75 @@ export function AchievementsCard({ state, update }) {
                                     />
                                 </div>
                             </div>
+
+                            {/* Detail, expanded in place. This used to be a
+                                full-screen modal that dimmed the whole page and
+                                moved the badge you clicked into the middle of
+                                the screen, which loses your place in the grid. */}
+                            {isOpen && (
+                                <div
+                                    className="mt-1 space-y-4 border-t border-[#EEEEEA] dark:border-[#2C332E] pt-4 animate-fade-in"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <div className="p-4 rounded-2xl bg-[#F7F7F3] dark:bg-[#222823] border border-[#E7E6E0] dark:border-[#2C332E] space-y-2">
+                                        <p className="text-xs text-[#555954] dark:text-[#B3BAB4] font-medium leading-relaxed">
+                                            {ach.desc}
+                                        </p>
+                                        <div className="text-[10px] text-amber-500 font-extrabold flex items-center gap-1 pt-1">
+                                            <Sparkles size={12} /> {ach.communityStatus}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between text-xs font-bold text-[#171817] dark:text-[#F4F5F2]">
+                                            <span>Unlock Progress</span>
+                                            <span>
+                                                {ach.currentProgress.toLocaleString()} / {ach.targetValue.toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div className="h-2.5 w-full bg-[#EEEEEA] dark:bg-[#2C332E] rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-500"
+                                                style={{ width: `${progressPercent}%` }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                                        <div>
+                                            <span className="text-[10px] text-[#858982] font-semibold block">Reward Value</span>
+                                            <span className="text-base font-black text-amber-500">+{ach.xp} XP</span>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleShareAchievement(ach)}
+                                                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+                                            >
+                                                <Share2 size={14} /> Share Achievement
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedAchievement(null)}
+                                                className="px-3 py-2.5 rounded-2xl text-xs font-bold border border-[#E7E6E0] dark:border-[#2C332E] text-[#858982] hover:text-[#171817] dark:hover:text-[#F4F5F2] transition"
+                                            >
+                                                Close
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {shareSuccessToast && (
+                                        <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 p-2 rounded-xl text-center animate-fade-in">
+                                            {shareSuccessToast}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     );
                 })}
             </div>
-
-            {/* 5. Interactive Achievement Inspector Modal */}
-            {selectedAchievement && (
-                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center animate-fade-in text-left">
-                    <div className="bg-white dark:bg-[#1C211E] border border-[#E7E6E0] dark:border-[#2C332E] rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-5 relative">
-                        <button
-                            onClick={() => setSelectedAchievement(null)}
-                            className="absolute top-4 right-4 p-2 rounded-2xl text-[#858982] hover:bg-[#F7F7F3] dark:hover:bg-[#222823] transition"
-                        >
-                            <X size={18} />
-                        </button>
-
-                        {/* Modal Top Header Graphic */}
-                        <div className="flex items-center gap-4">
-                            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg shrink-0 ${selectedAchievement.badgeBg}`}>
-                                <selectedAchievement.icon size={32} />
-                            </div>
-                            <div className="space-y-1">
-                                <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md border ${selectedAchievement.isUnlocked
-                                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                                    : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-                                    }`}>
-                                    {selectedAchievement.tier} Tier Achievement
-                                </span>
-                                <h3 className="text-lg font-black text-[#171817] dark:text-[#F4F5F2] leading-tight">
-                                    {selectedAchievement.title}
-                                </h3>
-                            </div>
-                        </div>
-
-                        {/* Achievement Description */}
-                        <div className="p-4 rounded-2xl bg-[#F7F7F3] dark:bg-[#222823] border border-[#E7E6E0] dark:border-[#2C332E] space-y-2">
-                            <p className="text-xs text-[#555954] dark:text-[#B3BAB4] font-medium leading-relaxed">
-                                {selectedAchievement.desc}
-                            </p>
-                            <div className="text-[10px] text-amber-500 font-extrabold flex items-center gap-1 pt-1">
-                                <Sparkles size={12} /> {selectedAchievement.communityStatus}
-                            </div>
-                        </div>
-
-                        {/* Progress Gauge */}
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-xs font-bold text-[#171817] dark:text-[#F4F5F2]">
-                                <span>Unlock Progress</span>
-                                <span>
-                                    {selectedAchievement.currentProgress.toLocaleString()} / {selectedAchievement.targetValue.toLocaleString()}
-                                </span>
-                            </div>
-                            <div className="h-2.5 w-full bg-[#EEEEEA] dark:bg-[#2C332E] rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-500"
-                                    style={{ width: `${Math.min(100, Math.round((selectedAchievement.currentProgress / selectedAchievement.targetValue) * 100))}%` }}
-                                />
-                            </div>
-                        </div>
-
-                        {/* XP Reward & Status Footer */}
-                        <div className="flex items-center justify-between pt-2 border-t border-[#EEEEEA] dark:border-[#2C332E]">
-                            <div>
-                                <span className="text-[10px] text-[#858982] font-semibold block">Reward Value</span>
-                                <span className="text-base font-black text-amber-500">+{selectedAchievement.xp} XP</span>
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={() => handleShareAchievement(selectedAchievement)}
-                                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
-                            >
-                                <Share2 size={14} /> Share Achievement
-                            </button>
-                        </div>
-
-                        {shareSuccessToast && (
-                            <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 p-2 rounded-xl text-center animate-fade-in">
-                                {shareSuccessToast}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
         </section>
     );
 }
