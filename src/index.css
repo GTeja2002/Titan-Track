@@ -24,9 +24,11 @@
   --color-primary-pressed: #0D3A30;
   --color-primary-soft: #EBF5F2;
 
-  --color-bg: #FAF9F5;
-  --color-bg-secondary: #F3F1E8;
-  --color-bg-hero: #EEEDE4;
+  /* Cool, light page field, matching the design: white cards read as raised
+     against it, where the previous warm cream made them disappear. */
+  --color-bg: #F4F7FA;
+  --color-bg-secondary: #EDF1F6;
+  --color-bg-hero: #E8EEF5;
   --color-surface: #FFFFFF;
   --color-surface-elevated: #FFFFFF;
 
@@ -1127,4 +1129,120 @@ body.dark[data-accent='rose'] {
   --color-primary-pressed: #A8446A;
   --color-primary-soft: #1B1114;
   --primary-glow: rgba(155, 59, 96, 0.3);
+}
+
+/* ================================================================
+ * Sidebar rail
+ *
+ * A dark green rail against the light app body, with the leaf artwork
+ * anchored at its foot. The rail carries its own colour tokens because it is
+ * always dark — it does not follow the light/dark theme the way cards do.
+ * ================================================================ */
+:root {
+  --rail-top: #123A2C;
+  --rail-bottom: #0A2018;
+  --rail-accent: #1A5C4E;
+  --rail-active: #1F7A5C;
+  --rail-muted: #9DBDB0;
+  --rail-gold: #F2C744;
+  --rail-avatar: #1F7A5C;
+}
+
+.sidebar-rail {
+  background: linear-gradient(175deg, var(--rail-top) 0%, var(--rail-bottom) 100%);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.sidebar-leaf {
+  position: absolute;
+  left: -10%;
+  /* Sat flush to the foot of the rail before, where the nav and the profile
+     row covered most of it. Lifted so the leaves clear the lower content and
+     actually read. */
+  bottom: 9%;
+  width: 138%;
+  max-width: none;
+  opacity: 0.72;
+  z-index: 0;
+  /* Still dimmed toward the rail's own green so it stays decoration rather
+     than competing with the nav, but far less than before. */
+  filter: saturate(0.95) brightness(0.92);
+}
+
+.rail-link {
+  color: var(--rail-muted);
+}
+
+.rail-link:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.rail-link-active,
+.rail-link-active:hover {
+  color: #fff;
+  background: linear-gradient(100deg, var(--rail-active) 0%, #18654C 100%);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+}
+
+.rail-premium {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.rail-premium:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* The rail is dark in both themes, so its scrollbar follows it, not the page. */
+.sidebar-rail .drawer-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* ---- Metric card trim -------------------------------------------------
+ * The tinted cards need a border and a bar track in their own hue, plus a
+ * glow for the icon disc. Derived per metric so a card never hardcodes a
+ * colour, and redefined in dark mode where a pale tint would glare.
+ */
+:root {
+  --m-calories-edge: #F6DCC9;
+  --m-protein-edge: #E2D6F0;
+  --m-water-edge: #CFE3F5;
+  --m-steps-edge: #EDE0BE;
+
+  --m-calories-track: #F7E3D6;
+  --m-protein-track: #E7DCF3;
+  --m-water-track: #DCEAF8;
+  --m-steps-track: #F0E6CC;
+
+  --m-calories-glow: rgba(217, 116, 63, 0.30);
+  --m-protein-glow: rgba(124, 92, 168, 0.30);
+  --m-water-glow: rgba(62, 142, 204, 0.30);
+  --m-steps-glow: rgba(196, 155, 69, 0.30);
+}
+
+body.dark {
+  --m-calories-edge: #35241A;
+  --m-protein-edge: #2A2136;
+  --m-water-edge: #1B2C3A;
+  --m-steps-edge: #332B18;
+
+  --m-calories-track: #2C1D14;
+  --m-protein-track: #221B2D;
+  --m-water-track: #16232E;
+  --m-steps-track: #2B2414;
+
+  --m-calories-glow: rgba(232, 144, 92, 0.28);
+  --m-protein-glow: rgba(158, 127, 201, 0.28);
+  --m-water-glow: rgba(94, 168, 222, 0.28);
+  --m-steps-glow: rgba(217, 177, 92, 0.28);
+}
+
+.metric-card {
+  box-shadow: 0 2px 10px rgba(20, 35, 50, 0.05);
+}
+
+.metric-card:hover {
+  box-shadow: 0 14px 30px rgba(20, 35, 50, 0.10);
 }

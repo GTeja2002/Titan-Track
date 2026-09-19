@@ -4,7 +4,7 @@ import {
   Moon, Sun, Check, Activity, Scale, Dumbbell, User, LogOut,
   Bell, Heart, MessageSquare, Share2, Compass, Settings as SettingsIcon,
   ChevronRight, Calendar, Sparkles, HelpCircle, Utensils, Search,
-  Menu, X
+  Menu, X, Crown, Home, BarChart3, Users
 } from 'lucide-react';
 import { useAppState } from './lib/useAppState.js';
 import { supabase } from './lib/supabaseClient.js';
@@ -29,11 +29,11 @@ import { getLocalDateString } from './lib/date.js';
 /** The one definition of the app's sections. The sidebar, the mobile drawer
  *  and the bottom tab bar all read from this. */
 const NAV_TABS = [
-  { id: 'Dashboard', label: 'Dashboard', icon: Activity },
+  { id: 'Dashboard', label: 'Dashboard', icon: Home },
   { id: 'Nutrition', label: 'Nutrition', icon: Utensils },
   { id: 'Workouts', label: 'Workouts', icon: Dumbbell },
-  { id: 'Progress', label: 'Progress', icon: Scale },
-  { id: 'Community', label: 'Community', icon: Compass },
+  { id: 'Progress', label: 'Progress', icon: BarChart3 },
+  { id: 'Community', label: 'Community', icon: Users },
   { id: 'Settings', label: 'Settings', icon: SettingsIcon },
 ];
 
@@ -100,50 +100,78 @@ export default function App() {
     <div className="min-h-screen flex text-[var(--text)] transition-all duration-300" style={{ background: 'var(--bg)' }}>
 
       {/* 1. PERSISTENT SIDEBAR FOR DESKTOP */}
-      <aside className="hidden lg:flex flex-col fixed top-0 bottom-0 left-0 w-64 glass border-r z-50 p-6 flex-shrink-0 animate-fade-in" style={{ borderColor: 'var(--border)' }}>
-        {/* Brand logo lockup */}
-        <div className="flex items-center gap-2.5 mb-10 cursor-pointer" onClick={() => setActiveTab('Dashboard')}>
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: 'var(--grad-primary-cta)', boxShadow: '0 4px 14px var(--primary-glow)' }}>
-            <Activity size={18} color="#fff" />
-          </div>
-          <span className="text-sm font-bold uppercase tracking-[0.25em]" style={{ color: 'var(--primary)' }}>TitanTrack</span>
-        </div>
+      <aside className="sidebar-rail hidden lg:flex flex-col fixed top-0 bottom-0 left-0 w-[268px] z-50 flex-shrink-0 animate-fade-in">
+        {/* Leaf artwork anchored to the foot of the rail. aria-hidden and
+            pointer-events-none: it is decoration, not content. */}
+        <img
+          src="/assets/decor/leaf.png"
+          alt=""
+          aria-hidden="true"
+          className="sidebar-leaf pointer-events-none select-none"
+        />
 
-        {/* Sidebar Nav Items */}
-        <nav className="flex-1 space-y-2 overflow-y-auto drawer-scroll">
-          {[
-            ...NAV_TABS,
-          ].map((item) => {
-            const Icon = item.icon;
-            const active = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition duration-150 border text-left ${active
-                  ? 'bg-primary-soft text-primary border-primary/25 shadow-sm'
-                  : 'text-[var(--text-dim)] border-transparent hover:text-[var(--text)] hover:bg-white/5'
-                  }`}
-              >
-                <Icon size={16} className={active ? 'text-primary' : 'text-[var(--text-faint)]'} />
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
+        <div className="relative z-10 flex h-full flex-col px-5 pt-7 pb-6">
+          {/* Brand lockup */}
+          <div className="mb-9 flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('Dashboard')}>
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-lg shrink-0">
+              <Activity size={22} style={{ color: 'var(--rail-accent)' }} />
+            </div>
+            <div className="leading-tight">
+              <div className="text-[17px] font-black tracking-[0.06em] text-white">TITANTRACK</div>
+              <div className="text-[10px] font-semibold mt-0.5" style={{ color: 'var(--rail-muted)' }}>
+                Better Food &middot; Healthier You
+              </div>
+            </div>
+          </div>
 
-        {/* Bottom Profile Info Badge */}
-        <div
-          onClick={() => setIsProfileOpen(true)}
-          className="mt-auto flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 cursor-pointer transition active:scale-95 text-left"
-        >
-          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-xs font-black text-white shrink-0">
-            {username.charAt(0).toUpperCase()}
-          </div>
-          <div className="overflow-hidden">
-            <p className="text-xs font-black truncate text-[var(--text)]">{username}</p>
-            <p className="text-[8px] font-bold text-primary tracking-wider uppercase mt-0.5">Premium</p>
-          </div>
+          {/* Nav */}
+          <nav className="flex-1 space-y-1.5 overflow-y-auto drawer-scroll -mx-1 px-1">
+            {NAV_TABS.map((item) => {
+              const Icon = item.icon;
+              const active = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  aria-current={active ? 'page' : undefined}
+                  className={`rail-link w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-[15px] font-bold text-left transition duration-150 ${active ? 'rail-link-active' : ''}`}
+                >
+                  <Icon size={20} strokeWidth={active ? 2.4 : 2} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* Premium card */}
+          <button
+            type="button"
+            onClick={() => setIsProfileOpen(true)}
+            className="rail-premium mt-5 w-full flex items-center gap-3 rounded-2xl px-4 py-3.5 text-left transition active:scale-[0.98]"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-full shrink-0" style={{ background: 'var(--rail-gold)' }}>
+              <Crown size={17} color="#3B2A06" />
+            </span>
+            <span className="flex-1 text-[15px] font-bold text-white">Premium</span>
+            <ChevronRight size={18} style={{ color: 'var(--rail-muted)' }} />
+          </button>
+
+          {/* Signed-in identity */}
+          <button
+            type="button"
+            onClick={() => setIsProfileOpen(true)}
+            className="mt-3 flex w-full items-center gap-3 rounded-2xl px-1.5 py-2 text-left transition hover:bg-white/5 active:scale-[0.98]"
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-black text-white shrink-0" style={{ background: 'var(--rail-avatar)' }}>
+              {username.charAt(0).toUpperCase()}
+            </span>
+            <span className="overflow-hidden">
+              <span className="block truncate text-[13px] font-bold text-white">{username}</span>
+              <span className="block text-[10px] font-bold tracking-[0.12em] uppercase mt-0.5" style={{ color: 'var(--rail-gold)' }}>
+                Premium
+              </span>
+            </span>
+          </button>
         </div>
       </aside>
 
@@ -205,7 +233,7 @@ export default function App() {
       )}
 
       {/* 3. MAIN CONTENT LAYER */}
-      <div className="flex-1 lg:pl-64 flex flex-col min-h-screen transition-all duration-300">
+      <div className="flex-1 lg:pl-[268px] flex flex-col min-h-screen transition-all duration-300">
         <div className="p-4 sm:p-6 lg:p-8 flex-1 flex flex-col w-full mx-auto">
 
           {/* SIMPLIFIED TOP HEADER */}
