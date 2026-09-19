@@ -1,7 +1,9 @@
 # TitanTrack
 
-A weight-loss / body-composition tracker: goal progress, food + activity logging, a
-diagnostics dashboard, and a real photo-based body composition viewer.
+A food, activity and wellbeing tracker. Goals can be about the scale or not —
+the default is consistency, not weight loss — with one-tap food logging,
+streaks that forgive a missed day, a daily mood/sleep/energy check-in, and an
+optional body-composition view for people who want it.
 
 This is the production build — a proper Vite + React project (real bundling,
 tree-shaking, minification), split into modules, with secrets pulled from
@@ -29,6 +31,14 @@ src/
     supabaseClient.js         # Supabase client + push/pull helpers
     auth.js                   # Google JWT decode helper
     date.js                   # local-calendar date helpers (never use toISOString for dates)
+    storage.js                # safe localStorage access (never throws)
+    goals.js                  # goal definitions + age-appropriate safety rules
+    streak.js                 # streak counting with rest days and freezes
+    portions.js               # household portions, so logging isn't done in grams
+    recentFoods.js            # your own rotation, derived from log history
+    cycle.js                  # optional menstrual cycle phase
+    accents.js                # accent themes
+    backup.js                 # JSON export / import
     calculations.js           # pure functions: BMI, BMR, TDEE, body-fat, projections, food DB
     wellness.js               # wellness/activity scoring
     wellnessContent.js        # static recipe + tip content
@@ -40,6 +50,8 @@ src/
     Dashboard.jsx             # the main dashboard shell
     GoalCard.jsx, EnergyCard.jsx, FoodLogCard.jsx, TrendCard.jsx, ActivityCard.jsx
     WaterTrackerCard.jsx, AchievementsCard.jsx, PersonalizedPlanCard.jsx
+    ConsistencyCard.jsx       # streak headline for goals that aren't about weight
+    WellbeingCard.jsx         # daily mood / sleep / energy, and cycle
     CalendarModal.jsx, BodyCompositionDashboard.jsx, HealthWellnessInsights.jsx
     ProfileDrawer.jsx, UserDirectoryModal.jsx
     shared/  (GoogleLogo, MacroBar)
@@ -50,6 +62,13 @@ public/
 
 Tests live next to the code they cover (`src/lib/*.test.js`) and run with
 `npm test`.
+
+## Installing on a phone
+
+The app ships a web manifest and a service worker, so it installs to a home
+screen and keeps working offline — all the data was already local. Open it in
+a mobile browser and choose "Add to Home Screen". The service worker is
+network-first for navigations, so a deploy is picked up on the next load.
 
 ## Setting up cloud sync (Supabase)
 
@@ -143,6 +162,16 @@ Remember: `VITE_*` values are inlined into the JS bundle at build time, so
 they're set as build-time environment variables on whichever platform you
 use — not read at runtime, and not something you can change without a
 rebuild.
+
+## Backing up your data
+
+Everything lives in this browser's localStorage unless you set up cloud sync
+below, so clearing site data or changing device loses it. Profile → **Export
+backup** writes your whole profile and log history to a JSON file; **Restore**
+reads one back. Restore validates the file first, tells you how much history
+it is about to bring back, and asks before replacing what's there. Your
+signed-in email is never written to the file and is preserved on restore, so a
+backup can't move data onto a different account.
 
 ## Security notes (read before treating this as more than a personal tool)
 
