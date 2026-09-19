@@ -1,8 +1,9 @@
 /* ---------------- lib/useAppState.js ---------------- */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCalories } from './calculations.js';
+import { calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCaloriesForAge } from './calculations.js';
 import { pushStateToSupabase, pullStateFromSupabase } from './supabaseClient.js';
 import { getLocalDateString } from './date.js';
+import { DEFAULT_GOAL } from './goals.js';
 import { readLocal, readLocalJSON, writeLocal, removeLocal } from './storage.js';
 import { recordUserLogin, updateUserDirectoryRecord } from './userLogger.js';
 
@@ -12,17 +13,34 @@ export const defaultState = {
   calorieTarget: 2302,
   logs: {},
   currentDate: getLocalDateString(),
-  gender: 'male',
-  age: 42,
-  height: 175,
-  weight: 97.5,
-  goalWeight: 90,
-  startWeight: 96,
-  goal: 'lose-fat',
+  // Neutral defaults. These used to describe a 42-year-old man at 97.5kg
+  // trying to lose weight, which made that the implicit persona of the whole
+  // app before the user had said anything about themselves.
+  gender: '',
+  age: null,
+  height: null,
+  weight: null,
+  goalWeight: null,
+  startWeight: null,
+  goal: DEFAULT_GOAL,
   activityLevel: 'Moderate',
   overrideBodyFat: false,
   manualBodyFat: 18,
   currentView: 'Front',
+  // Weight is opt-in. A non-scale goal should not put a weight number and a
+  // "% to goal" ring at the centre of the app.
+  trackWeight: false,
+  // The body-fat silhouette gallery is opt-in and off by default: it is the
+  // highest-risk surface in the app for a young audience.
+  showBodyComposition: false,
+  // Wellbeing tracking (sleep, mood, energy) and cycle tracking, both opt-in.
+  trackWellbeing: true,
+  cycle: { enabled: false, lastPeriodStart: null, avgCycleLength: 28, avgPeriodLength: 5 },
+  // Streak forgiveness: planned rest days, plus freezes that absorb a miss.
+  restDays: [0],            // 0 = Sunday
+  streakFreezes: 2,
+  streakFreezesUsedOn: [],
+  accent: 'evergreen',
   // User's available foods list (defaults to empty array - user populates)
   availableFoods: [],
   // Applied filters for Personalized Plan
@@ -305,7 +323,10 @@ export function useAppState() {
       const bmr = calculateBMR(next.gender, next.age, next.weight, next.height);
       const tdee = calculateTDEE(bmr, next.activityLevel);
       const days = getRemainingDays(next.currentDate, next.goalTargetDate);
-      next.calorieTarget = calculateDailyCalories(next.goal, tdee, next.weight, next.goalWeight, days);
+      // Age-safe: an under-18 never receives a deficit target.
+      next.calorieTarget = calculateDailyCaloriesForAge(
+        next.age, next.goal, tdee, next.weight, next.goalWeight, days
+      );
 
       updateUserDirectoryRecord(next.email, {
         name: next.name,

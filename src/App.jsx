@@ -11,6 +11,8 @@ import { supabase } from './lib/supabaseClient.js';
 import { LoginScreen } from './components/LoginScreen.jsx';
 import { OnboardingScreen } from './components/OnboardingScreen.jsx';
 import { GoalCard } from './components/GoalCard.jsx';
+import { ConsistencyCard } from './components/ConsistencyCard.jsx';
+import { isScaleGoal } from './lib/goals.js';
 import { EnergyCard } from './components/EnergyCard.jsx';
 import { FoodLogCard } from './components/FoodLogCard.jsx';
 import { TrendCard } from './components/TrendCard.jsx';
@@ -277,7 +279,12 @@ export default function App() {
               <div className="space-y-6 animate-scale-in">
                 <div className="grid grid-cols-12 gap-5">
                   <div className="col-span-12 lg:col-span-5 flex flex-col gap-5">
-                    <GoalCard state={state} update={update} />
+                    {/* A "% to goal weight" ring is meaningless for a goal
+                        that is not about the scale, so those goals get a
+                        consistency streak as their headline instead. */}
+                    {isScaleGoal(state.goal) || state.trackWeight
+                      ? <GoalCard state={state} update={update} />
+                      : <ConsistencyCard state={state} />}
                     <EnergyCard state={state} />
                   </div>
                   <div className="col-span-12 lg:col-span-7">
@@ -320,7 +327,34 @@ export default function App() {
             {/* TAB 4: PROGRESS */}
             {activeTab === 'Progress' && (
               <div className="space-y-6 animate-scale-in">
-                <BodyCompositionDashboard state={state} update={update} />
+                {/* The body-fat silhouette viewer is opt-in. Showing a gallery
+                    of bodies by fat percentage to someone who did not ask for
+                    it is the most harmful thing this app could do by default,
+                    and this audience skews young. */}
+                {state.showBodyComposition ? (
+                  <BodyCompositionDashboard state={state} update={update} />
+                ) : (
+                  <div
+                    className="rounded-3xl border p-6 text-left"
+                    style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+                  >
+                    <h3 className="text-sm font-black" style={{ color: 'var(--text)' }}>
+                      Body composition is off
+                    </h3>
+                    <p className="mt-1.5 max-w-xl text-xs" style={{ color: 'var(--text-dim)' }}>
+                      Body-fat estimates and the body reference photos are hidden unless you
+                      ask for them. Your streaks, food log, activity and wellbeing all work
+                      without this.
+                    </p>
+                    <button
+                      onClick={() => update((prev) => ({ ...prev, showBodyComposition: true }))}
+                      className="mt-3 rounded-xl px-3.5 py-2 text-xs font-bold text-white transition hover:scale-105 active:scale-95"
+                      style={{ background: 'var(--primary)' }}
+                    >
+                      Turn on body composition
+                    </button>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <TrendCard state={state} />
                   <HealthWellnessInsights state={state} update={update} />

@@ -6,6 +6,34 @@ import { calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCalories }
 import { getLocalDateString } from '../lib/date.js';
 import { UserDirectoryModal } from './UserDirectoryModal.jsx';
 import { createEmptyLog } from '../lib/useAppState.js';
+import { goalsForAge } from '../lib/goals.js';
+
+/** A labelled on/off row. Used for the display and privacy switches, which
+ *  are the controls that decide how much of this app is about your body. */
+function ToggleRow({ label, hint, checked, onChange }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className="flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition"
+      style={{ background: 'var(--surface)', borderColor: checked ? 'var(--primary)' : 'var(--border)' }}
+    >
+      <span className="flex flex-col">
+        <span className="text-xs font-bold" style={{ color: 'var(--text)' }}>{label}</span>
+        {hint && <span className="mt-0.5 text-[10px]" style={{ color: 'var(--text-dim)' }}>{hint}</span>}
+      </span>
+      <span
+        className="relative h-5 w-9 shrink-0 rounded-full transition"
+        style={{ background: checked ? 'var(--primary)' : 'var(--border-strong)' }}
+      >
+        <span
+          className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all"
+          style={{ left: checked ? 18 : 2 }}
+        />
+      </span>
+    </button>
+  );
+}
 
 export function ProfileDrawer({ state, update, isOpen, onClose }) {
   const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);
@@ -160,31 +188,52 @@ export function ProfileDrawer({ state, update, isOpen, onClose }) {
                     </div>
                   </div>
 
-                  {/* Fitness Goal selection */}
+                  {/* Goal — the list is age-filtered, so weight-loss goals
+                      are simply not offered to under-18s. */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Fitness Goal</label>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Goal</label>
                     <div className="chip-grid">
-                      <button
-                        type="button"
-                        className={`chip-card ${state.goal === 'lose-fat' ? 'active' : ''}`}
-                        onClick={() => handleFieldChange('goal', 'lose-fat')}
-                      >
-                        Lose Fat
-                      </button>
-                      <button
-                        type="button"
-                        className={`chip-card ${state.goal === 'maintain' ? 'active' : ''}`}
-                        onClick={() => handleFieldChange('goal', 'maintain')}
-                      >
-                        Maintain
-                      </button>
-                      <button
-                        type="button"
-                        className={`chip-card ${state.goal === 'gain-muscle' ? 'active' : ''}`}
-                        onClick={() => handleFieldChange('goal', 'gain-muscle')}
-                      >
-                        Gain Muscle
-                      </button>
+                      {goalsForAge(state.age).map((g) => (
+                        <button
+                          key={g.id}
+                          type="button"
+                          className={`chip-card ${state.goal === g.id ? 'active' : ''}`}
+                          onClick={() => handleFieldChange('goal', g.id)}
+                        >
+                          {g.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* What the app is allowed to show about your body. */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Privacy &amp; display</label>
+                    <div className="flex flex-col gap-1.5">
+                      <ToggleRow
+                        label="Track weight"
+                        hint="Show weight, goal weight and the trend chart."
+                        checked={Boolean(state.trackWeight)}
+                        onChange={(v) => handleFieldChange('trackWeight', v)}
+                      />
+                      <ToggleRow
+                        label="Body composition"
+                        hint="Body-fat estimates and the body reference photos."
+                        checked={Boolean(state.showBodyComposition)}
+                        onChange={(v) => handleFieldChange('showBodyComposition', v)}
+                      />
+                      <ToggleRow
+                        label="Wellbeing check-in"
+                        hint="Daily sleep, mood and energy."
+                        checked={state.trackWellbeing !== false}
+                        onChange={(v) => handleFieldChange('trackWellbeing', v)}
+                      />
+                      <ToggleRow
+                        label="Cycle tracking"
+                        hint="Period and cycle phase alongside your logs."
+                        checked={Boolean(state.cycle?.enabled)}
+                        onChange={(v) => handleFieldChange('cycle', { ...(state.cycle || {}), enabled: v })}
+                      />
                     </div>
                   </div>
 

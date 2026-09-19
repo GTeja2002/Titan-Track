@@ -3,6 +3,7 @@
  * console usage none), safe to unit test in isolation.
  */
 import { getLocalDateString, shiftDateString } from './date.js';
+import { getGoal, allowsDeficit } from './goals.js';
 
 export function calculateBMI(weightKg, heightCm) {
   if (!Number.isFinite(weightKg) || !Number.isFinite(heightCm) || weightKg <= 0 || heightCm <= 0) return 0;
@@ -32,10 +33,13 @@ export function calculateFatMass(weightKg, bodyFatRatio) {
 
 export function calculateBMR(gender, age, weightKg, heightCm) {
   if (!Number.isFinite(age) || !Number.isFinite(weightKg) || !Number.isFinite(heightCm)) return 0;
-  if (gender === 'female') {
-    return Math.round(10 * weightKg + 6.25 * heightCm - 5 * age - 161);
-  }
-  return Math.round(10 * weightKg + 6.25 * heightCm - 5 * age + 5);
+  const base = 10 * weightKg + 6.25 * heightCm - 5 * age;
+  // Mifflin-St Jeor's sex constants are +5 and -161. Someone who would rather
+  // not state a sex gets the midpoint rather than being silently counted as
+  // male, which is what an unrecognised value used to do.
+  if (gender === 'female') return Math.round(base - 161);
+  if (gender === 'male') return Math.round(base + 5);
+  return Math.round(base - 78);
 }
 
 export function calculateTDEE(bmr, activityLevel) {
@@ -85,10 +89,24 @@ export function calculateDailyCalories(goal, tdee, weight = 70, goalWeight = 70,
     return Math.max(1200, Math.round(tdee - deficit));
   }
 
-  // Goal weight ≈ current weight: fall back to the declared goal's default nudge.
-  if (goal === 'lose-fat') return Math.max(1200, Math.round(tdee - 300));
-  if (goal === 'gain-muscle') return Math.round(tdee + 250);
+  // Goal weight ≈ current weight, or a non-scale goal: use the goal's own
+  // energy stance rather than assuming a deficit.
+  const energy = getGoal(goal).energy;
+  if (energy === 'deficit') return Math.max(1200, Math.round(tdee - 300));
+  if (energy === 'surplus') return Math.round(tdee + 250);
+  if (energy === 'slight-surplus') return Math.round(tdee + 150);
   return Math.round(tdee);
+}
+
+/** calculateDailyCalories, with the under-18 rule applied.
+ *
+ * Growing bodies should not be handed an adult weight-loss deficit, so for a
+ * minor the target never drops below maintenance. This wraps rather than
+ * replaces the pure function so the underlying maths stays easy to test. */
+export function calculateDailyCaloriesForAge(age, goal, tdee, weight, goalWeight, days) {
+  const target = calculateDailyCalories(goal, tdee, weight, goalWeight, days);
+  if (!allowsDeficit(age)) return Math.max(target, Math.round(tdee));
+  return target;
 }
 
 /**
