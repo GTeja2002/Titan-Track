@@ -1,9 +1,12 @@
 /* ---------------- components/FoodLogCard.jsx ---------------- */
 
 import { useState, useMemo } from 'react';
-import { Plus, X, Search, Utensils } from 'lucide-react';
+import { Plus, X, Search, Utensils, RotateCcw, History } from 'lucide-react';
 import { FOOD_DB, QUICK_CHIPS, findFood, calcCal, calcMacros, calculateProteinTarget } from '../lib/calculations.js';
 import { MacroBar } from './shared/MacroBar.jsx';
+import { portionsFor } from '../lib/portions.js';
+import { frequentFoods, yesterdaysFoods } from '../lib/recentFoods.js';
+import { createEmptyLog } from '../lib/useAppState.js';
 
 export function FoodLogCard({ state, update }) {
   const [name, setName] = useState('');
@@ -27,7 +30,7 @@ export function FoodLogCard({ state, update }) {
       : `${matched.calPer100} kcal per 100${matched.unit} — calories auto-fill.`
     : name
       ? `"${name}" isn't in the database — enter calories manually.`
-      : 'Search 30+ foods, tap a quick chip, or type anything and enter calories yourself.';
+      : 'Tap something you eat often, search, or type anything and enter calories yourself.';
 
   const onQtyChange = (val) => {
     setQty(val);
@@ -76,6 +79,37 @@ export function FoodLogCard({ state, update }) {
 
   const log = state.logs[state.currentDate];
   const foods = log?.foods ?? [];
+
+  // One-tap repeats. Most people eat the same things on rotation, so the
+  // fastest log is the one that already knows what you eat.
+  const frequents = useMemo(
+    () => frequentFoods(state.logs, state.currentDate, 6),
+    [state.logs, state.currentDate]
+  );
+  const yesterday = useMemo(
+    () => yesterdaysFoods(state.logs, state.currentDate),
+    [state.logs, state.currentDate]
+  );
+
+  const logAgain = (item) => pushFood({ ...item });
+
+  const repeatYesterday = () => {
+    if (yesterday.length === 0) return;
+    update((prev) => {
+      const day = prev.logs[prev.currentDate] || createEmptyLog();
+      return {
+        ...prev,
+        logs: {
+          ...prev.logs,
+          [prev.currentDate]: { ...day, foods: [...(day.foods || []), ...yesterday.map((f) => ({ ...f }))] },
+        },
+      };
+    });
+  };
+
+  // Portion presets for whatever is currently matched, so a quantity is a tap
+  // rather than a guess in grams.
+  const portions = portionsFor(matched);
   const totalCal = foods.reduce((s, f) => s + (f.cal || 0), 0);
   const activeWeight = (log?.weight > 0) ? log.weight : (state.weight ?? 70);
   const totalProtein = Number(foods.reduce((s, f) => s + (f.protein || 0), 0).toFixed(1));
@@ -111,6 +145,38 @@ export function FoodLogCard({ state, update }) {
           <MacroBar label="Carbs" value={totalCarbs} target={carbsTarget} color="var(--accent)" />
           <MacroBar label="Fat" value={totalFat} target={fatTarget} color="var(--danger)" />
           <MacroBar label="Fiber" value={totalFiber} target={fiberTarget} color="var(--primary)" />
+        </div>
+      )}
+
+      {/* Your own rotation first, then the generic chips. Logging what you
+          already eat should not require typing it again. */}
+      {(frequents.length > 0 || yesterday.length > 0) && (
+        <div className="mb-2.5 flex flex-wrap items-center gap-1.5">
+          <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-faint)' }}>
+            <History size={11} /> Yours
+          </span>
+          {yesterday.length > 0 && (
+            <button
+              onClick={repeatYesterday}
+              className="flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-bold transition hover:scale-105 active:scale-95"
+              style={{ background: 'var(--primary-soft)', borderColor: 'var(--primary)', color: 'var(--primary)' }}
+              title={yesterday.map((f) => f.name).join(', ')}
+            >
+              <RotateCcw size={11} />
+              Repeat yesterday ({yesterday.length})
+            </button>
+          )}
+          {frequents.map((f, i) => (
+            <button
+              key={`${f.name}-${f.qty}-${i}`}
+              onClick={() => logAgain(f)}
+              className="rounded-full border px-2.5 py-1 text-[11px] font-medium transition hover:scale-105 active:scale-95"
+              style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-dim)' }}
+              title={`Logged ${f.timesLogged}x in the last 30 days`}
+            >
+              + {f.name}{f.qty ? ` · ${f.qty}${f.unit === 'piece' ? 'pc' : f.unit || ''}` : ''}
+            </button>
+          ))}
         </div>
       )}
 
@@ -245,6 +311,34 @@ export function FoodLogCard({ state, update }) {
           <Plus size={18} />
         </button>
       </div>
+      {/* Portion presets. Asking for a quantity in grams before anything can
+          be logged is the main reason food tracking gets abandoned — almost
+          nobody knows what 150g of poha looks like. One tap instead. */}
+      {matched && portions.length > 0 && (
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-faint)' }}>
+            How much?
+          </span>
+          {portions.map((p) => {
+            const active = parseFloat(qty) === p.qty;
+            return (
+              <button
+                key={p.label}
+                onClick={() => onQtyChange(String(p.qty))}
+                className="rounded-full border px-2.5 py-1 text-[11px] font-bold transition hover:scale-105 active:scale-95"
+                style={{
+                  background: active ? 'var(--primary)' : 'var(--surface)',
+                  borderColor: active ? 'var(--primary)' : 'var(--border)',
+                  color: active ? '#fff' : 'var(--text-dim)',
+                }}
+              >
+                {p.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <p className="mt-2 mb-4 text-xs" style={{ color: matched ? 'var(--primary)' : 'var(--text-faint)' }}>{hint}</p>
 
       <div className="flex flex-1 flex-col gap-1.5 overflow-y-auto" style={{ maxHeight: 240 }}>
