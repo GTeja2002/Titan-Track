@@ -3,6 +3,7 @@
 import { Activity, Scale, Flame, Dumbbell, Footprints, RotateCcw } from 'lucide-react';
 import { calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCalories, calculateWalkCalories } from '../lib/calculations.js';
 import { getLocalDateString } from '../lib/date.js';
+import { createEmptyLog } from '../lib/useAppState.js';
 
 export function ActivityCard({ state, update }) {
   const log = state.logs[state.currentDate];
@@ -11,7 +12,7 @@ export function ActivityCard({ state, update }) {
     const val = value === '' ? '' : (parseFloat(value) || 0);
     update((prev) => {
       const date = prev.currentDate;
-      const currentLog = prev.logs[date] || { foods: [], walk: 0, gym: 0, weight: 0 };
+      const currentLog = prev.logs[date] || createEmptyLog();
       const updatedLog = { ...currentLog, [field]: val };
       const next = { ...prev, logs: { ...prev.logs, [date]: updatedLog } };
 

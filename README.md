@@ -1,7 +1,7 @@
 # TitanTrack
 
 A weight-loss / body-composition tracker: goal progress, food + activity logging, a
-ClyHealth-style diagnostics dashboard, and a real photo-based body composition viewer.
+diagnostics dashboard, and a real photo-based body composition viewer.
 
 This is the production build — a proper Vite + React project (real bundling,
 tree-shaking, minification), split into modules, with secrets pulled from
@@ -25,20 +25,31 @@ gradient instead of a broken video.
 ```
 src/
   lib/
-    config.js          # reads all env vars — the only place secrets are referenced
-    supabaseClient.js   # Supabase client + push/pull helpers
-    auth.js              # Google JWT decode helper
-    calculations.js      # pure functions: BMI, BMR, TDEE, body-fat, projections, food DB
-    useAppState.js       # the app's single state hook (localStorage + Supabase sync)
+    config.js                 # reads all env vars — the only place secrets are referenced
+    supabaseClient.js         # Supabase client + push/pull helpers
+    auth.js                   # Google JWT decode helper
+    date.js                   # local-calendar date helpers (never use toISOString for dates)
+    calculations.js           # pure functions: BMI, BMR, TDEE, body-fat, projections, food DB
+    wellness.js               # wellness/activity scoring
+    wellnessContent.js        # static recipe + tip content
+    personalizedPlanEngine.js # builds the personalized meal/workout plan
+    userLogger.js             # local user directory + login audit log
+    useAppState.js            # the app's single state hook (localStorage + Supabase sync)
   components/
     LoginScreen.jsx, OnboardingScreen.jsx
+    Dashboard.jsx             # the main dashboard shell
     GoalCard.jsx, EnergyCard.jsx, FoodLogCard.jsx, TrendCard.jsx, ActivityCard.jsx
-    CalendarModal.jsx, BodyCompositionDashboard.jsx, ClyHealthDashboard.jsx, ProfileDrawer.jsx
-    shared/  (MetricStatusTag, GoogleLogo, MacroBar)
+    WaterTrackerCard.jsx, AchievementsCard.jsx, PersonalizedPlanCard.jsx
+    CalendarModal.jsx, BodyCompositionDashboard.jsx, HealthWellnessInsights.jsx
+    ProfileDrawer.jsx, UserDirectoryModal.jsx
+    shared/  (GoogleLogo, MacroBar)
   App.jsx, main.jsx, index.css
 public/
   assets/    # body reference photos, login video, onboarding background
 ```
+
+Tests live next to the code they cover (`src/lib/*.test.js`) and run with
+`npm test`.
 
 ## Setting up cloud sync (Supabase)
 
@@ -148,3 +159,9 @@ rebuild.
   verification (see `src/lib/auth.js`) — sufficient to read an email for this
   app's purposes, not sufficient as a real trust boundary. A real backend
   would verify the JWT signature server-side.
+- The email/phone login shows a **six-digit code that is generated and checked
+  entirely in the browser** (see `src/components/LoginScreen.jsx`) and is
+  displayed on screen. Nothing is sent to an email address or phone number, so
+  it confirms nothing about who is signing in — it's a demo of the flow, not
+  verification. Real verification needs a backend that sends the code out of
+  band and checks it server-side.

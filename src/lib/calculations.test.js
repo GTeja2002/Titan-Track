@@ -9,6 +9,8 @@ import {
     getRemainingDays,
     calculateDailyCalories,
     calculateWalkCalories,
+    normalizeWaterMl,
+    DEFAULT_GOAL_HORIZON_DAYS,
     simulateWeightProjection,
     calculateIdealWeight,
     getBMICategory,
@@ -183,5 +185,41 @@ describe('calculations.js unit tests', () => {
             expect(summary.title).toBe('Healthy BMI');
             expect(summary.recommendations).toContain('Maintain active life');
         });
+    });
+});
+
+describe('normalizeWaterMl', () => {
+    it('treats a small number as a legacy count of 250ml glasses', () => {
+        expect(normalizeWaterMl(8)).toBe(2000);
+        expect(normalizeWaterMl(1)).toBe(250);
+    });
+
+    it('passes through values already in millilitres', () => {
+        expect(normalizeWaterMl(2000)).toBe(2000);
+        expect(normalizeWaterMl(50)).toBe(50);
+    });
+
+    it('returns 0 for missing, zero, negative or non-numeric input', () => {
+        expect(normalizeWaterMl(undefined)).toBe(0);
+        expect(normalizeWaterMl(null)).toBe(0);
+        expect(normalizeWaterMl(0)).toBe(0);
+        expect(normalizeWaterMl(-5)).toBe(0);
+        expect(normalizeWaterMl('abc')).toBe(0);
+        expect(normalizeWaterMl(NaN)).toBe(0);
+    });
+
+    it('coerces numeric strings', () => {
+        expect(normalizeWaterMl('2000')).toBe(2000);
+    });
+});
+
+describe('getRemainingDays fallback horizon', () => {
+    it('falls back to a rolling horizon when no target date is set', () => {
+        expect(getRemainingDays('2026-09-19', null)).toBe(DEFAULT_GOAL_HORIZON_DAYS);
+    });
+
+    it('does not collapse to 1 day for a far-future current date', () => {
+        // A fixed fallback date would have gone stale and returned 1 here.
+        expect(getRemainingDays('2030-01-01', null)).toBe(DEFAULT_GOAL_HORIZON_DAYS);
     });
 });

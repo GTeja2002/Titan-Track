@@ -4,6 +4,8 @@ import {
     Trophy, Flame, Droplet, Star, Shield, Award, Sparkles, CheckCircle2,
     Lock, Zap, Share2, Target, Dumbbell, Crown, ChevronRight, X, Heart
 } from 'lucide-react';
+import { getLocalDateString, shiftDateString } from '../lib/date.js';
+import { normalizeWaterMl } from '../lib/calculations.js';
 
 export function AchievementsCard({ state, update }) {
     const [activeCategory, setActiveCategory] = useState('all'); // 'all' | 'streak' | 'hydration' | 'nutrition' | 'community'
@@ -11,21 +13,19 @@ export function AchievementsCard({ state, update }) {
     const [shareSuccessToast, setShareSuccessToast] = useState('');
 
     // 1. Gather Real-Time User Metrics from App State
-    const currentDate = state.currentDate || '2026-08-10';
+    const currentDate = state.currentDate || getLocalDateString();
     const logs = state.logs || {};
     const currentLog = logs[currentDate] || {};
     const foodsLogged = currentLog.foods || [];
     const waterLog = currentLog.water || 0;
-    // Convert water to mL if stored in legacy glasses
-    const currentWaterMl = waterLog < 50 ? waterLog * 250 : waterLog;
+    const currentWaterMl = normalizeWaterMl(waterLog);
     const activeWeight = currentLog.weight > 0 ? currentLog.weight : (state.weight || 70);
 
     // Calculate streak from log history
     const streakDays = useMemo(() => {
         let streak = 0;
-        const checkDate = new Date(currentDate + 'T00:00:00');
+        let dateStr = currentDate;
         for (let i = 0; i < 30; i++) {
-            const dateStr = checkDate.toISOString().split('T')[0];
             const dayLog = logs[dateStr];
             const hasActivity = dayLog && (
                 (dayLog.foods && dayLog.foods.length > 0) ||
@@ -35,10 +35,11 @@ export function AchievementsCard({ state, update }) {
             );
             if (hasActivity) {
                 streak++;
-                checkDate.setDate(checkDate.getDate() - 1);
+                dateStr = shiftDateString(dateStr, -1);
             } else {
+                // Today not logged yet is not a broken streak — skip back once.
                 if (i === 0) {
-                    checkDate.setDate(checkDate.getDate() - 1);
+                    dateStr = shiftDateString(dateStr, -1);
                     continue;
                 }
                 break;
@@ -50,8 +51,7 @@ export function AchievementsCard({ state, update }) {
     // Total cumulative water logged across all history
     const totalCumulativeWaterMl = useMemo(() => {
         return Object.values(logs).reduce((sum, day) => {
-            const w = day.water || 0;
-            return sum + (w < 50 ? w * 250 : w);
+            return sum + normalizeWaterMl(day.water);
         }, 0);
     }, [logs]);
 

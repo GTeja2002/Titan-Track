@@ -4,20 +4,24 @@ import { useMemo } from 'react';
 import { Activity, Scale, User, TrendingUp } from 'lucide-react';
 import { calculateBMI, calculateBodyFat, calculateLeanMass, calculateFatMass, calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCalories, calculateIdealWeight, getBMICategory, getHealthSummary, getNearestBodyImage } from '../lib/calculations.js';
 import { getLocalDateString } from '../lib/date.js';
+import { createEmptyLog } from '../lib/useAppState.js';
 
 export function BodyCompositionDashboard({ state, update }) {
   const activeWeight = (state.logs[state.currentDate]?.weight !== undefined && state.logs[state.currentDate]?.weight !== null && state.logs[state.currentDate]?.weight !== '') ? state.logs[state.currentDate].weight : (state.weight ?? 70);
 
   const handleFieldChange = (field, value) => {
     update((prev) => {
-      const next = { ...prev };
+      // Clone logs too: a shallow { ...prev } shares the same logs object, so
+      // writing into it mutates previous state in place and leaves state.logs
+      // reference-equal — silently staling every useMemo keyed on it.
+      const next = { ...prev, logs: { ...prev.logs } };
 
       if (field === 'weight') {
         const todayStr = getLocalDateString();
         if (next.currentDate === todayStr) next.weight = value;
         const date = next.currentDate;
         if (!next.logs[date]) {
-          next.logs[date] = { foods: [], walk: 0, gym: 0, weight: 0 };
+          next.logs[date] = createEmptyLog();
         }
         next.logs[date] = { ...next.logs[date], weight: value };
       } else {

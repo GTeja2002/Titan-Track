@@ -1,8 +1,9 @@
 /* ---------------- components/GoalCard.jsx ---------------- */
 
 import { TrendingDown, Scale, Target } from 'lucide-react';
-import { calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCalories } from '../lib/calculations.js';
-import { getLocalDateString } from '../lib/date.js';
+import { calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCalories, DEFAULT_GOAL_HORIZON_DAYS } from '../lib/calculations.js';
+import { getLocalDateString, shiftDateString } from '../lib/date.js';
+import { createEmptyLog } from '../lib/useAppState.js';
 
 export function GoalCard({ state, update }) {
   const activeWeight = (state.logs[state.currentDate]?.weight !== undefined && state.logs[state.currentDate]?.weight !== null && state.logs[state.currentDate]?.weight !== '') ? state.logs[state.currentDate].weight : (state.weight ?? 70);
@@ -28,11 +29,8 @@ export function GoalCard({ state, update }) {
   const offset = circ - (percent / 100) * circ;
 
   // Handle default target date dynamically (90 days from currentDate) if not defined
-  const targetDateStr = state.goalTargetDate || (() => {
-    const d = new Date((state.currentDate || '2026-08-10') + 'T00:00:00');
-    d.setDate(d.getDate() + 90);
-    return d.toISOString().split('T')[0];
-  })();
+  const targetDateStr = state.goalTargetDate
+    || shiftDateString(state.currentDate || getLocalDateString(), DEFAULT_GOAL_HORIZON_DAYS);
 
   // Parse dates for remaining day count
   const curDate = new Date(state.currentDate + 'T00:00:00');
@@ -62,14 +60,17 @@ export function GoalCard({ state, update }) {
 
   const handleWeightChange = (field, val) => {
     update((prev) => {
-      const next = { ...prev };
+      // Clone logs too: a shallow { ...prev } shares the same logs object, so
+      // writing into it mutates previous state in place and leaves state.logs
+      // reference-equal — silently staling every useMemo keyed on it.
+      const next = { ...prev, logs: { ...prev.logs } };
 
       if (field === 'weight') {
         const todayStr = getLocalDateString();
         if (next.currentDate === todayStr) next.weight = val;
         const date = next.currentDate;
         if (!next.logs[date]) {
-          next.logs[date] = { foods: [], walk: 0, gym: 0, weight: 0 };
+          next.logs[date] = createEmptyLog();
         }
         next.logs[date] = { ...next.logs[date], weight: val };
       } else {

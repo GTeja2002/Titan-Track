@@ -12,3 +12,18 @@ export function getLocalDateString(date = new Date()) {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+
+/** Returns the calendar date `deltaDays` away from `dateStr` (a 'YYYY-MM-DD'
+ * string), as a local 'YYYY-MM-DD' string.
+ *
+ * Do NOT do this with `new Date(dateStr + 'T00:00:00')` + `.toISOString()`:
+ * that parses as LOCAL midnight but formats as UTC, so anywhere east of UTC
+ * (e.g. IST, UTC+5:30) local midnight is still the previous day in UTC and
+ * every result comes back one day early.
+ */
+export function shiftDateString(dateStr, deltaDays) {
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d.getTime())) return dateStr;
+  d.setDate(d.getDate() + deltaDays);
+  return getLocalDateString(d);
+}

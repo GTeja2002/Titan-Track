@@ -5,7 +5,9 @@ import {
   TrendingDown, TrendingUp, Trophy, ArrowRight, Bell, Search, Star,
   Plus, Trash2, Edit, X
 } from 'lucide-react';
-import { calculateBMI, calculateBodyFat, calculateLeanMass, getBMICategory, calculateProteinTarget, FOOD_DB } from '../lib/calculations.js';
+import { calculateBMI, calculateBodyFat, calculateLeanMass, getBMICategory, calculateProteinTarget, normalizeWaterMl, FOOD_DB } from '../lib/calculations.js';
+import { getLocalDateString, shiftDateString } from '../lib/date.js';
+import { createEmptyLog } from '../lib/useAppState.js';
 import { recipes, tips } from '../lib/wellnessContent.js';
 import { PersonalizedPlanCard } from './PersonalizedPlanCard.jsx';
 import WaterTrackerCard from './WaterTrackerCard.jsx';
@@ -25,7 +27,7 @@ export function Dashboard({
   };
 
   const currentDate = state.currentDate;
-  const log = state.logs[currentDate] || { foods: [], walk: 0, gym: 0, weight: state.weight || 70 };
+  const log = state.logs[currentDate] || { ...createEmptyLog(), weight: state.weight || 70 };
   const foods = log.foods || [];
 
   // Logged metrics calculations
@@ -61,10 +63,8 @@ export function Dashboard({
   const handleWaterChange = (mlDelta) => {
     update((prev) => {
       const today = prev.currentDate;
-      const existingLog = prev.logs[today] || { foods: [], walk: 0, gym: 0, weight: prev.weight || 70 };
-      const rawWater = existingLog.water || 0;
-      // If legacy glass count (<50), convert to mL
-      const currentWaterMl = rawWater < 50 ? rawWater * 250 : rawWater;
+      const existingLog = prev.logs[today] || { ...createEmptyLog(), weight: prev.weight || 70 };
+      const currentWaterMl = normalizeWaterMl(existingLog.water);
       const newWaterMl = Math.max(0, currentWaterMl + mlDelta);
       return {
         ...prev,
@@ -108,27 +108,26 @@ export function Dashboard({
 
   const streakDays = useMemo(() => {
     const logs = state.logs || {};
-    const dates = Object.keys(logs).sort().reverse();
-    if (dates.length === 0) return 0;
+    if (Object.keys(logs).length === 0) return 0;
     let streak = 0;
-    let checkDate = new Date();
+    let dateStr = state.currentDate || getLocalDateString();
     for (let i = 0; i < 365; i++) {
-      const dateStr = checkDate.toISOString().split('T')[0];
       const dayLog = logs[dateStr];
       const hasActivity = dayLog && ((dayLog.foods && dayLog.foods.length > 0) || dayLog.walk > 0 || dayLog.gym > 0 || dayLog.water > 0 || dayLog.weight > 0);
       if (hasActivity) {
         streak++;
-        checkDate.setDate(checkDate.getDate() - 1);
+        dateStr = shiftDateString(dateStr, -1);
       } else {
+        // Today not logged yet is not a broken streak — skip back once.
         if (i === 0) {
-          checkDate.setDate(checkDate.getDate() - 1);
+          dateStr = shiftDateString(dateStr, -1);
           continue;
         }
         break;
       }
     }
     return streak;
-  }, [state.logs]);
+  }, [state.logs, state.currentDate]);
 
   const weightHistory = useMemo(() => {
     const history = [];
@@ -154,9 +153,7 @@ export function Dashboard({
     // If only 1 point, seed a starting point for trend visual baseline
     if (history.length === 1) {
       const startW = state.startWeight || (history[0].weight + 2);
-      const d = new Date(history[0].date + 'T00:00:00');
-      d.setDate(d.getDate() - 7);
-      const prevDateStr = d.toISOString().split('T')[0];
+      const prevDateStr = shiftDateString(history[0].date, -7);
       history.unshift({ date: prevDateStr, weight: startW });
     }
 
@@ -287,23 +284,6 @@ export function Dashboard({
     });
   };
 
-  // Water helper: set water log
-  const handleLogWater = (cups) => {
-    update((prev) => {
-      const currentLog = prev.logs[prev.currentDate] || { foods: [], walk: 0, gym: 0, weight: prev.weight || 70 };
-      const currentWater = currentLog.water || 0;
-      // Toggle logic: if user clicks the active cup value, toggle it down by 1 so the cup becomes empty.
-      const newWater = (currentWater === cups) ? cups - 1 : cups;
-      return {
-        ...prev,
-        logs: {
-          ...prev.logs,
-          [prev.currentDate]: { ...currentLog, water: Math.max(0, Math.min(8, newWater)) }
-        }
-      };
-    });
-  };
-
   // Check if a specific meal plan is logged (by matching food name)
   const isMealIncluded = (mealName) => {
     return foods.some((f) => f.name.toLowerCase().includes(mealName.toLowerCase()));
@@ -313,7 +293,7 @@ export function Dashboard({
   const handleToggleMeal = (meal) => {
     const isLogged = isMealIncluded(meal.name);
     update((prev) => {
-      const currentLog = prev.logs[prev.currentDate] || { foods: [], walk: 0, gym: 0, weight: prev.weight || 70 };
+      const currentLog = prev.logs[prev.currentDate] || { ...createEmptyLog(), weight: prev.weight || 70 };
       let newFoods = [...(currentLog.foods || [])];
 
       if (isLogged) {
@@ -358,7 +338,7 @@ export function Dashboard({
 
   const handleToggleWorkout = (workout) => {
     update((prev) => {
-      const currentLog = prev.logs[prev.currentDate] || { foods: [], walk: 0, gym: 0, weight: prev.weight || 70 };
+      const currentLog = prev.logs[prev.currentDate] || { ...createEmptyLog(), weight: prev.weight || 70 };
       if (workout.id === 'walk') {
         const nextWalk = currentLog.walk > 0 ? 0 : 3;
         return {

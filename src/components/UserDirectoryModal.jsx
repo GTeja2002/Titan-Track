@@ -2,6 +2,7 @@
 import { useState, useMemo } from 'react';
 import { Users, Search, Download, X, Calendar, Clock, ShieldCheck, UserCheck, Activity, RefreshCw } from 'lucide-react';
 import { getRegisteredUsers, getLoginHistory, exportUserLogsCSV } from '../lib/userLogger.js';
+import { getLocalDateString } from '../lib/date.js';
 
 export function UserDirectoryModal({ isOpen, onClose }) {
     const [activeTab, setActiveTab] = useState('directory'); // 'directory' | 'history'
@@ -38,10 +39,11 @@ export function UserDirectoryModal({ isOpen, onClose }) {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', `titantrack_user_audit_${new Date().toISOString().split('T')[0]}.csv`);
+        link.setAttribute('download', `titantrack_user_audit_${getLocalDateString()}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     };
 
     if (!isOpen) return null;

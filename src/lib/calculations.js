@@ -2,6 +2,7 @@
  * Pure calculation + data helpers — no React, no side effects (aside from
  * console usage none), safe to unit test in isolation.
  */
+import { getLocalDateString, shiftDateString } from './date.js';
 
 export function calculateBMI(weightKg, heightCm) {
   if (!Number.isFinite(weightKg) || !Number.isFinite(heightCm) || weightKg <= 0 || heightCm <= 0) return 0;
@@ -49,9 +50,16 @@ export function calculateTDEE(bmr, activityLevel) {
   return Math.round(bmr * factor);
 }
 
+export const DEFAULT_GOAL_HORIZON_DAYS = 90;
+
 export function getRemainingDays(currentDateStr, targetDateStr) {
-  const curDate = new Date((currentDateStr || '2026-08-10') + 'T00:00:00');
-  const tarDate = new Date((targetDateStr || '2026-12-31') + 'T00:00:00');
+  const startStr = currentDateStr || getLocalDateString();
+  // No target date set yet? Fall back to a rolling 90-day horizon rather than
+  // a fixed calendar date — a hardcoded date silently collapses to 1 day once
+  // it passes, which would distort every downstream calorie target.
+  const endStr = targetDateStr || shiftDateString(startStr, DEFAULT_GOAL_HORIZON_DAYS);
+  const curDate = new Date(startStr + 'T00:00:00');
+  const tarDate = new Date(endStr + 'T00:00:00');
   const timeDiff = tarDate.getTime() - curDate.getTime();
   return Math.max(1, Math.round(timeDiff / (1000 * 3600 * 24)));
 }
@@ -389,4 +397,22 @@ export function calcMacros(food, qty) {
     fat: Number((scale * (food[`fat${suffix}`] ?? 0)).toFixed(1)),
     fiber: Number((scale * (food[`fiber${suffix}`] ?? 0)).toFixed(1)),
   };
+}
+
+/** Water logs have two historical shapes: older entries stored a count of
+ * 250 ml glasses, newer ones store exact millilitres. Normalises either to
+ * millilitres.
+ *
+ * The threshold is a heuristic on legacy data, so it is deliberately low:
+ * anything under LEGACY_GLASS_THRESHOLD_ML is read as a glass count. A user
+ * logging a genuine sip smaller than that would be over-counted, which is why
+ * new writes should always store exact millilitres.
+ */
+export const LEGACY_GLASS_THRESHOLD_ML = 50;
+export const ML_PER_GLASS = 250;
+
+export function normalizeWaterMl(rawWater) {
+  const raw = Number(rawWater);
+  if (!Number.isFinite(raw) || raw <= 0) return 0;
+  return raw < LEGACY_GLASS_THRESHOLD_ML ? raw * ML_PER_GLASS : raw;
 }

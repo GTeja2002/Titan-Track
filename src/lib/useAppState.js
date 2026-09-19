@@ -158,7 +158,7 @@ export function pruneOldLogs(logs, currentDate) {
 }
 
 export function createEmptyLog() {
-  return { foods: [], walk: 0, gym: 0, weight: 0 };
+  return { foods: [], walk: 0, gym: 0, weight: 0, water: 0 };
 }
 
 export function useAppState() {
@@ -180,7 +180,7 @@ export function useAppState() {
         isOnboarded: false,
         name: lastEmail.split('@')[0] || '',
         logs: {
-          [defaultState.currentDate]: { foods: [], walk: 0, gym: 0, weight: defaultState.weight || 70, water: 0 }
+          [defaultState.currentDate]: { ...createEmptyLog(), weight: defaultState.weight || 70 }
         }
       };
     }
@@ -285,7 +285,7 @@ export function useAppState() {
         isOnboarded: false,
         name: lowerEmail.split('@')[0] || '',
         logs: {
-          [defaultState.currentDate]: { foods: [], walk: 0, gym: 0, weight: defaultState.weight || 70, water: 0 }
+          [defaultState.currentDate]: { ...createEmptyLog(), weight: defaultState.weight || 70 }
         }
       };
 
@@ -302,9 +302,11 @@ export function useAppState() {
   const completeOnboarding = (details) => {
     setState((prev) => {
       const next = { ...prev, ...details, isOnboarded: true };
-      next.logs = next.logs || {};
+      next.logs = { ...(next.logs || {}) };
       const today = next.currentDate;
-      next.logs[today] = { foods: [], walk: 0, gym: 0, weight: next.weight };
+      // Merge rather than overwrite: anything already logged today (water, a
+      // first meal) must survive finishing onboarding.
+      next.logs[today] = { ...createEmptyLog(), ...next.logs[today], weight: next.weight };
 
       const bmr = calculateBMR(next.gender, next.age, next.weight, next.height);
       const tdee = calculateTDEE(bmr, next.activityLevel);
@@ -329,7 +331,7 @@ export function useAppState() {
   const clearLogsHistory = () => {
     setState((prev) => {
       const today = prev.currentDate;
-      const freshLog = { foods: [], walk: 0, gym: 0, weight: prev.weight || 70, water: 0 };
+      const freshLog = { ...createEmptyLog(), weight: prev.weight || 70 };
       return {
         ...prev,
         logs: {

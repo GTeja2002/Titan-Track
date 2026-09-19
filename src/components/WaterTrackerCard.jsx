@@ -1,6 +1,7 @@
 /* ---------------- components/WaterTrackerCard.jsx ---------------- */
 import { useState } from 'react';
 import { Droplet, Plus, Minus, Edit3, Sparkles, Check } from 'lucide-react';
+import { normalizeWaterMl } from '../lib/calculations.js';
 
 const MIN_TARGET_ML = 500;
 const MAX_TARGET_ML = 10000;
@@ -19,9 +20,7 @@ export default function WaterTrackerCard({
     const [errorMsg, setErrorMsg] = useState('');
     const [successToast, setSuccessToast] = useState('');
 
-    // Normalize water value: if water < 50, assume legacy glass count (1 glass = 250 ml), else it's exact mL
-    const rawWater = typeof water === 'number' && !isNaN(water) ? Math.max(0, water) : 0;
-    const currentMl = rawWater < 50 ? rawWater * 250 : rawWater;
+    const currentMl = normalizeWaterMl(water);
 
     // Auto-calculated target based on weight (35ml per kg)
     const autoCalculatedTarget = Math.round(weight * 35);

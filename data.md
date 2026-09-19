@@ -14,12 +14,14 @@ This document outlines the planned feature updates, UX enhancements, and structu
     - Hydration progress ring and daily goal completion celebration.
     - Persistent logging in `state.logs[currentDate].water`.
 
-- [ ] **2. Interactive Macro Budget & Distribution Visualizer Card** <!-- id: update-2 -->
+- [ ] **2. Interactive Macro Budget & Distribution Visualizer Card** <!-- id: update-2 --> *(partially done)*
   - **Goal**: Give users a real-time breakdown of remaining macronutrient budgets.
   - **Features**:
-    - Progress bars for Protein, Carbs, Fats, and Fiber with remaining targets.
-    - Visual macro distribution pie / stack bar chart.
-    - Status badges (e.g. "Protein Target Hit", "Carb Surplus").
+    - [x] Progress bars for Protein, Carbs, Fats, and Fiber with remaining targets.
+      (Built as `MacroBar` — used in `FoodLogCard.jsx` and `HealthWellnessInsights.jsx`.)
+    - [ ] Visual macro distribution pie / stack bar chart.
+    - [ ] Status badges (e.g. "Protein Target Hit", "Carb Surplus").
+    - [ ] Pull the above together into one dedicated card.
 
 - [ ] **3. Detailed Workout Planner & Exercise Library** <!-- id: update-3 -->
   - **Goal**: Expand gym logging into a multi-exercise strength & cardio logger.
@@ -35,7 +37,7 @@ This document outlines the planned feature updates, UX enhancements, and structu
     - Auto-calculation of total calories, protein, carbs, fats, and fiber.
     - Save recipes to user's `availableFoods` list for quick logging.
 
-- [ ] **5. Dynamic Achievement Badges & Milestone Tracker** <!-- id: update-5 -->
+- [x] **5. Dynamic Achievement Badges & Milestone Tracker** <!-- id: update-5 -->
   - **Goal**: Convert static achievement UI into an automated gamified system.
   - **Features**:
     - Automated detection of 7-day streak, 30-day streak, 100k steps, protein target streaks, etc.

@@ -5,6 +5,7 @@ import { X, Users } from 'lucide-react';
 import { calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCalories } from '../lib/calculations.js';
 import { getLocalDateString } from '../lib/date.js';
 import { UserDirectoryModal } from './UserDirectoryModal.jsx';
+import { createEmptyLog } from '../lib/useAppState.js';
 
 export function ProfileDrawer({ state, update, isOpen, onClose }) {
   const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);
@@ -13,7 +14,10 @@ export function ProfileDrawer({ state, update, isOpen, onClose }) {
 
   const handleFieldChange = (field, val) => {
     update((prev) => {
-      const next = { ...prev };
+      // Clone logs too: a shallow { ...prev } shares the same logs object, so
+      // writing into it mutates previous state in place and leaves state.logs
+      // reference-equal — silently staling every useMemo keyed on it.
+      const next = { ...prev, logs: { ...prev.logs } };
 
       // NOTE: this used to call guessDiagnosticStats(next) here on every
       // age/weight/height/gender/lifestyle edit — that whole fake-medical-data
@@ -31,7 +35,7 @@ export function ProfileDrawer({ state, update, isOpen, onClose }) {
         if (next.currentDate === todayStr) next.weight = val;
         const date = next.currentDate;
         if (!next.logs[date]) {
-          next.logs[date] = { foods: [], walk: 0, gym: 0, weight: 0 };
+          next.logs[date] = createEmptyLog();
         }
         next.logs[date] = { ...next.logs[date], weight: val };
       } else {

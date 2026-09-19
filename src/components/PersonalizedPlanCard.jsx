@@ -6,6 +6,7 @@ import {
 import { recipes } from '../lib/wellnessContent.js';
 import { FOOD_DB, calculateProteinTarget } from '../lib/calculations.js';
 import { generatePersonalizedPlan } from '../lib/personalizedPlanEngine.js';
+import { createEmptyLog } from '../lib/useAppState.js';
 
 export function PersonalizedPlanCard({
     state,
@@ -16,7 +17,7 @@ export function PersonalizedPlanCard({
     onEditProfile
 }) {
     const currentDate = state.currentDate;
-    const currentLog = state.logs[currentDate] || { foods: [], walk: 0, gym: 0, weight: state.weight || 70 };
+    const currentLog = state.logs[currentDate] || { ...createEmptyLog(), weight: state.weight || 70 };
     const foodsLogged = currentLog.foods || [];
 
     // Single Source of Truth: Calorie & Protein Targets from Fitness State
@@ -88,7 +89,7 @@ export function PersonalizedPlanCard({
 
         update((prev) => {
             const today = prev.currentDate;
-            const existingLog = prev.logs[today] || { foods: [], walk: 0, gym: 0, weight: prev.weight || 70 };
+            const existingLog = prev.logs[today] || { ...createEmptyLog(), weight: prev.weight || 70 };
             const updatedFoods = [...(existingLog.foods || []), newFoodEntry];
 
             return {
