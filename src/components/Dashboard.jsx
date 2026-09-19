@@ -713,7 +713,7 @@ export function Dashboard({
                 src="/assets/homepage/running.png"
                 alt="Motivation running banner"
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/placeholders/running.png"; }}
+                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/homepage/running.png"; }}
               />
             </div>
           </div>
@@ -992,7 +992,7 @@ export function Dashboard({
                   src={tip.image}
                   alt={tip.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/placeholders/onboarding-bg.webp"; }}
+                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/onboarding-bg.webp"; }}
                 />
               </div>
               <div className="p-4 flex-1 flex flex-col justify-between space-y-2">
@@ -1020,7 +1020,7 @@ export function Dashboard({
                   src={activeTipModal.image}
                   alt={activeTipModal.title}
                   className="w-full h-32 object-cover rounded-2xl border border-[var(--border)]"
-                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/placeholders/onboarding-bg.webp"; }}
+                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/onboarding-bg.webp"; }}
                 />
               </div>
               <div className="flex-1 space-y-3">
