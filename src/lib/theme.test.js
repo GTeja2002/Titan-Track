@@ -116,18 +116,32 @@ describe('theme gradient tokens', () => {
         }
     });
 
-    it('keeps every metric ink readable on its own soft tint', () => {
-        // The stricter case, and the one that actually ships: the hydration
-        // quick-add buttons and every soft-tinted chip put ink on the tint,
-        // not on white. Water was 4.01:1 that way while passing on white.
+    const contrast = (a, b) => {
+        const la = luminance(a);
+        const lb = luminance(b);
+        return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+    };
+
+    it('keeps every metric ink readable on its own tinted surfaces', () => {
+        // The cases that actually ship: labels sit on the card wash, and the
+        // hydration quick-add buttons sit on the soft tint. Checking only
+        // ink-on-white missed water at 4.01:1 on its tint.
         const b = block(ROOT_BLOCK);
         for (const m of METRICS) {
             const ink = token(b, `m-${m}-ink`);
-            const soft = token(b, `m-${m}-soft`);
-            const li = luminance(ink);
-            const ls = luminance(soft);
-            const ratio = (Math.max(li, ls) + 0.05) / (Math.min(li, ls) + 0.05);
-            expect(ratio, `${m} ink on ${m} soft`).toBeGreaterThanOrEqual(4.5);
+            expect(contrast(ink, token(b, `m-${m}-soft`)), `${m} ink on soft`).toBeGreaterThanOrEqual(4.5);
+            expect(contrast(ink, token(b, `m-${m}-wash`)), `${m} ink on wash`).toBeGreaterThanOrEqual(4.5);
+        }
+    });
+
+    it('makes each card wash clearly tinted rather than near-white', () => {
+        // The pale tints read as white cards at a glance, which defeats the
+        // point of giving each metric a colour.
+        const b = block(ROOT_BLOCK);
+        for (const m of METRICS) {
+            const wash = token(b, `m-${m}-wash`);
+            expect(wash, `${m} wash`).toMatch(/^#[0-9A-Fa-f]{6}$/);
+            expect(contrast(wash, '#FFFFFF'), `${m} wash vs white`).toBeGreaterThan(1.12);
         }
     });
 

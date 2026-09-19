@@ -108,29 +108,34 @@
      --m-x-soft  a pale tint, for bar tracks and card washes
      Amber and gold are simply not readable as text at their vivid value. */
   --m-calories: #D9743F;
-  --m-calories-lift: #EFA274;
-  --m-calories-soft: #FDF0E8;
-  --m-calories-ink: #B4511D;
+  --m-calories-lift: #E7A988;
+  --m-calories-soft: #F7E8E1;
+  --m-calories-wash: #F2D6C7;
+  --m-calories-ink: #9C481B;
 
   --m-protein: #7C5CA8;
-  --m-protein-lift: #A68BC9;
-  --m-protein-soft: #F2EDF9;
-  --m-protein-ink: #7C59AB;
+  --m-protein-lift: #AC98C8;
+  --m-protein-soft: #EBE7F1;
+  --m-protein-wash: #DBD3E6;
+  --m-protein-ink: #6D4E97;
 
   --m-water: #3E8ECC;
-  --m-water-lift: #7FB8E4;
-  --m-water-soft: #E9F2FB;
-  --m-water-ink: #2772AB;
+  --m-water-lift: #87B9DF;
+  --m-water-soft: #E2EDF5;
+  --m-water-wash: #CADFEF;
+  --m-water-ink: #246596;
 
-  --m-steps: #C49B45;
-  --m-steps-lift: #E0C077;
-  --m-steps-soft: #FBF4E4;
-  --m-steps-ink: #8B6B27;
+  --m-steps: #2FA96A;
+  --m-steps-lift: #61D398;
+  --m-steps-soft: #E3F5EC;
+  --m-steps-wash: #CBEEDC;
+  --m-steps-ink: #1E7548;
 
   --m-streak: #E0952F;
-  --m-streak-lift: #F3BE72;
-  --m-streak-soft: #FDF3E4;
-  --m-streak-ink: #9D6212;
+  --m-streak-lift: #ECBE7F;
+  --m-streak-soft: #F8EEE0;
+  --m-streak-wash: #F4E0C5;
+  --m-streak-ink: #8E5912;
 
   --grad-calories: linear-gradient(135deg, var(--m-calories), var(--m-calories-lift));
   --grad-metric-protein: linear-gradient(135deg, var(--m-protein), var(--m-protein-lift));
@@ -238,27 +243,32 @@ body.dark {
   --m-calories: #E8905C;
   --m-calories-lift: #F2B48E;
   --m-calories-soft: #241710;
-  --m-calories-ink: #E8905C;
+  --m-calories-wash: #2E1D12;
+  --m-calories-ink: #F0A97C;
 
   --m-protein: #9E7FC9;
   --m-protein-lift: #BFA7DE;
   --m-protein-soft: #1B1626;
-  --m-protein-ink: #9E7FC9;
+  --m-protein-wash: #231C30;
+  --m-protein-ink: #B79ADA;
 
   --m-water: #5EA8DE;
   --m-water-lift: #93C8EC;
   --m-water-soft: #10202C;
-  --m-water-ink: #5EA8DE;
+  --m-water-wash: #132738;
+  --m-water-ink: #82BDE8;
 
-  --m-steps: #D9B15C;
-  --m-steps-lift: #EFCF8D;
-  --m-steps-soft: #241E10;
-  --m-steps-ink: #D9B15C;
+  --m-steps: #43C88A;
+  --m-steps-lift: #77DFAC;
+  --m-steps-soft: #0E2618;
+  --m-steps-wash: #12301F;
+  --m-steps-ink: #5FD79C;
 
   --m-streak: #F0A94A;
   --m-streak-lift: #F7CB8C;
   --m-streak-soft: #261B0F;
-  --m-streak-ink: #F0A94A;
+  --m-streak-wash: #2E2010;
+  --m-streak-ink: #F4BC72;
 
   --accent: var(--color-success);
   --accent-soft: var(--color-success-soft);
@@ -1207,37 +1217,37 @@ body.dark[data-accent='rose'] {
  * colour, and redefined in dark mode where a pale tint would glare.
  */
 :root {
-  --m-calories-edge: #F6DCC9;
-  --m-protein-edge: #E2D6F0;
-  --m-water-edge: #CFE3F5;
-  --m-steps-edge: #EDE0BE;
+  --m-calories-edge: #EFC4AC;
+  --m-protein-edge: #CDC0DF;
+  --m-water-edge: #B3D2E9;
+  --m-steps-edge: #B7E5CD;
 
-  --m-calories-track: #F7E3D6;
-  --m-protein-track: #E7DCF3;
-  --m-water-track: #DCEAF8;
-  --m-steps-track: #F0E6CC;
+  --m-calories-track: #EFD5C6;
+  --m-protein-track: #DCD2EA;
+  --m-water-track: #C9DFF0;
+  --m-steps-track: #D8F0E4;
 
   --m-calories-glow: rgba(217, 116, 63, 0.30);
   --m-protein-glow: rgba(124, 92, 168, 0.30);
   --m-water-glow: rgba(62, 142, 204, 0.30);
-  --m-steps-glow: rgba(196, 155, 69, 0.30);
+  --m-steps-glow: rgba(47, 169, 106, 0.32);
 }
 
 body.dark {
   --m-calories-edge: #35241A;
   --m-protein-edge: #2A2136;
   --m-water-edge: #1B2C3A;
-  --m-steps-edge: #332B18;
+  --m-steps-edge: #17402A;
 
   --m-calories-track: #2C1D14;
   --m-protein-track: #221B2D;
   --m-water-track: #16232E;
-  --m-steps-track: #2B2414;
+  --m-steps-track: #123020;
 
   --m-calories-glow: rgba(232, 144, 92, 0.28);
   --m-protein-glow: rgba(158, 127, 201, 0.28);
   --m-water-glow: rgba(94, 168, 222, 0.28);
-  --m-steps-glow: rgba(217, 177, 92, 0.28);
+  --m-steps-glow: rgba(67, 200, 138, 0.30);
 }
 
 .metric-card {
@@ -1296,7 +1306,7 @@ body.dark {
  * reads as the water metric's own surface, matching its card in the row above.
  */
 .hydration-card {
-  background: linear-gradient(150deg, var(--m-water-soft) 0%, var(--surface-solid) 62%);
+  background: linear-gradient(150deg, var(--m-water-wash) 0%, var(--surface-solid) 68%);
   border: 1px solid var(--m-water-edge);
   box-shadow: 0 2px 14px rgba(20, 35, 50, 0.05);
 }

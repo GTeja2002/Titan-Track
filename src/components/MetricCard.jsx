@@ -25,7 +25,9 @@ export function MetricCard({
     <div
       className="metric-card relative rounded-[22px] p-5 overflow-hidden transition duration-300 hover:-translate-y-1"
       style={{
-        background: `linear-gradient(135deg, var(--m-${metric}-soft) 0%, var(--surface-solid) 100%)`,
+        // The wash, not the pale soft tint: the card should read as its own
+        // colour at a glance, which a near-white tint does not.
+        background: `linear-gradient(135deg, var(--m-${metric}-wash) 0%, var(--surface-solid) 92%)`,
         border: `1px solid var(--m-${metric}-edge)`,
       }}
     >

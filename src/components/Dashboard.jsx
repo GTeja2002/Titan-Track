@@ -14,13 +14,9 @@ import WaterTrackerCard from './WaterTrackerCard.jsx';
 import { MetricCard } from './MetricCard.jsx';
 import { AchievementsCard } from './AchievementsCard.jsx';
 
-/** Slot colours for the daily meal list, cycled per row. */
-const MEAL_DOTS = [
-  'var(--m-calories)',
-  'var(--m-steps)',
-  'var(--m-protein)',
-  'var(--m-water)',
-];
+/** Metric hue per meal slot, cycled down the daily list so the rows read as a
+ *  sequence rather than four identical cards. */
+const MEAL_SLOTS = ['calories', 'steps', 'protein', 'water'];
 
 export function Dashboard({
   state,
@@ -696,7 +692,9 @@ export function Dashboard({
                 const logged = isMealIncluded(meal.name);
                 // A colour per slot, cycling the metric hues, so the list reads
                 // as a sequence of meals rather than four identical rows.
-                const dot = MEAL_DOTS[mealIndex % MEAL_DOTS.length];
+                const slot = MEAL_SLOTS[mealIndex % MEAL_SLOTS.length];
+                const dot = `var(--m-${slot})`;
+                const dotWash = `var(--m-${slot}-wash)`;
                 return (
                   <div
                     key={meal.name}
@@ -707,12 +705,20 @@ export function Dashboard({
                       border: `1px solid ${logged ? 'var(--primary)' : 'var(--border)'}`,
                     }}
                   >
-                    <img
-                      src={meal.image || '/assets/placeholders/food.png'}
-                      alt={meal.name}
-                      className="h-[52px] w-[62px] rounded-xl object-cover shrink-0"
-                      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/placeholders/food.png"; }}
-                    />
+                    {/* The thumbnail sits on a tile in the slot's own colour,
+                        which is what carries the colour through the list — a
+                        bare photo left every row looking the same. */}
+                    <span
+                      className="flex h-[54px] w-[66px] items-center justify-center rounded-xl shrink-0 overflow-hidden p-[3px]"
+                      style={{ background: dotWash }}
+                    >
+                      <img
+                        src={meal.image || '/assets/placeholders/food.png'}
+                        alt={meal.name}
+                        className="h-full w-full rounded-[9px] object-cover"
+                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/placeholders/food.png"; }}
+                      />
+                    </span>
                     <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: dot }} aria-hidden="true" />
                     <div className="flex-1 min-w-0">
                       <p className="text-[15px] font-bold truncate" style={{ color: 'var(--text)' }}>{meal.name}</p>
