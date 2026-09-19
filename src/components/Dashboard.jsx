@@ -389,15 +389,25 @@ export function Dashboard({
     <div className="space-y-8 animate-fade-in pb-12">
       {/* 1. Hero / Header Greeting Section */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center rounded-3xl p-6 sm:p-8 glass border border-[var(--border)] shadow-sm relative overflow-hidden">
-        {/* Glow overlay shape */}
-        <div className="absolute right-0 top-0 w-80 h-80 rounded-full bg-primary-soft/30 blur-[100px] pointer-events-none" />
+        {/* Three separated washes rather than one green glow, so the hero has
+            some colour depth behind it without anything competing with the
+            text. Each is keyed to a metric hue already used below. */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-70"
+          style={{
+            background:
+              'radial-gradient(circle at 88% 12%, var(--m-streak-soft), transparent 42%),' +
+              'radial-gradient(circle at 62% 92%, var(--m-water-soft), transparent 38%),' +
+              'radial-gradient(circle at 8% 40%, var(--primary-soft), transparent 45%)',
+          }}
+        />
 
         <div className="lg:col-span-6 space-y-4">
           <span className="inline-block text-xs font-semibold px-3 py-1 bg-primary-soft text-primary rounded-full">
             Welcome back, {displayName}! 👋
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[var(--text)] tracking-tight leading-[1.1]">
-            You're building a <span className="text-primary">better, healthier</span> you.
+            You're building a <span className="text-flow">better, healthier</span> you.
           </h1>
           <p className="text-sm text-[var(--text-dim)] max-w-md">
             Stay consistent, stay focused. Small steps today, big changes tomorrow.
@@ -406,7 +416,8 @@ export function Dashboard({
           <div className="flex flex-wrap gap-3 pt-2">
             <button
               onClick={() => goToTab('Nutrition')}
-              className="flex items-center gap-2 rounded-2xl py-3 px-5 text-sm font-bold text-white transition hover:scale-105 active:scale-95 bg-primary hover:bg-primary-hover active:bg-primary-pressed shadow-md shadow-primary/20"
+              className="flex items-center gap-2 rounded-2xl py-3 px-5 text-sm font-bold text-white transition hover:scale-105 active:scale-95 shadow-md"
+              style={{ background: 'var(--grad-primary-cta)', boxShadow: '0 8px 20px var(--primary-glow)' }}
             >
               Log Your Meal
             </button>
@@ -420,11 +431,18 @@ export function Dashboard({
           </div>
         </div>
 
-        {/* Hero Banner Images & Overlay Floating widgets */}
+        {/* Hero Banner Images & Overlay Floating widgets
+            The two badges used to be anchored to the same box as the bowl, so
+            they sat on top of the food and the right-hand one was clipped by
+            this section's overflow-hidden. The frame below is deliberately
+            wider than the bowl: the bowl centres inside it and the badges sit
+            in the margin, overlapping the artwork only slightly and never
+            leaving the card. */}
         <div className="lg:col-span-6 flex justify-center items-center relative mt-6 lg:mt-0">
-          <div className="relative w-full max-w-sm sm:max-w-md flex justify-center items-center">
+          <div className="relative w-full max-w-md px-10 sm:px-14 py-10 flex justify-center items-center">
             {/* Main Salad Bowl image from projects assets */}
-            <div className="relative w-64 h-64 sm:w-80 sm:h-80 rounded-full bg-primary-soft/50 flex items-center justify-center p-3 animate-scale-in">
+            <div className="relative w-52 h-52 sm:w-64 sm:h-64 rounded-full flex items-center justify-center p-3 animate-scale-in"
+              style={{ background: 'var(--grad-primary-soft)' }}>
               <img
                 src="/assets/homepage/healthy_bowl.png"
                 alt="Healthy food selection"
@@ -437,37 +455,59 @@ export function Dashboard({
               />
             </div>
 
-            {/* Streak Float Widget */}
-            <div className="absolute top-4 left-0 sm:left-4 bg-white dark:bg-[#1C211E] border border-[#E7E6E0] dark:border-[#2C332E] rounded-2xl p-4 flex flex-col shadow-lg hover:scale-105 transition duration-300">
-              <span className="text-[10px] uppercase font-bold text-amber-500 tracking-wider flex items-center gap-1">
+            {/* Streak — amber, its own hue rather than another green card */}
+            <div
+              className="absolute top-0 left-0 rounded-2xl p-3.5 flex flex-col shadow-lg hover:scale-105 transition duration-300 border"
+              style={{
+                background: 'var(--surface-solid)',
+                borderColor: 'var(--m-streak-soft)',
+                boxShadow: '0 10px 26px rgba(224, 149, 47, 0.18)',
+              }}
+            >
+              <span className="text-[10px] uppercase font-bold tracking-wider flex items-center gap-1" style={{ color: 'var(--m-streak-ink)' }}>
                 🔥 Streak
               </span>
-              <span className="text-3xl font-extrabold tracking-tight mt-1 text-[var(--text)]">{streakDays}</span>
-              <span className="text-[10px] text-[var(--text-dim)] font-medium">Days Active</span>
+              <span className="text-3xl font-extrabold tracking-tight mt-0.5" style={{ color: 'var(--m-streak-ink)' }}>{streakDays}</span>
+              <span className="text-[10px] font-medium" style={{ color: 'var(--text-dim)' }}>Days Active</span>
             </div>
 
-            {/* Overall completeness widget */}
-            <div className="absolute bottom-4 right-0 sm:right-4 bg-white dark:bg-[#1C211E] border border-[#E7E6E0] dark:border-[#2C332E] rounded-2xl p-4 flex items-center gap-3 shadow-lg hover:scale-105 transition duration-300">
+            {/* Today's goal — sits in the frame's bottom margin, fully inside
+                the card, with the ring running the accent gradient. */}
+            <div
+              className="absolute bottom-0 right-0 rounded-2xl p-3.5 flex items-center gap-2.5 shadow-lg hover:scale-105 transition duration-300 border"
+              style={{
+                background: 'var(--surface-solid)',
+                borderColor: 'var(--border)',
+                boxShadow: '0 10px 26px rgba(0, 0, 0, 0.10)',
+              }}
+            >
               <div className="relative flex items-center justify-center">
-                <svg className="w-14 h-14 transform -rotate-95">
-                  <circle cx="28" cy="28" r="23" stroke="var(--color-border-subtle)" strokeWidth="4" fill="transparent" />
+                <svg className="w-12 h-12 -rotate-90">
+                  <defs>
+                    <linearGradient id="hero-goal-flow" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="var(--primary)" />
+                      <stop offset="100%" stopColor="var(--primary-lift)" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="24" cy="24" r="20" stroke="var(--color-border-subtle)" strokeWidth="4" fill="transparent" />
                   <circle
-                    cx="28"
-                    cy="28"
-                    r="23"
-                    stroke="var(--primary)"
+                    cx="24"
+                    cy="24"
+                    r="20"
+                    stroke="url(#hero-goal-flow)"
                     strokeWidth="4"
+                    strokeLinecap="round"
                     fill="transparent"
-                    strokeDasharray={2 * Math.PI * 23}
-                    strokeDashoffset={2 * Math.PI * 23 * (1 - Math.max(0.05, goalOverallProgress / 100))}
+                    strokeDasharray={2 * Math.PI * 20}
+                    strokeDashoffset={2 * Math.PI * 20 * (1 - Math.max(0.05, goalOverallProgress / 100))}
                     className="transition-all duration-1000"
                   />
                 </svg>
-                <div className="absolute text-xs font-black text-[var(--text)]">{goalOverallProgress}%</div>
+                <div className="absolute text-[11px] font-black" style={{ color: 'var(--text)' }}>{goalOverallProgress}%</div>
               </div>
               <div>
-                <span className="text-[9px] uppercase font-bold text-[var(--text-dim)] tracking-wider">Today's Goal</span>
-                <p className="text-xs font-extrabold text-[var(--text)] mt-0.5">Completed</p>
+                <span className="text-[9px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-dim)' }}>Today's Goal</span>
+                <p className="text-xs font-extrabold mt-0.5" style={{ color: 'var(--text)' }}>Completed</p>
               </div>
             </div>
           </div>
@@ -485,10 +525,11 @@ export function Dashboard({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card: Calories */}
-          <div className="bg-white dark:bg-[#1C211E] border border-[#E7E6E0] dark:border-[#2C332E] rounded-2xl p-5 flex flex-col justify-between hover:-translate-y-1 transition duration-300 shadow-[0_4px_18px_rgba(30,35,30,0.05)] relative overflow-hidden group">
+          <div className="bg-white dark:bg-[#1C211E] border border-[#E7E6E0] dark:border-[#2C332E] rounded-2xl p-5 flex flex-col justify-between hover:-translate-y-1 transition duration-300 shadow-[0_4px_18px_rgba(30,35,30,0.05)] relative overflow-hidden group"
+            style={{ backgroundImage: 'radial-gradient(circle at 100% 0%, var(--m-calories-soft), transparent 58%)' }}>
             <div className="space-y-1 z-10">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#555954] dark:text-[#B3BAB4] flex items-center gap-1.5">
-                <Flame size={12} className="text-primary" />
+                <Flame size={12} style={{ color: 'var(--m-calories-ink)' }} />
                 Calories
               </span>
               <div className="text-2xl font-black tracking-tight text-[#171817] dark:text-[#F4F5F2]">
@@ -498,19 +539,20 @@ export function Dashboard({
                 {totalCal >= calorieTarget ? 'Target met! 🎉' : `Remaining: ${Math.max(0, calorieTarget - totalCal)} kcal`}
               </span>
             </div>
-            <div className="h-1.5 w-full bg-[#FFF0E8] dark:bg-[#2F1F17] rounded-full mt-4 overflow-hidden">
+            <div className="h-1.5 w-full rounded-full mt-4 overflow-hidden" style={{ background: 'var(--m-calories-soft)' }}>
               <div
-                className="h-full bg-primary rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(100, (totalCal / calorieTarget) * 100)}%` }}
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(100, (totalCal / calorieTarget) * 100)}%`, background: 'var(--grad-calories)' }}
               />
             </div>
           </div>
 
           {/* Card: Protein */}
-          <div className="bg-white dark:bg-[#1C211E] border border-[#E7E6E0] dark:border-[#2C332E] rounded-2xl p-5 flex flex-col justify-between hover:-translate-y-1 transition duration-300 shadow-[0_4px_18px_rgba(30,35,30,0.05)] relative overflow-hidden group">
+          <div className="bg-white dark:bg-[#1C211E] border border-[#E7E6E0] dark:border-[#2C332E] rounded-2xl p-5 flex flex-col justify-between hover:-translate-y-1 transition duration-300 shadow-[0_4px_18px_rgba(30,35,30,0.05)] relative overflow-hidden group"
+            style={{ backgroundImage: 'radial-gradient(circle at 100% 0%, var(--m-protein-soft), transparent 58%)' }}>
             <div className="space-y-1 z-10">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#555954] dark:text-[#B3BAB4] flex items-center gap-1.5">
-                <Star size={12} className="text-success" />
+                <Star size={12} style={{ color: 'var(--m-protein-ink)' }} />
                 Protein
               </span>
               <div className="text-2xl font-black tracking-tight text-[#171817] dark:text-[#F4F5F2]">
@@ -520,10 +562,10 @@ export function Dashboard({
                 {totalProtein >= proteinTarget ? 'Target hit! 💪' : `Remaining: ${Math.max(0, proteinTarget - totalProtein)}g`}
               </span>
             </div>
-            <div className="h-1.5 w-full bg-[#EAF3F0] dark:bg-[#182320] rounded-full mt-4 overflow-hidden">
+            <div className="h-1.5 w-full rounded-full mt-4 overflow-hidden" style={{ background: 'var(--m-protein-soft)' }}>
               <div
-                className="h-full bg-success rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(100, (totalProtein / proteinTarget) * 100)}%` }}
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(100, (totalProtein / proteinTarget) * 100)}%`, background: 'var(--grad-metric-protein)' }}
               />
             </div>
           </div>
@@ -538,10 +580,11 @@ export function Dashboard({
           />
 
           {/* Card: Steps */}
-          <div className="bg-white dark:bg-[#1C211E] border border-[#E7E6E0] dark:border-[#2C332E] rounded-2xl p-5 flex flex-col justify-between hover:-translate-y-1 transition duration-300 shadow-[0_4px_18px_rgba(30,35,30,0.05)] relative overflow-hidden group">
+          <div className="bg-white dark:bg-[#1C211E] border border-[#E7E6E0] dark:border-[#2C332E] rounded-2xl p-5 flex flex-col justify-between hover:-translate-y-1 transition duration-300 shadow-[0_4px_18px_rgba(30,35,30,0.05)] relative overflow-hidden group"
+            style={{ backgroundImage: 'radial-gradient(circle at 100% 0%, var(--m-steps-soft), transparent 58%)' }}>
             <div className="space-y-1 z-10">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#555954] dark:text-[#B3BAB4] flex items-center gap-1.5">
-                <Footprints size={12} className="text-warning" />
+                <Footprints size={12} style={{ color: 'var(--m-steps-ink)' }} />
                 Steps
               </span>
               <div className="text-2xl font-black tracking-tight text-[#171817] dark:text-[#F4F5F2]">
@@ -551,10 +594,10 @@ export function Dashboard({
                 {dailySteps >= stepsTarget ? 'Step goal met! 🏃‍♂️' : 'Keep going!'}
               </span>
             </div>
-            <div className="h-1.5 w-full bg-[#FFF6DE] dark:bg-[#2C261A] rounded-full mt-4 overflow-hidden">
+            <div className="h-1.5 w-full rounded-full mt-4 overflow-hidden" style={{ background: 'var(--m-steps-soft)' }}>
               <div
-                className="h-full bg-warning rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(100, (dailySteps / stepsTarget) * 100)}%` }}
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(100, (dailySteps / stepsTarget) * 100)}%`, background: 'var(--grad-steps)' }}
               />
             </div>
           </div>

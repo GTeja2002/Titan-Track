@@ -93,10 +93,13 @@ export default function WaterTrackerCard({
         <>
             {/* Variant A: Clean Overview Summary Card (Today's Overview Grid) */}
             {variant === 'overview' && (
-                <div className="bg-white dark:bg-[#1C211E] border border-[#E7E6E0] dark:border-[#2C332E] rounded-2xl p-5 flex flex-col justify-between hover:-translate-y-1 transition duration-300 shadow-[0_4px_18px_rgba(30,35,30,0.05)] relative overflow-hidden group h-full">
+                <div
+                    className="bg-white dark:bg-[#1C211E] border border-[#E7E6E0] dark:border-[#2C332E] rounded-2xl p-5 flex flex-col justify-between hover:-translate-y-1 transition duration-300 shadow-[0_4px_18px_rgba(30,35,30,0.05)] relative overflow-hidden group h-full"
+                    style={{ backgroundImage: 'radial-gradient(circle at 100% 0%, var(--m-water-soft), transparent 58%)' }}
+                >
                     <div className="space-y-1 z-10">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-[#555954] dark:text-[#B3BAB4] flex items-center gap-1.5">
-                            <Droplet size={12} className="text-water" />
+                            <Droplet size={12} style={{ color: 'var(--m-water-ink)' }} />
                             Water
                         </span>
 
@@ -112,10 +115,10 @@ export default function WaterTrackerCard({
                         </span>
                     </div>
 
-                    <div className="h-1.5 w-full bg-[#EAF4FA] dark:bg-[#1D252E] rounded-full mt-4 overflow-hidden">
+                    <div className="h-1.5 w-full rounded-full mt-4 overflow-hidden" style={{ background: 'var(--m-water-soft)' }}>
                         <div
-                            className="h-full bg-water rounded-full transition-all duration-500"
-                            style={{ width: `${progressVisual}%` }}
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{ width: `${progressVisual}%`, background: 'var(--grad-water)' }}
                         />
                     </div>
                 </div>

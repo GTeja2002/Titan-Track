@@ -36,6 +36,9 @@ const accentBlock = (id) =>
 const darkAccentBlock = (id) =>
     new RegExp("body\\.dark\\[data-accent='" + id + "'\\] \\{[\\s\\S]*?\\n\\}");
 
+const ROOT_BLOCK = new RegExp(":root \\{[\\s\\S]*?\\n\\}");
+const DARK_BLOCK = new RegExp("body\\.dark \\{[\\s\\S]*?\\n\\}");
+
 const lightBlocks = [
     [DEFAULT_ACCENT, /:root \{[\s\S]*?\n\}/],
     ...ACCENTS.filter((a) => a.id !== DEFAULT_ACCENT).map((a) => [a.id, accentBlock(a.id)]),
@@ -90,6 +93,48 @@ describe('theme gradient tokens', () => {
     it('defines the gradient tokens components rely on', () => {
         for (const t of ['--grad-primary', '--grad-primary-cta', '--grad-primary-soft', '--grad-sheen', '--grad-edge']) {
             expect(css).toContain(`${t}:`);
+        }
+    });
+
+    const METRICS = ['calories', 'protein', 'water', 'steps', 'streak'];
+
+    it('gives every metric all three tokens', () => {
+        const b = block(ROOT_BLOCK);
+        for (const m of METRICS) {
+            expect(token(b, `m-${m}`), `${m} base`).toMatch(/^#[0-9A-Fa-f]{6}$/);
+            expect(token(b, `m-${m}-ink`), `${m} ink`).toMatch(/^#[0-9A-Fa-f]{6}$/);
+            expect(token(b, `m-${m}-soft`), `${m} soft`).toMatch(/^#[0-9A-Fa-f]{6}$/);
+        }
+    });
+
+    it('keeps every metric ink readable as text on white', () => {
+        // Amber and gold at their vivid value are around 2.5:1 on white, which
+        // is why text and icons use the ink token rather than the base.
+        const b = block(ROOT_BLOCK);
+        for (const m of METRICS) {
+            expect(contrastWithWhite(token(b, `m-${m}-ink`)), `${m} ink`).toBeGreaterThanOrEqual(4.5);
+        }
+    });
+
+    it('keeps every metric soft tint pale enough to sit under content', () => {
+        const b = block(ROOT_BLOCK);
+        for (const m of METRICS) {
+            expect(luminance(token(b, `m-${m}-soft`)), `${m} soft`).toBeGreaterThan(0.75);
+        }
+    });
+
+    it('gives the metrics distinct hues rather than five greens', () => {
+        const b = block(ROOT_BLOCK);
+        const seen = new Set(METRICS.map((m) => token(b, `m-${m}`)));
+        expect(seen.size).toBe(METRICS.length);
+    });
+
+    it('defines a dark-mode value for every metric token', () => {
+        const b = block(DARK_BLOCK);
+        for (const m of METRICS) {
+            expect(token(b, `m-${m}`), `${m} dark base`).toBeTruthy();
+            expect(token(b, `m-${m}-ink`), `${m} dark ink`).toBeTruthy();
+            expect(token(b, `m-${m}-soft`), `${m} dark soft`).toBeTruthy();
         }
     });
 

@@ -83,8 +83,8 @@
   /* Macro family. Four distinct hues that still read as one set, each with a
      lighter companion so the bars have direction rather than being flat
      blocks of colour. */
-  --macro-protein: #4B88B3;
-  --macro-protein-lift: #7FB4D6;
+  --macro-protein: #7C5CA8;
+  --macro-protein-lift: #A68BC9;
   --macro-carbs: #C49B45;
   --macro-carbs-lift: #E0BE77;
   --macro-fat: #C4705D;
@@ -93,6 +93,47 @@
   --macro-fiber-lift: #6FB89A;
 
   --grad-protein: linear-gradient(90deg, var(--macro-protein), var(--macro-protein-lift));
+
+  /* Metric family. The app leaned almost entirely on the primary green, which
+     made every number look like the same number. Each tracked metric now owns
+     a hue, distinct from the others and from the accent, so a glance at the
+     dashboard tells you what you are looking at before you read the label.
+     
+     Three tokens per metric, for the same reason the accent has two ramps:
+     --m-x       vivid, for fills, bars and gradients
+     --m-x-ink   darkened to at least 4.5:1 on white, for text and icons
+     --m-x-soft  a pale tint, for bar tracks and card washes
+     Amber and gold are simply not readable as text at their vivid value. */
+  --m-calories: #D9743F;
+  --m-calories-lift: #EFA274;
+  --m-calories-soft: #FDF0E8;
+  --m-calories-ink: #C0561F;
+
+  --m-protein: #7C5CA8;
+  --m-protein-lift: #A68BC9;
+  --m-protein-soft: #F2EDF9;
+  --m-protein-ink: #7C59AB;
+
+  --m-water: #3E8ECC;
+  --m-water-lift: #7FB8E4;
+  --m-water-soft: #E9F2FB;
+  --m-water-ink: #2A7BB9;
+
+  --m-steps: #C49B45;
+  --m-steps-lift: #E0C077;
+  --m-steps-soft: #FBF4E4;
+  --m-steps-ink: #937129;
+
+  --m-streak: #E0952F;
+  --m-streak-lift: #F3BE72;
+  --m-streak-soft: #FDF3E4;
+  --m-streak-ink: #A76813;
+
+  --grad-calories: linear-gradient(135deg, var(--m-calories), var(--m-calories-lift));
+  --grad-metric-protein: linear-gradient(135deg, var(--m-protein), var(--m-protein-lift));
+  --grad-water: linear-gradient(135deg, var(--m-water), var(--m-water-lift));
+  --grad-steps: linear-gradient(135deg, var(--m-steps), var(--m-steps-lift));
+  --grad-streak: linear-gradient(135deg, var(--m-streak), var(--m-streak-lift));
   --grad-carbs: linear-gradient(90deg, var(--macro-carbs), var(--macro-carbs-lift));
   --grad-fat: linear-gradient(90deg, var(--macro-fat), var(--macro-fat-lift));
   --grad-fiber: linear-gradient(90deg, var(--macro-fiber), var(--macro-fiber-lift));
@@ -181,14 +222,40 @@ body.dark {
 
   /* Lifted on dark so the bars keep their punch against a dark track. The
      gradient tokens above reference these, so they follow automatically. */
-  --macro-protein: #6BA6CF;
-  --macro-protein-lift: #9CC9E8;
+  --macro-protein: #9E7FC9;
+  --macro-protein-lift: #BFA7DE;
   --macro-carbs: #D9B15C;
   --macro-carbs-lift: #EFCF8D;
   --macro-fat: #D98876;
   --macro-fat-lift: #EFAE9F;
   --macro-fiber: #5BA889;
   --macro-fiber-lift: #8ACCAE;
+
+  /* Metrics, lifted for a dark background with deep rather than pale tints. */
+  --m-calories: #E8905C;
+  --m-calories-lift: #F2B48E;
+  --m-calories-soft: #241710;
+  --m-calories-ink: #E8905C;
+
+  --m-protein: #9E7FC9;
+  --m-protein-lift: #BFA7DE;
+  --m-protein-soft: #1B1626;
+  --m-protein-ink: #9E7FC9;
+
+  --m-water: #5EA8DE;
+  --m-water-lift: #93C8EC;
+  --m-water-soft: #10202C;
+  --m-water-ink: #5EA8DE;
+
+  --m-steps: #D9B15C;
+  --m-steps-lift: #EFCF8D;
+  --m-steps-soft: #241E10;
+  --m-steps-ink: #D9B15C;
+
+  --m-streak: #F0A94A;
+  --m-streak-lift: #F7CB8C;
+  --m-streak-soft: #261B0F;
+  --m-streak-ink: #F0A94A;
 
   --accent: var(--color-success);
   --accent-soft: var(--color-success-soft);
