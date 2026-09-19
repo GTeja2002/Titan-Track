@@ -4,6 +4,7 @@ import { calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCaloriesFo
 import { pushStateToSupabase, pullStateFromSupabase } from './supabaseClient.js';
 import { getLocalDateString } from './date.js';
 import { DEFAULT_GOAL } from './goals.js';
+import { accentAttribute } from './accents.js';
 import { readLocal, readLocalJSON, writeLocal, removeLocal } from './storage.js';
 import { recordUserLogin, updateUserDirectoryRecord } from './userLogger.js';
 
@@ -241,6 +242,14 @@ export function useAppState() {
   useEffect(() => {
     document.body.classList.toggle('dark', state.isDarkMode);
   }, [state.isDarkMode]);
+
+  // Accent theme. index.css keys off this attribute to re-point the primary
+  // colour tokens, so no component needs to know the theme changed.
+  useEffect(() => {
+    const attr = accentAttribute(state.accent);
+    if (attr) document.body.setAttribute('data-accent', attr);
+    else document.body.removeAttribute('data-accent');
+  }, [state.accent]);
 
   const ensureLog = useCallback((date) => {
     setState((prev) => {

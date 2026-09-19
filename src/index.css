@@ -715,3 +715,49 @@ input:focus {
   color: var(--primary);
   opacity: 0.85;
 }
+/* ---------------- Accent themes ----------------
+ * Self-expression costs almost nothing here and matters to this audience.
+ * Each theme only re-points the primary tokens; everything else in the app
+ * already reads from them, so nothing else has to change.
+ *
+ * Applied as data-accent on <body> from state.accent.
+ */
+body[data-accent='ocean'] {
+  --color-primary: #1B5E7E;
+  --color-primary-hover: #17506B;
+  --color-primary-pressed: #113D52;
+  --color-primary-soft: #E8F2F8;
+  --primary-glow: rgba(27, 94, 126, 0.18);
+}
+
+body[data-accent='plum'] {
+  --color-primary: #6B4A7E;
+  --color-primary-hover: #5B3E6B;
+  --color-primary-pressed: #482F57;
+  --color-primary-soft: #F2ECF6;
+  --primary-glow: rgba(107, 74, 126, 0.18);
+}
+
+body[data-accent='ember'] {
+  --color-primary: #B4542F;
+  --color-primary-hover: #9C4728;
+  --color-primary-pressed: #7E3820;
+  --color-primary-soft: #FBEDE6;
+  --primary-glow: rgba(180, 84, 47, 0.18);
+}
+
+body[data-accent='midnight'] {
+  --color-primary: #2F3E7E;
+  --color-primary-hover: #28356B;
+  --color-primary-pressed: #1F2A55;
+  --color-primary-soft: #EBEEF8;
+  --primary-glow: rgba(47, 62, 126, 0.18);
+}
+
+body[data-accent='rose'] {
+  --color-primary: #A8446A;
+  --color-primary-hover: #91395B;
+  --color-primary-pressed: #752E4A;
+  --color-primary-soft: #FBEAF0;
+  --primary-glow: rgba(168, 68, 106, 0.18);
+}

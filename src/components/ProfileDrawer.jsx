@@ -1,12 +1,14 @@
 /* ---------------- components/ProfileDrawer.jsx ---------------- */
 
 import { useState } from 'react';
-import { X, Users } from 'lucide-react';
+import { X, Users, Download, Upload } from 'lucide-react';
 import { calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCalories } from '../lib/calculations.js';
 import { getLocalDateString } from '../lib/date.js';
 import { UserDirectoryModal } from './UserDirectoryModal.jsx';
 import { createEmptyLog } from '../lib/useAppState.js';
 import { goalsForAge } from '../lib/goals.js';
+import { ACCENTS, DEFAULT_ACCENT } from '../lib/accents.js';
+import { buildBackup, backupFilename, parseBackup, describeBackup } from '../lib/backup.js';
 
 /** A labelled on/off row. Used for the display and privacy switches, which
  *  are the controls that decide how much of this app is about your body. */
@@ -37,8 +39,66 @@ function ToggleRow({ label, hint, checked, onChange }) {
 
 export function ProfileDrawer({ state, update, isOpen, onClose }) {
   const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);
+  const [backupMessage, setBackupMessage] = useState('');
+  const [backupError, setBackupError] = useState(false);
 
+  // Every hook must run before this early return, or the hook order changes
+  // between renders when the drawer opens and closes.
   if (!isOpen) return null;
+
+  const handleExportBackup = () => {
+    try {
+      const blob = new Blob([JSON.stringify(buildBackup(state), null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = backupFilename(state.currentDate);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      setBackupError(false);
+      setBackupMessage('Backup downloaded.');
+    } catch (err) {
+      setBackupError(true);
+      setBackupMessage(`Could not export: ${err.message}`);
+    }
+  };
+
+  const handleImportBackup = (e) => {
+    const file = e.target.files && e.target.files[0];
+    // Reset the input so re-picking the same file fires change again.
+    e.target.value = '';
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onerror = () => {
+      setBackupError(true);
+      setBackupMessage('Could not read that file.');
+    };
+    reader.onload = () => {
+      const result = parseBackup(String(reader.result));
+      if (!result.ok) {
+        setBackupError(true);
+        setBackupMessage(result.error);
+        return;
+      }
+      const { days, meals } = describeBackup(result.data);
+      const ok = window.confirm(
+        `Restore ${days} day${days === 1 ? '' : 's'} of history (${meals} logged item${meals === 1 ? '' : 's'})?
+
+` +
+        'This replaces everything currently in this profile.'
+      );
+      if (!ok) return;
+      // Keep the signed-in identity; a backup should never move data to a
+      // different account than the one restoring it.
+      update((prev) => ({ ...prev, ...result.data, email: prev.email, isOnboarded: true }));
+      setBackupError(false);
+      setBackupMessage(`Restored ${days} day${days === 1 ? '' : 's'} of history.`);
+    };
+    reader.readAsText(file);
+  };
 
   const handleFieldChange = (field, val) => {
     update((prev) => {
@@ -235,6 +295,60 @@ export function ProfileDrawer({ state, update, isOpen, onClose }) {
                         onChange={(v) => handleFieldChange('cycle', { ...(state.cycle || {}), enabled: v })}
                       />
                     </div>
+                  </div>
+
+                  {/* Accent theme */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Accent</label>
+                    <div className="flex flex-wrap gap-2">
+                      {ACCENTS.map((a) => {
+                        const active = (state.accent || DEFAULT_ACCENT) === a.id;
+                        return (
+                          <button
+                            key={a.id}
+                            type="button"
+                            onClick={() => handleFieldChange('accent', a.id)}
+                            title={a.label}
+                            aria-label={a.label}
+                            aria-pressed={active}
+                            className="h-8 w-8 rounded-full transition hover:scale-110 active:scale-95"
+                            style={{
+                              background: a.swatch,
+                              outline: active ? '2px solid var(--text)' : '1px solid var(--border)',
+                              outlineOffset: 2,
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Backup — everything lives in one browser, so a file the
+                      user controls is the only real portability guarantee. */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Your data</label>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={handleExportBackup}
+                        className="flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[11px] font-bold transition hover:scale-105 active:scale-95"
+                        style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-dim)' }}
+                      >
+                        <Download size={13} /> Export backup
+                      </button>
+                      <label
+                        className="flex cursor-pointer items-center gap-1.5 rounded-xl border px-3 py-2 text-[11px] font-bold transition hover:scale-105 active:scale-95"
+                        style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-dim)' }}
+                      >
+                        <Upload size={13} /> Restore
+                        <input type="file" accept="application/json,.json" className="hidden" onChange={handleImportBackup} />
+                      </label>
+                    </div>
+                    {backupMessage && (
+                      <p className="text-[10px]" style={{ color: backupError ? 'var(--danger)' : 'var(--primary)' }}>
+                        {backupMessage}
+                      </p>
+                    )}
                   </div>
 
                   {/* Gender selection */}
