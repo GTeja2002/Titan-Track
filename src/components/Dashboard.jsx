@@ -694,7 +694,10 @@ export function Dashboard({
                 // as a sequence of meals rather than four identical rows.
                 const slot = MEAL_SLOTS[mealIndex % MEAL_SLOTS.length];
                 const dot = `var(--m-${slot})`;
-                const dotWash = `var(--m-${slot}-wash)`;
+                // The tile is a gradient, not a flat tint: it runs from the
+                // lifted hue at the top to the full hue at the bottom, which
+                // is what gives the list its colour flow.
+                const tile = `linear-gradient(165deg, var(--m-${slot}-lift) 0%, var(--m-${slot}) 100%)`;
                 return (
                   <div
                     key={meal.name}
@@ -709,13 +712,13 @@ export function Dashboard({
                         which is what carries the colour through the list — a
                         bare photo left every row looking the same. */}
                     <span
-                      className="flex h-[54px] w-[66px] items-center justify-center rounded-xl shrink-0 overflow-hidden p-[3px]"
-                      style={{ background: dotWash }}
+                      className="flex h-[56px] w-[72px] items-center justify-center rounded-xl shrink-0 overflow-hidden p-[5px]"
+                      style={{ background: tile }}
                     >
                       <img
                         src={meal.image || '/assets/placeholders/food.png'}
                         alt={meal.name}
-                        className="h-full w-full rounded-[9px] object-cover"
+                        className="h-full w-full rounded-lg object-cover"
                         onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/placeholders/food.png"; }}
                       />
                     </span>
