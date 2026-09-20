@@ -4,7 +4,7 @@ import {
   Flame, Droplet, Footprints, Check, Play, ChevronLeft, ChevronRight,
   TrendingDown, TrendingUp, Trophy, ArrowRight, Bell, Search, Star,
   Plus, Trash2, Edit, X, CalendarDays, ChevronDown, Zap, Utensils, Database,
-  Scale, User, Dumbbell, BarChart3, Activity, Heart, Clock
+  Scale, User, Dumbbell, BarChart3, Activity, Heart, Clock, Leaf, Target
 } from 'lucide-react';
 import { calculateBMI, calculateBodyFat, calculateLeanMass, getBMICategory, calculateProteinTarget, normalizeWaterMl, FOOD_DB } from '../lib/calculations.js';
 import { getLocalDateString, shiftDateString } from '../lib/date.js';
@@ -266,6 +266,15 @@ export function Dashboard({
   const stepsPct = Math.min(100, Math.round((dailySteps / stepsTarget) * 100));
   const goalOverallProgress = Math.round((caloriesPct + waterPct + stepsPct) / 3) || 0;
 
+  // The hero shows "n / 4 completed", so count targets actually met rather
+  // than reusing the averaged percentage.
+  const goalsCompleted = [
+    totalCal >= calorieTarget,
+    totalProtein >= proteinTarget,
+    normalizeWaterMl(waterLog) >= waterTarget,
+    dailySteps >= stepsTarget,
+  ].filter(Boolean).length;
+
   // Personalized Plan Tab
   const [activePlanTab, setActivePlanTab] = useState('meals'); // 'meals' | 'workouts'
 
@@ -481,12 +490,12 @@ export function Dashboard({
       {/* 1. Greeting header */}
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <span className="text-3xl leading-none mt-0.5" aria-hidden="true">{greeting.emoji}</span>
+          <span className="text-2xl leading-none mt-0.5" aria-hidden="true">{greeting.emoji}</span>
           <div>
-            <h1 className="text-[30px] sm:text-[34px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>
+            <h1 className="text-[21px] sm:text-[23px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>
               {greeting.label},
             </h1>
-            <p className="text-sm mt-0.5" style={{ color: 'var(--text-dim)' }}>
+            <p className="text-[12.5px] mt-0.5" style={{ color: 'var(--text-dim)' }}>
               Keep going! Your healthy habits are making a difference.
             </p>
           </div>
@@ -523,136 +532,157 @@ export function Dashboard({
         </div>
       </header>
 
-      {/* 2. Hero card */}
-      <section className="panel-card grid grid-cols-1 lg:grid-cols-12 gap-6 items-center rounded-[26px] p-6 sm:p-8 relative overflow-hidden">
-        {/* Three separated washes rather than one green glow, so the hero has
-            some colour depth behind it without anything competing with the
-            text. Each is keyed to a metric hue already used below. */}
-        <div
-          className="absolute inset-0 z-0 pointer-events-none opacity-60"
-          style={{
-            background:
-              'radial-gradient(circle at 88% 12%, var(--m-streak-soft), transparent 42%),' +
-              'radial-gradient(circle at 62% 92%, var(--m-water-soft), transparent 38%),' +
-              'radial-gradient(circle at 8% 40%, var(--primary-soft), transparent 45%)',
-          }}
-        />
+      {/* 2. Hero, with the streak and body stats beside it */}
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
-        {/* relative z-10: the wash above is absolutely positioned, and
-            positioned elements paint after non-positioned inline content, so
-            without this it sits on top of the headline and button and washes
-            them out. */}
-        <div className="relative z-10 lg:col-span-6 space-y-4">
-          <span className="inline-block text-xs font-semibold px-3 py-1 bg-primary-soft text-primary rounded-full">
-            Welcome back, {displayName}! 👋
-          </span>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[var(--text)] tracking-tight leading-[1.1]">
-            You're building a <span className="text-flow">better, healthier</span> you.
-          </h1>
-          <p className="text-sm text-[var(--text-dim)] max-w-md">
-            Stay consistent, stay focused. Small steps today, big changes tomorrow.
-          </p>
+        <div className="lg:col-span-8 panel-card relative overflow-hidden rounded-[18px] p-6">
+          {/* Soft green field behind the hero, and the leaf artwork bleeding in
+              from the right behind the bowl. */}
+          <div
+            className="absolute inset-0 z-0 pointer-events-none"
+            style={{ background: 'linear-gradient(115deg, var(--w-body-tint) 0%, var(--surface-solid) 68%)' }}
+          />
+          <img
+            src="/assets/decor/leaf.png"
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-6 top-0 z-0 h-full w-[58%] object-contain opacity-60"
+          />
 
-          <div className="flex flex-wrap gap-3 pt-2">
-            <button
-              onClick={() => goToTab('Nutrition')}
-              className="flex items-center gap-2 rounded-2xl py-3 px-5 text-sm font-bold text-white transition hover:scale-105 active:scale-95 shadow-md"
-              style={{ background: 'var(--grad-primary-cta)', boxShadow: '0 8px 20px var(--primary-glow)' }}
-            >
-              Log Your Meal
-            </button>
-            <button
-              onClick={() => goToTab('Workouts')}
-              className="flex items-center gap-2 rounded-2xl py-3 px-5 text-sm font-bold border justify-center transition hover:scale-105 active:scale-95 bg-[var(--surface-solid)] border-[var(--border)] text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5"
-            >
-              <Play size={14} className="fill-current text-[var(--text-dim)]" />
-              <span>Start Workout</span>
-            </button>
-          </div>
-        </div>
+          <div className="relative z-10 grid grid-cols-1 sm:grid-cols-12 items-center gap-4">
+            <div className="sm:col-span-7">
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
+                style={{ background: 'var(--w-body-disc)', color: 'var(--w-body-ink)' }}
+              >
+                <Leaf size={12} /> Healthy Living
+              </span>
 
-        {/* Hero Banner Images & Overlay Floating widgets
-            The two badges used to be anchored to the same box as the bowl, so
-            they sat on top of the food and the right-hand one was clipped by
-            this section's overflow-hidden. The frame below is deliberately
-            wider than the bowl: the bowl centres inside it and the badges sit
-            in the margin, overlapping the artwork only slightly and never
-            leaving the card. */}
-        <div className="relative z-10 lg:col-span-6 flex justify-center items-center mt-6 lg:mt-0">
-          <div className="relative w-full max-w-md px-10 sm:px-14 py-10 flex justify-center items-center">
-            {/* Main Salad Bowl image from projects assets */}
-            <div className="relative w-52 h-52 sm:w-64 sm:h-64 rounded-full flex items-center justify-center p-3 animate-scale-in"
-              style={{ background: 'var(--grad-primary-soft)' }}>
+              <h1 className="mt-2.5 text-[22px] sm:text-[26px] font-black tracking-tight leading-[1.15]" style={{ color: 'var(--text)' }}>
+                You&apos;re building a better,<br />
+                <span style={{ color: 'var(--primary)' }}>healthier</span> you.
+              </h1>
+
+              <p className="mt-2 max-w-[300px] text-[12.5px] leading-snug" style={{ color: 'var(--text-dim)' }}>
+                Stay consistent, stay focused. Small steps today, big changes tomorrow.
+              </p>
+
+              <div className="mt-4 flex flex-wrap gap-2.5">
+                <button
+                  onClick={() => goToTab('Nutrition')}
+                  className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-bold text-white transition hover:brightness-105 active:scale-95"
+                  style={{ background: 'var(--grad-primary-cta)', boxShadow: '0 6px 16px var(--primary-glow)' }}
+                >
+                  <Utensils size={15} />
+                  Log Your Meal
+                </button>
+                <button
+                  onClick={() => goToTab('Workouts')}
+                  className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-bold transition hover:brightness-95 active:scale-95"
+                  style={{ background: 'var(--surface-solid)', color: 'var(--text)', border: '1px solid var(--border)' }}
+                >
+                  <Play size={13} className="fill-current" />
+                  Start Workout
+                </button>
+              </div>
+            </div>
+
+            <div className="relative sm:col-span-5 flex items-center justify-center">
               <img
                 src="/assets/homepage/healthy_bowl.png"
-                alt="Healthy food selection"
-                className="w-full h-full object-contain rounded-full shadow-2xl transition hover:rotate-12 duration-1000"
-                style={{ filter: 'drop-shadow(0 15px 25px rgba(0, 0, 0, 0.15))' }}
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = "/assets/placeholders/food.png";
-                }}
+                alt=""
+                aria-hidden="true"
+                className="h-[168px] w-[168px] object-contain"
+                style={{ filter: 'drop-shadow(0 12px 22px rgba(0,0,0,0.16))' }}
+                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/placeholders/food.png"; }}
               />
             </div>
+          </div>
 
-            {/* Streak — amber, its own hue rather than another green card */}
-            <div
-              className="absolute top-0 left-0 rounded-2xl p-3.5 flex flex-col shadow-lg hover:scale-105 transition duration-300 border"
-              style={{
-                background: 'var(--surface-solid)',
-                borderColor: 'var(--m-streak-soft)',
-                boxShadow: '0 10px 26px rgba(224, 149, 47, 0.18)',
-              }}
-            >
-              <span className="text-[10px] uppercase font-bold tracking-wider flex items-center gap-1" style={{ color: 'var(--m-streak-ink)' }}>
-                🔥 Streak
+          {/* Today's goal, pinned to the lower right of the hero */}
+          <button
+            type="button"
+            onClick={() => goToTab('Progress')}
+            className="relative z-10 mt-3 ml-auto flex w-fit items-center gap-2.5 rounded-xl px-3 py-2 text-left transition hover:brightness-[0.98] active:scale-95 sm:absolute sm:bottom-5 sm:right-5 sm:mt-0"
+            style={{ background: 'var(--surface-solid)', border: '1px solid var(--border)', boxShadow: '0 6px 18px rgba(20,35,50,0.10)' }}
+          >
+            <div className="relative flex h-10 w-10 items-center justify-center shrink-0">
+              <svg className="h-10 w-10 -rotate-90">
+                <circle cx="20" cy="20" r="16" stroke="var(--color-border-subtle)" strokeWidth="3.5" fill="none" />
+                <circle
+                  cx="20" cy="20" r="16"
+                  stroke="var(--primary)" strokeWidth="3.5" strokeLinecap="round" fill="none"
+                  strokeDasharray={2 * Math.PI * 16}
+                  strokeDashoffset={2 * Math.PI * 16 * (1 - Math.max(0.02, goalOverallProgress / 100))}
+                  className="transition-all duration-1000"
+                />
+              </svg>
+              <span className="absolute text-[10px] font-black" style={{ color: 'var(--text)' }}>{goalOverallProgress}%</span>
+            </div>
+            <div>
+              <span className="flex items-center gap-1 text-[9.5px] font-black uppercase tracking-[0.08em]" style={{ color: 'var(--text-dim)' }}>
+                <Target size={10} /> Today&apos;s Goal
               </span>
-              <span className="text-3xl font-extrabold tracking-tight mt-0.5" style={{ color: 'var(--m-streak-ink)' }}>{streakDays}</span>
-              <span className="text-[10px] font-medium" style={{ color: 'var(--text-dim)' }}>Days Active</span>
+              <p className="mt-0.5 text-[11.5px] font-bold" style={{ color: 'var(--text)' }}>
+                {goalsCompleted} / 4 completed
+              </p>
             </div>
+            <ChevronRight size={15} style={{ color: 'var(--text-faint)' }} />
+          </button>
+        </div>
 
-            {/* Today's goal — sits in the frame's bottom margin, fully inside
-                the card, with the ring running the accent gradient. */}
-            <div
-              className="absolute bottom-0 right-0 rounded-2xl p-3.5 flex items-center gap-2.5 shadow-lg hover:scale-105 transition duration-300 border"
-              style={{
-                background: 'var(--surface-solid)',
-                borderColor: 'var(--border)',
-                boxShadow: '0 10px 26px rgba(0, 0, 0, 0.10)',
-              }}
-            >
-              <div className="relative flex items-center justify-center">
-                <svg className="w-12 h-12 -rotate-90">
-                  <defs>
-                    <linearGradient id="hero-goal-flow" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="var(--primary)" />
-                      <stop offset="100%" stopColor="var(--primary-lift)" />
-                    </linearGradient>
-                  </defs>
-                  <circle cx="24" cy="24" r="20" stroke="var(--color-border-subtle)" strokeWidth="4" fill="transparent" />
-                  <circle
-                    cx="24"
-                    cy="24"
-                    r="20"
-                    stroke="url(#hero-goal-flow)"
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                    fill="transparent"
-                    strokeDasharray={2 * Math.PI * 20}
-                    strokeDashoffset={2 * Math.PI * 20 * (1 - Math.max(0.05, goalOverallProgress / 100))}
-                    className="transition-all duration-1000"
-                  />
-                </svg>
-                <div className="absolute text-[11px] font-black" style={{ color: 'var(--text)' }}>{goalOverallProgress}%</div>
-              </div>
-              <div>
-                <span className="text-[9px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-dim)' }}>Today's Goal</span>
-                <p className="text-xs font-extrabold mt-0.5" style={{ color: 'var(--text)' }}>Completed</p>
-              </div>
+        {/* Right column: streak, then body stats */}
+        <div className="lg:col-span-4 flex flex-col gap-4">
+          <div
+            className="rounded-[18px] p-5"
+            style={{ background: 'var(--m-streak-soft)', border: '1px solid var(--m-streak-edge, var(--border))' }}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.07em]" style={{ color: 'var(--m-streak-ink)' }}>
+                <Flame size={14} /> Current Streak
+              </span>
+              <CalendarDays size={16} style={{ color: 'var(--m-streak-ink)' }} />
             </div>
+            <p className="mt-2 text-[28px] font-black leading-none tracking-tight" style={{ color: 'var(--text)' }}>
+              {streakDays} <span className="text-[15px] font-bold" style={{ color: 'var(--text-dim)' }}>day{streakDays === 1 ? '' : 's'}</span>
+            </p>
+            <p className="mt-1 text-[12px] font-medium" style={{ color: 'var(--text-dim)' }}>Keep it going!</p>
+          </div>
+
+          <div className="panel-card flex-1 rounded-[18px] p-5">
+            <h3 className="text-[15px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>Body Stats</h3>
+            <p className="text-[11.5px] font-medium mt-0.5 mb-1" style={{ color: 'var(--text-dim)' }}>Keep pushing!</p>
+
+            {BODY_STAT_ROWS({ activeWeight, weightDiffStr, bodyFatPercent, bfDiffStr, leanMass, leanDiffStr, bmi, bmiCategoryLabel }).map((row, i, arr) => {
+              const Icon = row.icon;
+              return (
+                <button
+                  key={row.label}
+                  type="button"
+                  onClick={() => goToTab('Progress')}
+                  aria-label={`${row.label}: ${row.value}. Open Progress`}
+                  className="flex w-full items-center gap-2.5 py-2.5 text-left transition hover:opacity-80"
+                  style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}
+                >
+                  <Icon size={16} style={{ color: `var(--m-${row.hue}-ink)` }} strokeWidth={2.3} className="shrink-0" />
+                  <span className="flex-1 text-[12.5px] font-semibold" style={{ color: 'var(--text)' }}>{row.label}</span>
+                  <span className="text-[13px] font-black" style={{ color: 'var(--text)' }}>{row.value}</span>
+                  <span
+                    className="rounded-full px-1.5 py-0.5 text-[10px] font-bold whitespace-nowrap"
+                    style={{
+                      background: row.alert ? 'var(--danger-soft)' : 'var(--primary-soft)',
+                      color: row.alert ? 'var(--danger)' : 'var(--primary)',
+                    }}
+                  >
+                    {row.badge}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
+
 
       {/* 3. The four headline numbers. No section heading above them: they
           are the first thing under the greeting and label themselves. */}
@@ -708,12 +738,12 @@ export function Dashboard({
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
 
         {/* Left Column: Your Daily Meal Plan (Connected to Nutrition & Food Log) */}
-        <div className="lg:col-span-7 panel-card rounded-[22px] p-7 text-left">
+        <div className="lg:col-span-7 panel-card rounded-[18px] p-5 text-left">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
             <div className="flex items-start gap-3">
               <Utensils size={28} style={{ color: 'var(--primary)' }} className="mt-1 shrink-0" strokeWidth={2.2} />
               <div>
-                <h3 className="text-[24px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>Your Daily Meals</h3>
+                <h3 className="text-[19px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>Your Daily Meals</h3>
                 <p className="text-[13.5px] font-medium mt-1" style={{ color: 'var(--text-dim)' }}>
                   Planned meals for your day. Logged meals sync directly with your Nutrition target.
                 </p>
@@ -740,7 +770,7 @@ export function Dashboard({
                   type="button"
                   onClick={() => setSelectedPlanWeekday(day)}
                   aria-current={isSelected ? 'true' : undefined}
-                  className="day-pill text-[13px] font-bold px-[18px] py-2 rounded-full transition"
+                  className="day-pill text-[12px] font-bold px-[15px] py-1.5 rounded-full transition"
                   style={isSelected
                     ? { background: 'var(--primary)', color: '#fff', boxShadow: '0 4px 12px var(--primary-glow)' }
                     : {
@@ -777,7 +807,7 @@ export function Dashboard({
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggleMeal(meal); }
                     }}
-                    className="meal-row flex items-center gap-4 rounded-[17px] px-4 py-3.5 transition cursor-pointer"
+                    className="meal-row flex items-center gap-3.5 rounded-[14px] px-3.5 py-2.5 transition cursor-pointer"
                     style={{
                       background: 'var(--surface-solid)',
                       border: `1px solid ${logged ? 'var(--primary)' : 'var(--border)'}`,
@@ -789,7 +819,7 @@ export function Dashboard({
                     <img
                       src={meal.image || '/assets/placeholders/food.png'}
                       alt={meal.name}
-                      className="h-[60px] w-[60px] rounded-[13px] object-cover shrink-0"
+                      className="h-[50px] w-[50px] rounded-[11px] object-cover shrink-0"
                       style={{ boxShadow: `0 0 0 2px ${dot}` }}
                       onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/placeholders/food.png"; }}
                     />
@@ -797,17 +827,17 @@ export function Dashboard({
                     <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: dot }} aria-hidden="true" />
 
                     <div className="flex-1 min-w-0">
-                      <p className="text-[16px] font-bold truncate leading-snug" style={{ color: 'var(--text)' }}>
+                      <p className="text-[14px] font-bold truncate leading-snug" style={{ color: 'var(--text)' }}>
                         {meal.name}
                       </p>
-                      <p className="text-[13.5px] font-medium mt-1" style={{ color: 'var(--text-dim)' }}>
+                      <p className="text-[12px] font-medium mt-0.5" style={{ color: 'var(--text-dim)' }}>
                         {meal.cal} kcal
                       </p>
                     </div>
 
                     {/* Logged state */}
                     <span
-                      className="flex h-[30px] w-[30px] items-center justify-center rounded-full shrink-0 transition"
+                      className="flex h-[26px] w-[26px] items-center justify-center rounded-full shrink-0 transition"
                       style={{
                         background: logged ? 'var(--primary)' : 'var(--surface-solid)',
                         border: `1.5px solid ${logged ? 'var(--primary)' : 'var(--border-strong)'}`,
@@ -823,7 +853,7 @@ export function Dashboard({
                       type="button"
                       onClick={(e) => { e.stopPropagation(); goToTab('Nutrition'); }}
                       aria-label={`Open ${meal.name} in Nutrition`}
-                      className="flex h-[38px] w-[38px] items-center justify-center rounded-full shrink-0 transition hover:brightness-95 active:scale-95"
+                      className="flex h-[32px] w-[32px] items-center justify-center rounded-full shrink-0 transition hover:brightness-95 active:scale-95"
                       style={{ background: 'var(--chip-bg)' }}
                     >
                       <ChevronRight size={19} style={{ color: 'var(--text)' }} />
@@ -836,7 +866,7 @@ export function Dashboard({
             <button
               onClick={() => setIsFullMenuExpanded(!isFullMenuExpanded)}
               aria-expanded={isFullMenuExpanded}
-              className="mt-[15px] flex h-[46px] w-full items-center justify-center gap-2.5 rounded-[13px] text-[14.5px] font-semibold transition hover:brightness-[0.97] active:scale-[0.99]"
+              className="mt-3 flex h-[40px] w-full items-center justify-center gap-2.5 rounded-[13px] text-[13px] font-semibold transition hover:brightness-[0.97] active:scale-[0.99]"
               style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }}
             >
               <Database size={18} />
@@ -900,7 +930,7 @@ export function Dashboard({
           {/* The photo is the card, not a thumbnail beside it: it bleeds to
               the edges and a dark gradient runs in from the left so the text
               keeps its contrast over the bright sunrise. */}
-          <div className="motivation-card relative overflow-hidden rounded-[26px] min-h-[178px] group">
+          <div className="motivation-card relative overflow-hidden rounded-[18px] min-h-[150px] group">
             <img
               src="/assets/homepage/running.png"
               alt=""
@@ -936,15 +966,15 @@ export function Dashboard({
 
       </section>
 
-      {/* 5. Your Progress + Body Stats */}
+      {/* 5. Your Progress */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
 
         {/* Weight trend */}
-        <div className="lg:col-span-7 panel-card rounded-[22px] p-6 text-left">
-          <div className="flex items-start justify-between gap-3 mb-5">
+        <div className="lg:col-span-12 panel-card rounded-[18px] p-5 text-left">
+          <div className="flex items-start justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full shrink-0" style={{ background: 'var(--primary-soft)' }}>
-                <TrendingUp size={19} style={{ color: 'var(--primary)' }} strokeWidth={2.4} />
+              <span className="flex h-9 w-9 items-center justify-center rounded-full shrink-0" style={{ background: 'var(--primary-soft)' }}>
+                <TrendingUp size={17} style={{ color: 'var(--primary)' }} strokeWidth={2.4} />
               </span>
               <div>
                 <h3 className="text-[17px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>Your Progress</h3>
@@ -1052,59 +1082,6 @@ export function Dashboard({
           </div>
         </div>
 
-        {/* Body stats */}
-        <div className="lg:col-span-5 panel-card rounded-[22px] p-6 text-left flex flex-col">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full shrink-0" style={{ background: 'var(--chip-bg)' }}>
-              <User size={19} style={{ color: 'var(--text)' }} strokeWidth={2.2} />
-            </span>
-            <div>
-              <h3 className="text-[17px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>Body Stats</h3>
-              <p className="text-[12.5px] font-medium mt-0.5" style={{ color: 'var(--text-dim)' }}>Keep pushing!</p>
-            </div>
-          </div>
-
-          <div className="flex-1 flex flex-col justify-center">
-            {BODY_STAT_ROWS({ activeWeight, weightDiffStr, bodyFatPercent, bfDiffStr, leanMass, leanDiffStr, bmi, bmiCategoryLabel }).map((row, i, arr) => {
-              const Icon = row.icon;
-              return (
-                <button
-                  key={row.label}
-                  type="button"
-                  onClick={() => goToTab('Progress')}
-                  aria-label={`${row.label}: ${row.value}. Open Progress`}
-                  className="flex w-full items-center gap-3 py-3 text-left transition hover:opacity-80"
-                  style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}
-                >
-                  <span
-                    className="flex h-10 w-10 items-center justify-center rounded-xl shrink-0"
-                    style={{ background: `var(--m-${row.hue}-soft)` }}
-                  >
-                    <Icon size={18} style={{ color: `var(--m-${row.hue}-ink)` }} strokeWidth={2.2} />
-                  </span>
-
-                  <span className="flex-1 text-[14px] font-semibold" style={{ color: 'var(--text)' }}>
-                    {row.label}
-                  </span>
-
-                  <span className="text-[15px] font-black" style={{ color: 'var(--text)' }}>{row.value}</span>
-
-                  <span
-                    className="rounded-full px-2 py-0.5 text-[11px] font-bold whitespace-nowrap"
-                    style={{
-                      background: row.alert ? 'var(--danger-soft)' : 'var(--primary-soft)',
-                      color: row.alert ? 'var(--danger)' : 'var(--primary)',
-                    }}
-                  >
-                    {row.badge}
-                  </span>
-
-                  <ChevronRight size={17} style={{ color: 'var(--text-faint)' }} className="shrink-0" />
-                </button>
-              );
-            })}
-          </div>
-        </div>
       </section>
 
 
@@ -1114,7 +1091,7 @@ export function Dashboard({
           <div className="flex items-center gap-3">
             <Utensils size={26} style={{ color: 'var(--primary)' }} className="shrink-0" strokeWidth={2.2} />
             <div>
-              <h2 className="text-[19px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>
+              <h2 className="text-[18px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>
                 Healthy Recipes for You
               </h2>
               <p className="text-[12.5px] font-medium mt-0.5" style={{ color: 'var(--text-dim)' }}>

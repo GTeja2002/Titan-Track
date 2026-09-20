@@ -23,7 +23,7 @@ export function MetricCard({
 
   return (
     <div
-      className="metric-card relative rounded-[22px] p-5 overflow-hidden transition duration-300 hover:-translate-y-1"
+      className="metric-card relative rounded-[16px] p-4 overflow-hidden transition duration-300 hover:-translate-y-1"
       style={{
         // The wash, not the pale soft tint: the card should read as its own
         // colour at a glance, which a near-white tint does not.
@@ -34,16 +34,16 @@ export function MetricCard({
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-3">
           <span
-            className="flex h-12 w-12 items-center justify-center rounded-2xl shrink-0"
+            className="flex h-10 w-10 items-center justify-center rounded-xl shrink-0"
             style={{
               background: `var(--grad-${metric === 'protein' ? 'metric-protein' : metric})`,
               boxShadow: `0 8px 18px var(--m-${metric}-glow)`,
             }}
           >
-            <Icon size={22} color="#fff" strokeWidth={2.4} />
+            <Icon size={19} color="#fff" strokeWidth={2.4} />
           </span>
           <span
-            className="text-[11px] font-black uppercase tracking-[0.08em]"
+            className="text-[10px] font-black uppercase tracking-[0.07em]"
             style={{ color: `var(--m-${metric}-ink)` }}
           >
             {label}
@@ -55,29 +55,29 @@ export function MetricCard({
             type="button"
             onClick={onOpen}
             aria-label={`Open ${label}`}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition hover:scale-110 active:scale-95"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition hover:scale-110 active:scale-95"
             style={{ background: 'var(--surface-solid)', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
           >
-            <ChevronRight size={16} style={{ color: `var(--m-${metric}-ink)` }} />
+            <ChevronRight size={14} style={{ color: `var(--m-${metric}-ink)` }} />
           </button>
         )}
       </div>
 
-      <div className="mt-3 flex items-baseline gap-1.5">
-        <span className="text-[34px] font-black leading-none tracking-tight" style={{ color: 'var(--text)' }}>
+      <div className="mt-2.5 flex items-baseline gap-1.5">
+        <span className="text-[26px] font-black leading-none tracking-tight" style={{ color: 'var(--text)' }}>
           {v(value)}{unit}
         </span>
-        <span className="text-sm font-semibold" style={{ color: 'var(--text-dim)' }}>
+        <span className="text-[12.5px] font-semibold" style={{ color: 'var(--text-dim)' }}>
           / {v(target)}{unit ? ` ${unit}` : ''}
         </span>
       </div>
 
-      <p className="mt-1.5 text-xs font-medium" style={{ color: 'var(--text-dim)' }}>
+      <p className="mt-1 text-[11.5px] font-medium" style={{ color: 'var(--text-dim)' }}>
         {footnote}
       </p>
 
       <div
-        className="mt-3.5 h-2 w-full rounded-full overflow-hidden"
+        className="mt-3 h-1.5 w-full rounded-full overflow-hidden"
         style={{ background: 'var(--m-' + metric + '-track)' }}
       >
         <div
