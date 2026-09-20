@@ -110,11 +110,11 @@ export function HealthWellnessInsights({ state, update }) {
       : 'Logging your meals more consistently will give you a clearer picture.';
 
   return (
-    <div className="space-y-6 animate-fade-in pb-4">
+    <div className="space-y-4 animate-fade-in pb-4">
       <div className="flex items-start gap-2.5">
         <Leaf size={20} style={{ color: 'var(--w-body-accent)' }} className="mt-0.5 shrink-0" strokeWidth={2.2} />
         <div>
-          <h2 className="text-[19px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>
+          <h2 className="text-[17px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>
             Health &amp; Wellness Insights
           </h2>
           <p className="mt-1 text-[13px] leading-snug" style={{ color: 'var(--text-dim)' }}>
@@ -124,7 +124,7 @@ export function HealthWellnessInsights({ state, update }) {
       </div>
 
       {/* Row 1: the three headline cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
         {/* Body Snapshot — the real photo from Body Composition, shown here for
             context. No risk badges: purely visual. */}
         <WellnessCard
@@ -164,7 +164,7 @@ export function HealthWellnessInsights({ state, update }) {
           footnote="Lifestyle-based estimate, not a medical measurement."
         >
           <div className="flex flex-1 flex-col items-center justify-center py-3">
-            <span className="text-[54px] font-black leading-none tracking-tight" style={{ color: 'var(--text)' }}>
+            <span className="text-[42px] font-black leading-none tracking-tight" style={{ color: 'var(--text)' }}>
               {fitnessAge}
             </span>
             <span className="mt-1.5 text-[13px] font-medium" style={{ color: 'var(--text-dim)' }}>years</span>
@@ -180,7 +180,7 @@ export function HealthWellnessInsights({ state, update }) {
         >
           <div className="flex flex-1 flex-col items-center justify-center py-3">
             <div className="flex items-baseline gap-1">
-              <span className="text-[54px] font-black leading-none tracking-tight" style={{ color: 'var(--text)' }}>
+              <span className="text-[42px] font-black leading-none tracking-tight" style={{ color: 'var(--text)' }}>
                 {recoveryScore}
               </span>
               <span className="text-[15px] font-semibold" style={{ color: 'var(--text-dim)' }}>/100</span>
@@ -193,7 +193,7 @@ export function HealthWellnessInsights({ state, update }) {
       </div>
 
       {/* Row 2: the four supporting cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         <WellnessCard
           hue="heart"
           icon={<HeartPulse size={18} strokeWidth={2.2} />}
@@ -277,7 +277,7 @@ export function HealthWellnessInsights({ state, update }) {
       </div>
 
       {/* Row 3: readings the user enters themselves */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <WellnessCard
           hue="recovery"
           icon={<ShieldAlert size={18} strokeWidth={2.2} />}

@@ -234,7 +234,7 @@ export default function App() {
 
       {/* 3. MAIN CONTENT LAYER */}
       <div className="flex-1 lg:pl-[268px] flex flex-col min-h-screen transition-all duration-300">
-        <div className="p-4 sm:p-6 lg:p-8 flex-1 flex flex-col w-full mx-auto">
+        <div className="p-4 sm:p-5 lg:p-6 flex-1 flex flex-col w-full mx-auto">
 
           {/* SIMPLIFIED TOP HEADER */}
           <header className="mb-6 flex items-center justify-between gap-4 p-3 sm:px-6 rounded-3xl glass border shadow-sm animate-fade-in" style={{ borderColor: 'var(--border)' }}>

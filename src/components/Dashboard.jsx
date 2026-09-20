@@ -2,9 +2,9 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Flame, Droplet, Footprints, Check, Play, ChevronLeft, ChevronRight,
-  TrendingDown, TrendingUp, Trophy, ArrowRight, Bell, Search, Star,
-  Plus, Trash2, Edit, X, CalendarDays, ChevronDown, Zap, Utensils, Database,
-  Scale, User, Dumbbell, BarChart3, Activity, Heart, Clock, Leaf, Target
+  TrendingUp, ArrowRight, Bell, Star, Trash2, X, CalendarDays, ChevronDown,
+  Zap, Utensils, Database, Scale, Dumbbell, BarChart3, Heart, Clock,
+  Leaf, Target
 } from 'lucide-react';
 import { calculateBMI, calculateBodyFat, calculateLeanMass, getBMICategory, calculateProteinTarget, normalizeWaterMl, FOOD_DB } from '../lib/calculations.js';
 import { getLocalDateString, shiftDateString } from '../lib/date.js';
@@ -21,11 +21,11 @@ import { AchievementsCard } from './AchievementsCard.jsx';
  *  four near-identical blocks of markup, and each row names the metric hue its
  *  icon and badge are drawn from. */
 const BODY_STAT_ROWS = ({ activeWeight, weightDiffStr, bodyFatPercent, bfDiffStr, leanMass, leanDiffStr, bmi, bmiCategoryLabel }) => [
-  { label: 'Weight', icon: Scale, hue: 'steps', value: `${activeWeight} kg`, badge: weightDiffStr },
-  { label: 'Body Fat', icon: Activity, hue: 'calories', value: `${bodyFatPercent}%`, badge: bfDiffStr },
-  { label: 'Muscle Mass', icon: Dumbbell, hue: 'streak', value: `${leanMass} kg`, badge: leanDiffStr },
+  { label: 'Weight', icon: Scale, ink: 'var(--m-water-ink)', value: `${activeWeight} kg`, badge: weightDiffStr },
+  { label: 'Body Fat', icon: Flame, ink: 'var(--m-calories-ink)', value: `${bodyFatPercent}%`, badge: bfDiffStr },
+  { label: 'Muscle Mass', icon: Dumbbell, ink: 'var(--m-protein-ink)', value: `${leanMass} kg`, badge: leanDiffStr },
   {
-    label: 'BMI', icon: BarChart3, hue: 'protein',
+    label: 'BMI', icon: BarChart3, ink: 'var(--w-heart-ink)',
     value: bmi > 0 ? bmi.toFixed(1) : '——',
     badge: bmiCategoryLabel,
     alert: /obese|over|under/i.test(bmiCategoryLabel || ''),
@@ -486,13 +486,13 @@ export function Dashboard({
   // Dynamic progress indicators from logs
 
   return (
-    <div className="space-y-8 animate-fade-in pb-12">
+    <div className="space-y-5 animate-fade-in pb-10">
       {/* 1. Greeting header */}
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-3">
           <span className="text-2xl leading-none mt-0.5" aria-hidden="true">{greeting.emoji}</span>
           <div>
-            <h1 className="text-[21px] sm:text-[23px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>
+            <h1 className="text-[20px] sm:text-[22px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>
               {greeting.label},
             </h1>
             <p className="text-[12.5px] mt-0.5" style={{ color: 'var(--text-dim)' }}>
@@ -535,7 +535,7 @@ export function Dashboard({
       {/* 2. Hero, with the streak and body stats beside it */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
-        <div className="lg:col-span-8 panel-card relative overflow-hidden rounded-[18px] p-6">
+        <div className="lg:col-span-8 panel-card relative overflow-hidden rounded-[16px] p-5">
           {/* Soft green field behind the hero, and the leaf artwork bleeding in
               from the right behind the bowl. */}
           <div
@@ -635,7 +635,7 @@ export function Dashboard({
         {/* Right column: streak, then body stats */}
         <div className="lg:col-span-4 flex flex-col gap-4">
           <div
-            className="rounded-[18px] p-5"
+            className="rounded-[16px] p-4"
             style={{ background: 'var(--m-streak-soft)', border: '1px solid var(--m-streak-edge, var(--border))' }}
           >
             <div className="flex items-start justify-between gap-2">
@@ -650,7 +650,7 @@ export function Dashboard({
             <p className="mt-1 text-[12px] font-medium" style={{ color: 'var(--text-dim)' }}>Keep it going!</p>
           </div>
 
-          <div className="panel-card flex-1 rounded-[18px] p-5">
+          <div className="panel-card flex-1 rounded-[16px] p-4">
             <h3 className="text-[15px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>Body Stats</h3>
             <p className="text-[11.5px] font-medium mt-0.5 mb-1" style={{ color: 'var(--text-dim)' }}>Keep pushing!</p>
 
@@ -665,7 +665,7 @@ export function Dashboard({
                   className="flex w-full items-center gap-2.5 py-2.5 text-left transition hover:opacity-80"
                   style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}
                 >
-                  <Icon size={16} style={{ color: `var(--m-${row.hue}-ink)` }} strokeWidth={2.3} className="shrink-0" />
+                  <Icon size={15} style={{ color: row.ink }} strokeWidth={2.3} className="shrink-0" />
                   <span className="flex-1 text-[12.5px] font-semibold" style={{ color: 'var(--text)' }}>{row.label}</span>
                   <span className="text-[13px] font-black" style={{ color: 'var(--text)' }}>{row.value}</span>
                   <span
@@ -687,7 +687,7 @@ export function Dashboard({
 
       {/* 3. The four headline numbers. No section heading above them: they
           are the first thing under the greeting and label themselves. */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
         <MetricCard
           metric="calories"
           icon={Flame}
@@ -736,15 +736,15 @@ export function Dashboard({
       </section>
 
       {/* 4. Daily meals, motivation and hydration */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
         {/* Left Column: Your Daily Meal Plan (Connected to Nutrition & Food Log) */}
-        <div className="lg:col-span-7 panel-card rounded-[18px] p-5 text-left">
+        <div className="lg:col-span-7 panel-card rounded-[16px] p-4 text-left">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
             <div className="flex items-start gap-3">
               <Utensils size={28} style={{ color: 'var(--primary)' }} className="mt-1 shrink-0" strokeWidth={2.2} />
               <div>
-                <h3 className="text-[19px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>Your Daily Meals</h3>
+                <h3 className="text-[17px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>Your Daily Meals</h3>
                 <p className="text-[13.5px] font-medium mt-1" style={{ color: 'var(--text-dim)' }}>
                   Planned meals for your day. Logged meals sync directly with your Nutrition target.
                 </p>
@@ -926,12 +926,12 @@ export function Dashboard({
         </div>
 
         {/* Right Column: Daily Motivation Banner + Water Tracker Cup interface */}
-        <div className="lg:col-span-5 flex flex-col gap-5 lg:gap-6">
+        <div className="lg:col-span-5 flex flex-col gap-4">
           {/* Motivation card widget */}
           {/* The photo is the card, not a thumbnail beside it: it bleeds to
               the edges and a dark gradient runs in from the left so the text
               keeps its contrast over the bright sunrise. */}
-          <div className="motivation-card relative overflow-hidden rounded-[18px] min-h-[150px] group">
+          <div className="motivation-card relative overflow-hidden rounded-[16px] min-h-[138px] group">
             <img
               src="/assets/homepage/running.png"
               alt=""
@@ -968,17 +968,17 @@ export function Dashboard({
       </section>
 
       {/* 5. Your Progress */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
         {/* Weight trend */}
-        <div className="lg:col-span-12 panel-card rounded-[18px] p-5 text-left">
+        <div className="lg:col-span-12 panel-card rounded-[16px] p-4 text-left">
           <div className="flex items-start justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
               <span className="flex h-9 w-9 items-center justify-center rounded-full shrink-0" style={{ background: 'var(--primary-soft)' }}>
                 <TrendingUp size={17} style={{ color: 'var(--primary)' }} strokeWidth={2.4} />
               </span>
               <div>
-                <h3 className="text-[17px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>Your Progress</h3>
+                <h3 className="text-[16px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>Your Progress</h3>
                 <p className="text-[12.5px] font-medium mt-0.5" style={{ color: 'var(--text-dim)' }}>
                   You&apos;re doing great! Last 30 Days
                 </p>
@@ -1092,7 +1092,7 @@ export function Dashboard({
           <div className="flex items-center gap-3">
             <Utensils size={26} style={{ color: 'var(--primary)' }} className="shrink-0" strokeWidth={2.2} />
             <div>
-              <h2 className="text-[18px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>
+              <h2 className="text-[17px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>
                 Healthy Recipes for You
               </h2>
               <p className="text-[12.5px] font-medium mt-0.5" style={{ color: 'var(--text-dim)' }}>
@@ -1143,7 +1143,7 @@ export function Dashboard({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveRecipeModal(item); }
                 }}
-                className="recipe-card group flex flex-col overflow-hidden rounded-[18px] transition duration-300 hover:-translate-y-1 cursor-pointer"
+                className="recipe-card group flex flex-col overflow-hidden rounded-[16px] transition duration-300 hover:-translate-y-1 cursor-pointer"
                 style={{
                   background: 'var(--surface-solid)',
                   border: '1px solid var(--border)',
@@ -1278,7 +1278,7 @@ export function Dashboard({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
           {tips.map((tip) => (
             <div
               key={tip.title}
