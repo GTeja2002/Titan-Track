@@ -1,5 +1,5 @@
 /* ---------------- components/Dashboard.jsx ---------------- */
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Flame, Droplet, Footprints, Check, Play, ChevronLeft, ChevronRight,
   TrendingDown, TrendingUp, Trophy, ArrowRight, Bell, Search, Star,
@@ -425,6 +425,17 @@ export function Dashboard({
 
   // Saved recipes live in app state so a heart survives a reload, rather than
   // being local-only decoration.
+  const recipeScrollRef = useRef(null);
+
+  // The arrows were previously wired to a scrollRecipes that was never
+  // defined, so clicking either one threw a ReferenceError and nothing moved.
+  const scrollRecipes = (direction) => {
+    const el = recipeScrollRef.current;
+    if (!el) return;
+    const step = Math.max(240, Math.round(el.clientWidth * 0.8));
+    el.scrollBy({ left: direction === 'left' ? -step : step, behavior: 'smooth' });
+  };
+
   const savedRecipes = state.savedRecipes || [];
   const toggleSavedRecipe = (name) => {
     update((prev) => {
@@ -1132,8 +1143,14 @@ export function Dashboard({
           </div>
         </div>
 
-        {/* Carousel Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Carousel Grid. A scroll container on narrow screens so the arrows
+            have something to move; it still lays out as a four-up grid once
+            there is room for all of them. */}
+        <div
+          ref={recipeScrollRef}
+          className="grid grid-flow-col auto-cols-[minmax(230px,1fr)] gap-4 overflow-x-auto scroll-smooth pb-1 xl:grid-flow-row xl:auto-cols-auto xl:grid-cols-4 xl:overflow-visible"
+          style={{ scrollbarWidth: 'thin' }}
+        >
           {recipes.map((item, idx) => {
             // Same hue cycle as the meal list, so a recipe and its meal slot
             // read as the same colour language.
@@ -1155,11 +1172,16 @@ export function Dashboard({
                   borderLeft: `4px solid var(--m-${hue})`,
                 }}
               >
-                <div className="relative h-[132px] overflow-hidden">
+                {/* shrink-0 matters: this is a flex child with a fixed height,
+                    and flex children shrink by default — without it the photo
+                    is squeezed and crops through the dish, and the text below
+                    gets pushed against the card edge. */}
+                <div className="relative h-[124px] shrink-0 overflow-hidden">
                   <img
                     src={item.image}
-                    alt={item.name}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    alt=""
+                    aria-hidden="true"
+                    className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                     onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/placeholders/food.png"; }}
                   />
 
@@ -1187,7 +1209,7 @@ export function Dashboard({
                   </button>
                 </div>
 
-                <div className="flex flex-1 flex-col gap-1 p-3.5">
+                <div className="flex flex-1 flex-col gap-1 p-3.5 min-w-0">
                   <p className="text-[14.5px] font-bold leading-snug" style={{ color: 'var(--text)' }}>{item.name}</p>
                   {item.desc && (
                     <p className="text-[12px] font-medium leading-snug" style={{ color: 'var(--text-dim)' }}>{item.desc}</p>
