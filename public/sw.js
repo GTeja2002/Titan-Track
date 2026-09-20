@@ -8,7 +8,9 @@
  * away and the cached shell is only a fallback; cache-first for hashed build
  * assets and images, which never change under the same URL.
  */
-const VERSION = 'titantrack-v1';
+// Bumping this name makes the activate handler delete every older cache, so a
+// stale set from a previous worker cannot survive an update.
+const VERSION = 'titantrack-v2';
 const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png'];
 
 self.addEventListener('install', (event) => {
