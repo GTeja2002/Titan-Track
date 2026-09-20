@@ -528,14 +528,17 @@ export function Dashboard({
       </header>
 
       {/* 2. Hero, with the streak and body stats beside it */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <section className="grid grid-cols-1 lg:grid-cols-12 items-start gap-4">
 
         <div className="lg:col-span-8 panel-card relative overflow-hidden rounded-[24px] p-6">
           {/* Soft green field behind the hero, and the leaf artwork bleeding in
               from the right behind the bowl. */}
           <div
             className="absolute inset-0 z-0 pointer-events-none"
-            style={{ background: 'linear-gradient(120deg, #F0FAF6 0%, #FFFFFF 62%)' }}
+            style={{
+              background:
+                'radial-gradient(circle at 72% 46%, #BCE6D2 0%, #D3F0E3 32%, #E8F8F1 62%, #FBFEFD 88%, #FFFFFF 100%)',
+            }}
           />
 
           <div className="relative z-10 grid grid-cols-1 sm:grid-cols-12 items-center gap-4">
@@ -581,15 +584,14 @@ export function Dashboard({
               {/* The bowl keeps the circular soft-green backdrop and the slow
                   hover rotate it has always had. */}
               <div
-                className="relative flex h-[176px] w-[176px] items-center justify-center rounded-full p-3 animate-scale-in"
-                style={{ background: 'var(--grad-primary-soft)' }}
+                className="relative flex h-[230px] w-[230px] items-center justify-center rounded-full animate-scale-in"
               >
                 <img
                   src="/assets/homepage/healthy_bowl.png"
                   alt=""
                   aria-hidden="true"
                   className="h-full w-full rounded-full object-contain transition duration-1000 hover:rotate-12"
-                  style={{ filter: 'drop-shadow(0 15px 25px rgba(0, 0, 0, 0.15))' }}
+                  style={{ filter: 'drop-shadow(0 14px 26px rgba(12, 60, 45, 0.16))' }}
                   onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/placeholders/food.png"; }}
                 />
               </div>
@@ -600,7 +602,7 @@ export function Dashboard({
           <button
             type="button"
             onClick={() => goToTab('Progress')}
-            className="relative z-10 mt-3 ml-auto flex w-fit items-center gap-2.5 rounded-xl px-3 py-2 text-left transition hover:brightness-[0.98] active:scale-95 sm:absolute sm:bottom-5 sm:right-5 sm:mt-0"
+            className="relative z-10 mt-4 ml-auto flex w-fit items-center gap-2.5 rounded-xl px-3 py-2 text-left transition hover:brightness-[0.98] active:scale-95"
             style={{ background: 'var(--surface-solid)', border: '1px solid var(--border)', boxShadow: '0 6px 18px rgba(20,35,50,0.10)' }}
           >
             <div className="relative flex h-10 w-10 items-center justify-center shrink-0">
