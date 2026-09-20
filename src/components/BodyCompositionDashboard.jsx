@@ -85,7 +85,7 @@ export function BodyCompositionDashboard({ state, update }) {
     <div className="grid grid-cols-12 gap-4 lg:gap-5">
       {/* USER INFO PANEL */}
       <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 animate-fade-in">
-        <div className="glass rounded-3xl p-6 flex flex-col gap-4">
+        <div className="panel-card rounded-[22px] p-6 flex flex-col gap-4">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <User size={18} style={{ color: 'var(--primary)' }} />
             User Information
@@ -258,7 +258,7 @@ export function BodyCompositionDashboard({ state, update }) {
 
       {/* INDEX IMAGE VISUALIZER */}
       <div className="col-span-12 md:col-span-6 lg:col-span-4 flex flex-col gap-4 animate-fade-in" style={{ animationDelay: '0.05s' }}>
-        <div className="glass rounded-3xl p-6 flex flex-col justify-between flex-1 gap-4">
+        <div className="panel-card rounded-[22px] p-6 flex flex-col justify-between flex-1 gap-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <Scale size={18} style={{ color: 'var(--primary)' }} />
@@ -312,14 +312,14 @@ export function BodyCompositionDashboard({ state, update }) {
 
       {/* STATISTICS PANEL */}
       <div className="col-span-12 md:col-span-6 lg:col-span-4 flex flex-col gap-4 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-        <div className="glass rounded-3xl p-6 flex flex-col gap-4">
+        <div className="panel-card rounded-[22px] p-6 flex flex-col gap-4">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <TrendingUp size={18} style={{ color: 'var(--primary)' }} />
             Statistics
           </h2>
 
           <div className="stats-grid-composition gap-3">
-            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-3 flex flex-col justify-between">
+            <div className="stat-tile rounded-2xl p-3 flex flex-col justify-between" style={{ background: `var(--m-protein-soft)`, border: `1px solid var(--m-protein-edge)` }}>
               <span className="text-[10px] uppercase font-bold text-[var(--text-dim)] tracking-wider">BMI</span>
               <div className="mt-1 flex items-baseline gap-1">
                 <strong className="text-lg font-black">{stats.bmi.toFixed(1)}</strong>
@@ -327,14 +327,14 @@ export function BodyCompositionDashboard({ state, update }) {
               </div>
             </div>
 
-            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-3 flex flex-col justify-between">
+            <div className="stat-tile rounded-2xl p-3 flex flex-col justify-between" style={{ background: `var(--m-calories-soft)`, border: `1px solid var(--m-calories-edge)` }}>
               <span className="text-[10px] uppercase font-bold text-[var(--text-dim)] tracking-wider">{state.overrideBodyFat ? 'Manual' : 'Est.'} Body Fat</span>
               <div className="mt-1 flex items-baseline gap-1">
                 <strong className="text-lg font-black">{stats.bfPercent}%</strong>
               </div>
             </div>
 
-            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-3 flex flex-col justify-between">
+            <div className="stat-tile rounded-2xl p-3 flex flex-col justify-between" style={{ background: `var(--m-steps-soft)`, border: `1px solid var(--m-steps-edge)` }}>
               <span className="text-[10px] uppercase font-bold text-[var(--text-dim)] tracking-wider">Lean Mass</span>
               <div className="mt-1 flex items-baseline gap-1">
                 <strong className="text-lg font-black">{stats.leanMass.toFixed(1)}</strong>
@@ -342,7 +342,7 @@ export function BodyCompositionDashboard({ state, update }) {
               </div>
             </div>
 
-            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-3 flex flex-col justify-between">
+            <div className="stat-tile rounded-2xl p-3 flex flex-col justify-between" style={{ background: `var(--m-calories-soft)`, border: `1px solid var(--m-calories-edge)` }}>
               <span className="text-[10px] uppercase font-bold text-[var(--text-dim)] tracking-wider">Fat Mass</span>
               <div className="mt-1 flex items-baseline gap-1">
                 <strong className="text-lg font-black">{stats.fatMass.toFixed(1)}</strong>
@@ -350,7 +350,7 @@ export function BodyCompositionDashboard({ state, update }) {
               </div>
             </div>
 
-            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-3 flex flex-col justify-between">
+            <div className="stat-tile rounded-2xl p-3 flex flex-col justify-between" style={{ background: `var(--m-water-soft)`, border: `1px solid var(--m-water-edge)` }}>
               <span className="text-[10px] uppercase font-bold text-[var(--text-dim)] tracking-wider">Ideal Range</span>
               <div className="mt-1 flex items-baseline gap-0.5">
                 <strong className="text-sm font-black">{stats.idealWeight.min}–{stats.idealWeight.max}</strong>
@@ -358,14 +358,22 @@ export function BodyCompositionDashboard({ state, update }) {
               </div>
             </div>
 
-            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-3 flex flex-col justify-between">
+            <div className="stat-tile rounded-2xl p-3 flex flex-col justify-between" style={{ background: `var(--m-protein-soft)`, border: `1px solid var(--m-protein-edge)` }}>
               <span className="text-[10px] uppercase font-bold text-[var(--text-dim)] tracking-wider">BMI Category</span>
               <div className="mt-1">
-                <strong className="text-sm font-black text-[var(--primary)] truncate block">{stats.bmiCategory}</strong>
+                {/* Obese, overweight and underweight were all rendered in the
+                    primary green, which read as reassuring regardless of the
+                    reading. */}
+                <strong
+                  className="text-sm font-black truncate block"
+                  style={{ color: /obese|over|under/i.test(stats.bmiCategory || '') ? 'var(--danger)' : 'var(--primary)' }}
+                >
+                  {stats.bmiCategory}
+                </strong>
               </div>
             </div>
 
-            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-3 flex flex-col justify-between col-span-2 md:col-span-1">
+            <div className="stat-tile rounded-2xl p-3 flex flex-col justify-between col-span-2 md:col-span-1" style={{ background: `var(--m-streak-soft)`, border: `1px solid var(--m-streak-edge)` }}>
               <span className="text-[10px] uppercase font-bold text-[var(--text-dim)] tracking-wider">BMR Baseline</span>
               <div className="mt-1 flex items-baseline gap-1">
                 <strong className="text-lg font-black">{stats.bmr.toLocaleString()}</strong>
@@ -373,7 +381,7 @@ export function BodyCompositionDashboard({ state, update }) {
               </div>
             </div>
 
-            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-3 flex flex-col justify-between col-span-2 md:col-span-2 lg:col-span-1">
+            <div className="stat-tile rounded-2xl p-3 flex flex-col justify-between col-span-2 md:col-span-2 lg:col-span-1" style={{ background: `var(--m-steps-soft)`, border: `1px solid var(--m-steps-edge)` }}>
               <span className="text-[10px] uppercase font-bold text-[var(--text-dim)] tracking-wider">Daily calories</span>
               <div className="mt-1 flex items-baseline gap-1">
                 <strong className="text-lg font-black text-[var(--accent)]">{stats.dailyCalories.toLocaleString()}</strong>
@@ -383,14 +391,14 @@ export function BodyCompositionDashboard({ state, update }) {
           </div>
 
           {/* Health Summary list */}
-          <div className="health-summary bg-[var(--primary-soft)] border border-[var(--primary-glow)] rounded-2xl p-4 mt-2">
-            <span className="text-[10px] uppercase font-bold text-[var(--primary)] tracking-wider block mb-1">Health Summary</span>
+          <div className="health-summary rounded-2xl p-4 mt-2" style={{ background: 'var(--w-body-tint)', border: '1px solid var(--w-body-disc)' }}>
+            <span className="text-[10px] uppercase font-bold tracking-wider block mb-1" style={{ color: 'var(--w-body-ink)' }}>Health Summary</span>
             <strong className="text-base font-extrabold text-[var(--text)] block">{stats.summary.title}</strong>
             <p className="text-xs text-[var(--text-dim)] mt-0.5 mb-2">Based on calculations, we recommend:</p>
             <ul className="text-xs font-semibold space-y-1.5">
               {stats.summary.recommendations.map((item, idx) => (
                 <li key={idx} className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--primary)] shrink-0" />
+                  <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: 'var(--w-body-accent)' }} />
                   <span>{item}</span>
                 </li>
               ))}
@@ -401,8 +409,8 @@ export function BodyCompositionDashboard({ state, update }) {
             <button
               type="button"
               onClick={handleReset}
-              className="rounded-xl py-3 border border-[var(--border)] text-xs font-bold transition hover:scale-[1.03] active:scale-95 text-[var(--text-dim)] hover:text-white w-full"
-              style={{ background: 'var(--surface)' }}
+              className="rounded-xl py-3 text-xs font-bold transition hover:brightness-95 active:scale-95 w-full"
+              style={{ background: 'var(--chip-bg)', color: 'var(--text-dim)' }}
             >
               Reset Settings
             </button>
