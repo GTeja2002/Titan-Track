@@ -635,20 +635,20 @@ export function Dashboard({
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
 
         {/* Left Column: Your Daily Meal Plan (Connected to Nutrition & Food Log) */}
-        <div className="lg:col-span-7 panel-card rounded-[26px] p-6 space-y-4 text-left">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div className="lg:col-span-7 panel-card rounded-[22px] p-7 text-left">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
             <div className="flex items-start gap-3">
-              <Utensils size={26} style={{ color: 'var(--primary)' }} className="mt-0.5 shrink-0" />
+              <Utensils size={28} style={{ color: 'var(--primary)' }} className="mt-1 shrink-0" strokeWidth={2.2} />
               <div>
-                <h3 className="text-[21px] font-black tracking-tight" style={{ color: 'var(--text)' }}>Your Daily Meals</h3>
-                <p className="text-[13px] font-medium mt-0.5" style={{ color: 'var(--text-dim)' }}>
+                <h3 className="text-[24px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>Your Daily Meals</h3>
+                <p className="text-[13.5px] font-medium mt-1" style={{ color: 'var(--text-dim)' }}>
                   Planned meals for your day. Logged meals sync directly with your Nutrition target.
                 </p>
               </div>
             </div>
             <button
               onClick={() => goToTab('Nutrition')}
-              className="flex items-center gap-2 text-[13px] font-bold px-4 py-2.5 rounded-2xl transition hover:scale-[1.03] active:scale-95 shrink-0"
+              className="flex items-center gap-2 text-[13.5px] font-bold px-4 py-2.5 rounded-full transition hover:brightness-[0.97] active:scale-95 shrink-0"
               style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }}
             >
               <span>Customize in Nutrition</span>
@@ -657,7 +657,7 @@ export function Dashboard({
           </div>
 
           {/* Weekday Selector Row */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 mb-5">
             {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => {
               const isCurrentDay = day === getWeekdayName(state.currentDate);
               const isSelected = day === selectedPlanWeekday;
@@ -667,9 +667,9 @@ export function Dashboard({
                   type="button"
                   onClick={() => setSelectedPlanWeekday(day)}
                   aria-current={isSelected ? 'true' : undefined}
-                  className="day-pill text-[13px] font-bold px-5 py-2.5 rounded-full transition"
+                  className="day-pill text-[13px] font-bold px-[18px] py-2 rounded-full transition"
                   style={isSelected
-                    ? { background: 'var(--grad-primary-cta)', color: '#fff', boxShadow: '0 6px 16px var(--primary-glow)' }
+                    ? { background: 'var(--primary)', color: '#fff', boxShadow: '0 4px 12px var(--primary-glow)' }
                     : {
                       background: 'var(--chip-bg)',
                       color: 'var(--text-dim)',
@@ -684,7 +684,7 @@ export function Dashboard({
           </div>
 
           {/* Meals List for Selected Weekday */}
-          <div className="space-y-3 pt-1">
+          <div className="space-y-3">
             {defaultMeals.length === 0 ? (
               <p className="text-xs text-[var(--text-dim)] py-6 text-center">No meals planned for this day. Click "Customize in Nutrition" to add meals.</p>
             ) : (
@@ -694,55 +694,67 @@ export function Dashboard({
                 // as a sequence of meals rather than four identical rows.
                 const slot = MEAL_SLOTS[mealIndex % MEAL_SLOTS.length];
                 const dot = `var(--m-${slot})`;
-                // The tile is a gradient, not a flat tint: it runs from the
-                // lifted hue at the top to the full hue at the bottom, which
-                // is what gives the list its colour flow.
-                const tile = `linear-gradient(165deg, var(--m-${slot}-lift) 0%, var(--m-${slot}) 100%)`;
                 return (
                   <div
                     key={meal.name}
                     onClick={() => handleToggleMeal(meal)}
-                    className="meal-row flex items-center gap-3.5 rounded-2xl p-3 transition cursor-pointer"
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={logged}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggleMeal(meal); }
+                    }}
+                    className="meal-row flex items-center gap-4 rounded-[17px] px-4 py-3.5 transition cursor-pointer"
                     style={{
                       background: 'var(--surface-solid)',
                       border: `1px solid ${logged ? 'var(--primary)' : 'var(--border)'}`,
                     }}
                   >
-                    {/* The thumbnail sits on a tile in the slot's own colour,
-                        which is what carries the colour through the list — a
-                        bare photo left every row looking the same. */}
-                    <span
-                      className="flex h-[56px] w-[72px] items-center justify-center rounded-xl shrink-0 overflow-hidden p-[5px]"
-                      style={{ background: tile }}
-                    >
-                      <img
-                        src={meal.image || '/assets/placeholders/food.png'}
-                        alt={meal.name}
-                        className="h-full w-full rounded-lg object-cover"
-                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/placeholders/food.png"; }}
-                      />
-                    </span>
+                    {/* Square thumbnail with a thin ring in the slot's hue. The
+                        ring is a box-shadow rather than a border so it does not
+                        eat into the image box. */}
+                    <img
+                      src={meal.image || '/assets/placeholders/food.png'}
+                      alt={meal.name}
+                      className="h-[60px] w-[60px] rounded-[13px] object-cover shrink-0"
+                      style={{ boxShadow: `0 0 0 2px ${dot}` }}
+                      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/placeholders/food.png"; }}
+                    />
+
                     <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: dot }} aria-hidden="true" />
+
                     <div className="flex-1 min-w-0">
-                      <p className="text-[15px] font-bold truncate" style={{ color: 'var(--text)' }}>{meal.name}</p>
-                      <p className="text-[13px] font-medium mt-0.5" style={{ color: 'var(--text-dim)' }}>{meal.cal} kcal</p>
+                      <p className="text-[16px] font-bold truncate leading-snug" style={{ color: 'var(--text)' }}>
+                        {meal.name}
+                      </p>
+                      <p className="text-[13.5px] font-medium mt-1" style={{ color: 'var(--text-dim)' }}>
+                        {meal.cal} kcal
+                      </p>
                     </div>
+
+                    {/* Logged state */}
                     <span
-                      className="flex h-7 w-7 items-center justify-center rounded-full shrink-0 transition"
+                      className="flex h-[30px] w-[30px] items-center justify-center rounded-full shrink-0 transition"
                       style={{
-                        background: logged ? 'var(--primary)' : 'transparent',
+                        background: logged ? 'var(--primary)' : 'var(--surface-solid)',
                         border: `1.5px solid ${logged ? 'var(--primary)' : 'var(--border-strong)'}`,
                         color: '#fff',
                       }}
                     >
-                      {logged && <Check size={15} strokeWidth={3} />}
+                      {logged && <Check size={16} strokeWidth={3} />}
                     </span>
-                    <span
-                      className="flex h-9 w-9 items-center justify-center rounded-full shrink-0"
+
+                    {/* Open in Nutrition. Stops propagation so it does not also
+                        toggle the row it sits in. */}
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); goToTab('Nutrition'); }}
+                      aria-label={`Open ${meal.name} in Nutrition`}
+                      className="flex h-[38px] w-[38px] items-center justify-center rounded-full shrink-0 transition hover:brightness-95 active:scale-95"
                       style={{ background: 'var(--chip-bg)' }}
                     >
-                      <ChevronRight size={17} style={{ color: 'var(--text-dim)' }} />
-                    </span>
+                      <ChevronRight size={19} style={{ color: 'var(--text)' }} />
+                    </button>
                   </div>
                 );
               })
@@ -750,12 +762,13 @@ export function Dashboard({
 
             <button
               onClick={() => setIsFullMenuExpanded(!isFullMenuExpanded)}
-              className="mt-2 flex w-full items-center justify-center gap-2.5 rounded-2xl py-3.5 text-[14px] font-bold transition hover:brightness-[0.98] active:scale-[0.99]"
+              aria-expanded={isFullMenuExpanded}
+              className="mt-[15px] flex h-[46px] w-full items-center justify-center gap-2.5 rounded-[13px] text-[14.5px] font-semibold transition hover:brightness-[0.97] active:scale-[0.99]"
               style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }}
             >
-              <Database size={17} />
+              <Database size={18} />
               <span>{isFullMenuExpanded ? 'Collapse Full Food Database' : 'View Quick Add Food Database'}</span>
-              <ArrowRight size={15} />
+              <ArrowRight size={16} />
             </button>
 
             {isFullMenuExpanded && (
