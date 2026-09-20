@@ -28,6 +28,44 @@
 </head>
 
 <body>
+  <script>
+    /* Service worker escape hatch.
+     *
+     * An earlier build registered the worker in development, where it served
+     * same-origin assets cache-first — including /src/main.jsx. The unregister
+     * logic lives in main.jsx, so the cached worker was serving the very file
+     * meant to remove it and the fix could never run.
+     *
+     * This runs from index.html, which the worker fetches network-first, so it
+     * is always the live copy. On any non-production origin it tears down every
+     * registration and the app caches, then reloads once so the page is rebuilt
+     * from the network. The reload is guarded by sessionStorage so it can only
+     * happen a single time per tab.
+     */
+    (function () {
+      var host = location.hostname;
+      var isDev = host === "localhost" || host === "127.0.0.1" || host === "[::1]" || host.endsWith(".local");
+      if (!isDev || !("serviceWorker" in navigator)) return;
+
+      navigator.serviceWorker.getRegistrations().then(function (regs) {
+        if (!regs.length) return;
+        Promise.all(regs.map(function (r) { return r.unregister(); }))
+          .then(function () {
+            if (!window.caches) return null;
+            return caches.keys().then(function (keys) {
+              return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+            });
+          })
+          .then(function () {
+            if (sessionStorage.getItem("tt-sw-cleared")) return;
+            sessionStorage.setItem("tt-sw-cleared", "1");
+            location.reload();
+          })
+          .catch(function () { /* nothing further we can do */ });
+      }).catch(function () { /* no registrations to inspect */ });
+    })();
+  </script>
+
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
 </body>
