@@ -134,14 +134,17 @@ describe('theme gradient tokens', () => {
         }
     });
 
-    it('makes each card wash clearly tinted rather than near-white', () => {
-        // The pale tints read as white cards at a glance, which defeats the
-        // point of giving each metric a colour.
+    it('keeps each card wash tinted, but barely', () => {
+        // This threshold was 1.12 when the cards were meant to read as strongly
+        // coloured. The design direction then changed: the card background is
+        // now deliberately near-white, with the colour carried by the icon,
+        // the label and the bar instead. The check is kept only to catch a
+        // wash going fully white, which would lose the tint altogether.
         const b = block(ROOT_BLOCK);
         for (const m of METRICS) {
             const wash = token(b, `m-${m}-wash`);
             expect(wash, `${m} wash`).toMatch(/^#[0-9A-Fa-f]{6}$/);
-            expect(contrast(wash, '#FFFFFF'), `${m} wash vs white`).toBeGreaterThan(1.12);
+            expect(contrast(wash, '#FFFFFF'), `${m} wash vs white`).toBeGreaterThan(1.03);
         }
     });
 

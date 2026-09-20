@@ -9,37 +9,37 @@
  */
 
 :root {
-  --color-primary: #1A5C4E;
+  --color-primary: #167A63;
   /* Every gradient in the app runs from --color-primary to this. Defining it
      per theme is what makes the colour flows follow the chosen accent instead
      of being hardcoded green. */
-  --color-primary-lift: #2E8B74;
+  --color-primary-lift: #2A9A7E;
   /* A second, darker companion used only where white text sits on the
      gradient. The vivid --color-primary-lift drops below 4.5:1 against white
      at its light end, so decoration and labelled surfaces need different
      ramps; using one for both would mean either dull gradients or unreadable
      buttons. */
-  --color-primary-cta-lift: #2A826D;
-  --color-primary-hover: #134B3F;
-  --color-primary-pressed: #0D3A30;
-  --color-primary-soft: #EBF5F2;
+  --color-primary-cta-lift: #12836A;
+  --color-primary-hover: #126B58;
+  --color-primary-pressed: #073B2F;
+  --color-primary-soft: #DDF4EC;
 
   /* Cool, light page field, matching the design: white cards read as raised
      against it, where the previous warm cream made them disappear. */
-  --color-bg: #F4F7FA;
-  --color-bg-secondary: #EDF1F6;
-  --color-bg-hero: #E8EEF5;
+  --color-bg: #F4F7F8;
+  --color-bg-secondary: #F8FAFA;
+  --color-bg-hero: #EFFAF6;
   --color-surface: #FFFFFF;
   --color-surface-elevated: #FFFFFF;
 
-  --color-text-primary: #151A18;
-  --color-text-secondary: #4A5551;
-  --color-text-muted: #7E8C87;
-  --color-text-subtle: #A3B3AE;
+  --color-text-primary: #17201E;
+  --color-text-secondary: #65716D;
+  --color-text-muted: #8A9692;
+  --color-text-subtle: #A9B3AF;
 
-  --color-border: #E3E2DA;
-  --color-border-strong: #D5D3C8;
-  --color-border-subtle: #ECEBE4;
+  --color-border: #E1E7E5;
+  --color-border-strong: #DCE5E1;
+  --color-border-subtle: #EDF1F0;
 
   --color-success: #1A5C4E;
   --color-success-soft: #EBF5F2;
@@ -70,7 +70,7 @@
 
   --primary: var(--color-primary);
   --primary-lift: var(--color-primary-lift);
-  --primary-glow: rgba(26, 92, 78, 0.18);
+  --primary-glow: rgba(22, 122, 99, 0.16);
   --primary-soft: var(--color-primary-soft);
 
   /* Gradient tokens. Components reference these rather than writing their own
@@ -107,35 +107,35 @@
                  which is the stricter case and covers white too
      --m-x-soft  a pale tint, for bar tracks and card washes
      Amber and gold are simply not readable as text at their vivid value. */
-  --m-calories: #D9743F;
-  --m-calories-lift: #E7A988;
-  --m-calories-soft: #F7E8E1;
-  --m-calories-wash: #F2D6C7;
-  --m-calories-ink: #9C481B;
+  --m-calories: #D96F32;
+  --m-calories-lift: #D96F32;
+  --m-calories-soft: #FDF1E8;
+  --m-calories-wash: #FFF4EC;
+  --m-calories-ink: #AF5420;
 
-  --m-protein: #7C5CA8;
-  --m-protein-lift: #AC98C8;
-  --m-protein-soft: #EBE7F1;
-  --m-protein-wash: #DBD3E6;
-  --m-protein-ink: #6D4E97;
+  --m-protein: #7652A8;
+  --m-protein-lift: #7652A8;
+  --m-protein-soft: #F4EFFB;
+  --m-protein-wash: #F6F1FC;
+  --m-protein-ink: #7652A8;
 
-  --m-water: #3E8ECC;
-  --m-water-lift: #87B9DF;
-  --m-water-soft: #E2EDF5;
-  --m-water-wash: #CADFEF;
-  --m-water-ink: #246596;
+  --m-water: #348BC8;
+  --m-water-lift: #348BC8;
+  --m-water-soft: #ECF5FC;
+  --m-water-wash: #EFF7FD;
+  --m-water-ink: #2C75A8;
 
-  --m-steps: #2FA96A;
-  --m-steps-lift: #61D398;
-  --m-steps-soft: #E3F5EC;
-  --m-steps-wash: #CBEEDC;
-  --m-steps-ink: #1E7548;
+  --m-steps: #2FA56D;
+  --m-steps-lift: #2FA56D;
+  --m-steps-soft: #EBF8F1;
+  --m-steps-wash: #EEF9F3;
+  --m-steps-ink: #247F54;
 
-  --m-streak: #E0952F;
-  --m-streak-lift: #ECBE7F;
-  --m-streak-soft: #F8EEE0;
-  --m-streak-wash: #F4E0C5;
-  --m-streak-ink: #8E5912;
+  --m-streak: #C97816;
+  --m-streak-lift: #C97816;
+  --m-streak-soft: #FFF8EA;
+  --m-streak-wash: #FFF8EA;
+  --m-streak-ink: #A46212;
 
   --grad-calories: linear-gradient(135deg, var(--m-calories), var(--m-calories-lift));
   --grad-metric-protein: linear-gradient(135deg, var(--m-protein), var(--m-protein-lift));
@@ -157,6 +157,16 @@
 
   --font-sans: 'Inter', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --m-calories-edge: #F4D5C2;
+  --m-calories-track: #F4DED1;
+  --m-protein-edge: #DDD0EF;
+  --m-protein-track: #E6DDF1;
+  --m-water-edge: #C9E1F4;
+  --m-water-track: #DCECF8;
+  --m-steps-edge: #C8E8D5;
+  --m-steps-track: #DDF0E5;
+  --m-streak-edge: #F1E3C7;
+  --m-streak-track: #F3E6CE;
 }
 
 body.dark {
@@ -941,7 +951,7 @@ body::before {
     radial-gradient(circle at 82% 26%, var(--accent-soft), transparent 38%),
     radial-gradient(circle at 52% 88%, var(--primary-glow), transparent 46%);
   filter: blur(80px);
-  opacity: 0.85;
+  opacity: 0.35;
   animation: ambientDrift 26s ease-in-out infinite alternate;
 }
 
@@ -1150,13 +1160,13 @@ body.dark[data-accent='rose'] {
  * always dark — it does not follow the light/dark theme the way cards do.
  * ================================================================ */
 :root {
-  --rail-top: #123A2C;
-  --rail-bottom: #0A2018;
+  --rail-top: #0A4536;
+  --rail-bottom: #073B2F;
   --rail-accent: #1A5C4E;
-  --rail-active: #1F7A5C;
-  --rail-muted: #9DBDB0;
+  --rail-active: #147A60;
+  --rail-muted: #A6C9BB;
   --rail-gold: #F2C744;
-  --rail-avatar: #1F7A5C;
+  --rail-avatar: #147A60;
 }
 
 .sidebar-rail {
@@ -1193,7 +1203,7 @@ body.dark[data-accent='rose'] {
 .rail-link-active,
 .rail-link-active:hover {
   color: #fff;
-  background: linear-gradient(100deg, var(--rail-active) 0%, #18654C 100%);
+  background: var(--rail-active);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
 }
 
@@ -1217,15 +1227,15 @@ body.dark[data-accent='rose'] {
  * colour, and redefined in dark mode where a pale tint would glare.
  */
 :root {
-  --m-calories-edge: #EFC4AC;
-  --m-protein-edge: #CDC0DF;
-  --m-water-edge: #B3D2E9;
-  --m-steps-edge: #B7E5CD;
+  --m-calories-edge: #F4D5C2;
+  --m-protein-edge: #DDD0EF;
+  --m-water-edge: #C9E1F4;
+  --m-steps-edge: #C8E8D5;
 
-  --m-calories-track: #EFD5C6;
-  --m-protein-track: #DCD2EA;
-  --m-water-track: #C9DFF0;
-  --m-steps-track: #D8F0E4;
+  --m-calories-track: #F4DED1;
+  --m-protein-track: #E6DDF1;
+  --m-water-track: #DCECF8;
+  --m-steps-track: #DDF0E5;
 
   --m-calories-glow: rgba(217, 116, 63, 0.30);
   --m-protein-glow: rgba(124, 92, 168, 0.30);
@@ -1234,15 +1244,15 @@ body.dark[data-accent='rose'] {
 }
 
 body.dark {
-  --m-calories-edge: #35241A;
-  --m-protein-edge: #2A2136;
-  --m-water-edge: #1B2C3A;
-  --m-steps-edge: #17402A;
+  --m-calories-edge: #F4D5C2;
+  --m-protein-edge: #DDD0EF;
+  --m-water-edge: #C9E1F4;
+  --m-steps-edge: #C8E8D5;
 
-  --m-calories-track: #2C1D14;
-  --m-protein-track: #221B2D;
-  --m-water-track: #16232E;
-  --m-steps-track: #123020;
+  --m-calories-track: #F4DED1;
+  --m-protein-track: #E6DDF1;
+  --m-water-track: #DCECF8;
+  --m-steps-track: #DDF0E5;
 
   --m-calories-glow: rgba(232, 144, 92, 0.28);
   --m-protein-glow: rgba(158, 127, 201, 0.28);
@@ -1251,11 +1261,11 @@ body.dark {
 }
 
 .metric-card {
-  box-shadow: 0 2px 10px rgba(20, 35, 50, 0.05);
+  box-shadow: 0 4px 18px rgba(20, 40, 35, 0.04);
 }
 
 .metric-card:hover {
-  box-shadow: 0 14px 30px rgba(20, 35, 50, 0.10);
+  box-shadow: 0 8px 24px rgba(20, 40, 35, 0.07);
 }
 
 /* ---- Dashboard surfaces matching the supplied design ------------------- */
@@ -1263,10 +1273,12 @@ body.dark {
 /* Plain white panel with a soft lift, used for the large dashboard cards.
  * Deliberately not .glass: these sit on a light field and want a crisp edge
  * rather than a blur. */
+/* Every dashboard card shares this surface, border and shadow, so they read
+ * as one system rather than each carrying its own weight. */
 .panel-card {
   background: var(--surface-solid);
   border: 1px solid var(--border);
-  box-shadow: 0 2px 14px rgba(20, 35, 50, 0.05);
+  box-shadow: 0 4px 18px rgba(20, 40, 35, 0.04);
 }
 
 .chip-bg-token {
@@ -1308,7 +1320,7 @@ body.dark {
 .hydration-card {
   background: linear-gradient(150deg, var(--m-water-wash) 0%, var(--surface-solid) 68%);
   border: 1px solid var(--m-water-edge);
-  box-shadow: 0 2px 14px rgba(20, 35, 50, 0.05);
+  box-shadow: 0 4px 18px rgba(20, 40, 35, 0.04);
 }
 
 /* Number inputs in the panel: hide the spinners, which crowd the "ml" suffix. */
@@ -1370,7 +1382,7 @@ body.dark {
 
 .wellness-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 14px 30px rgba(20, 35, 50, 0.10);
+  box-shadow: 0 8px 24px rgba(20, 40, 35, 0.07);
 }
 
 /* Stat tiles on the Body Composition page. The hue comes from an inline
@@ -1381,4 +1393,18 @@ body.dark {
 
 .stat-tile:hover {
   transform: translateY(-2px);
+}
+
+/* Nutrition tab panels. A white card over a whisper of the brand green,
+ * matching the reference, rather than the dark translucent glass these used
+ * before — they sit on a light page now. */
+.nutrition-panel {
+  background: var(--surface-solid);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 18px rgba(20, 40, 35, 0.04);
+  transition: box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nutrition-panel:hover {
+  box-shadow: 0 8px 24px rgba(20, 40, 35, 0.07);
 }

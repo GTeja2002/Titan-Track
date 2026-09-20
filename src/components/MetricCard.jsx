@@ -23,11 +23,12 @@ export function MetricCard({
 
   return (
     <div
-      className="metric-card relative rounded-[16px] p-4 overflow-hidden transition duration-300 hover:-translate-y-1"
+      className="metric-card relative rounded-[18px] p-5 overflow-hidden transition duration-300 hover:-translate-y-1"
       style={{
-        // The wash, not the pale soft tint: the card should read as its own
-        // colour at a glance, which a near-white tint does not.
-        background: `linear-gradient(135deg, var(--m-${metric}-wash) 0%, var(--surface-solid) 92%)`,
+        // A flat, very light tint. The colour belongs in the icon, the label
+        // and the bar — not spread across the whole card, which made four
+        // metrics compete with the hero.
+        background: `var(--m-${metric}-wash)`,
         border: `1px solid var(--m-${metric}-edge)`,
       }}
     >
@@ -35,10 +36,7 @@ export function MetricCard({
         <div className="flex items-center gap-3">
           <span
             className="flex h-10 w-10 items-center justify-center rounded-xl shrink-0"
-            style={{
-              background: `var(--grad-${metric === 'protein' ? 'metric-protein' : metric})`,
-              boxShadow: `0 8px 18px var(--m-${metric}-glow)`,
-            }}
+            style={{ background: `var(--m-${metric})` }}
           >
             <Icon size={19} color="#fff" strokeWidth={2.4} />
           </span>
@@ -64,11 +62,11 @@ export function MetricCard({
       </div>
 
       <div className="mt-2.5 flex items-baseline gap-1.5">
-        <span className="text-[26px] font-black leading-none tracking-tight" style={{ color: 'var(--text)' }}>
-          {v(value)}{unit}
+        <span className="text-[26px] font-bold leading-none tracking-tight" style={{ color: 'var(--text)' }}>
+          {v(value)}
         </span>
         <span className="text-[12.5px] font-semibold" style={{ color: 'var(--text-dim)' }}>
-          / {v(target)}{unit ? ` ${unit}` : ''}
+          / {v(target)}{unit}
         </span>
       </div>
 
@@ -80,13 +78,15 @@ export function MetricCard({
         className="mt-3 h-1.5 w-full rounded-full overflow-hidden"
         style={{ background: 'var(--m-' + metric + '-track)' }}
       >
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{
-            width: `${Math.max(0, Math.min(100, progress))}%`,
-            background: `var(--grad-${metric === 'protein' ? 'metric-protein' : metric})`,
-          }}
-        />
+        {progress > 0 && (
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${Math.min(100, progress)}%`,
+              background: `var(--m-${metric})`,
+            }}
+          />
+        )}
       </div>
     </div>
   );

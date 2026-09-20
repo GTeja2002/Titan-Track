@@ -44,7 +44,7 @@ export function EnergyCard({ state }) {
   const offset = circ - (Math.min(100, pct) / 100) * circ;
 
   return (
-    <div className="glass card-lift card-edge h-full rounded-3xl p-6 flex flex-col" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
+    <div className="nutrition-panel h-full rounded-[16px] p-5 flex flex-col">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
           <Zap size={14} style={{ color: 'var(--accent)' }} />

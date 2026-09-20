@@ -4,7 +4,7 @@ import {
   Moon, Sun, Check, Activity, Scale, Dumbbell, User, LogOut,
   Bell, Heart, MessageSquare, Share2, Compass, Settings as SettingsIcon,
   ChevronRight, Calendar, Sparkles, HelpCircle, Utensils, Search,
-  Menu, X, Crown, Home, BarChart3, Users
+  Menu, X, Crown, Home, BarChart3, Users, Leaf
 } from 'lucide-react';
 import { useAppState } from './lib/useAppState.js';
 import { supabase } from './lib/supabaseClient.js';
@@ -24,6 +24,7 @@ import { HealthWellnessInsights } from './components/HealthWellnessInsights.jsx'
 import { ProfileDrawer } from './components/ProfileDrawer.jsx';
 import { Dashboard } from './components/Dashboard.jsx';
 import { PersonalizedPlanCard } from './components/PersonalizedPlanCard.jsx';
+import { NutritionOverview } from './components/NutritionOverview.jsx';
 import { getLocalDateString } from './lib/date.js';
 
 /** The one definition of the app's sections. The sidebar, the mobile drawer
@@ -309,9 +310,22 @@ export default function App() {
 
             {/* TAB 2: NUTRITION */}
             {activeTab === 'Nutrition' && (
-              <div className="space-y-6 animate-scale-in">
-                <div className="grid grid-cols-12 gap-5">
-                  <div className="col-span-12 lg:col-span-5 flex flex-col gap-5">
+              <div className="space-y-4 animate-scale-in">
+                {/* Page header */}
+                <header className="flex items-start gap-3">
+                  <Leaf size={30} style={{ color: 'var(--primary)' }} className="mt-1 shrink-0" strokeWidth={2.2} />
+                  <div>
+                    <h1 className="text-[30px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>
+                      Nutrition
+                    </h1>
+                    <p className="text-[13px] font-medium mt-0.5" style={{ color: 'var(--text-dim)' }}>
+                      Track your meals, stay on target, and fuel your goals.
+                    </p>
+                  </div>
+                </header>
+
+                <div className="grid grid-cols-12 gap-4">
+                  <div className="col-span-12 lg:col-span-5 flex flex-col gap-4">
                     {/* A "% to goal weight" ring is meaningless for a goal
                         that is not about the scale, so those goals get a
                         consistency streak as their headline instead. */}
@@ -320,8 +334,9 @@ export default function App() {
                       : <ConsistencyCard state={state} />}
                     <EnergyCard state={state} />
                   </div>
-                  <div className="col-span-12 lg:col-span-7">
+                  <div className="col-span-12 lg:col-span-7 flex flex-col gap-4">
                     <FoodLogCard state={state} update={update} />
+                    <NutritionOverview state={state} onViewDetails={() => setActiveTab('Progress')} />
                   </div>
                 </div>
 
