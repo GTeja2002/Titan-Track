@@ -8,6 +8,7 @@ import {
     appendBpReading,
 } from './wellness.js';
 import { pruneOldLogs } from './useAppState.js';
+import { calculateProteinTarget } from './calculations.js';
 
 describe('wellness.js unit tests', () => {
     describe('getFitnessAgeEstimate', () => {
@@ -148,12 +149,34 @@ describe('wellness.js unit tests', () => {
                 currentDate: '2026-08-30',
                 weight: 90,
                 gender: 'male',
+                goal: 'lose-fat',
+                activityLevel: 'Sedentary',
             });
 
             expect(progress.protein).toBe(65.5);
             expect(progress.fiber).toBe(17.3);
-            expect(progress.proteinTarget).toBe(144); // 90 * 1.6
+            // Was a flat weight * 1.6 (144g). That disagreed with the target the
+            // food log and metric cards show for the same person, so this now
+            // defers to calculateProteinTarget: 90kg * 0.8 for sedentary fat
+            // loss.
+            expect(progress.proteinTarget).toBe(calculateProteinTarget(90, 'lose-fat', 'Sedentary'));
+            expect(progress.proteinTarget).toBe(72);
             expect(progress.fiberTarget).toBe(30); // Male fiber target
+        });
+
+        it('matches the protein target the rest of the app shows', () => {
+            // The regression this replaces: two different targets for one
+            // person, 152g in the wellness card against 76g in the food log.
+            for (const [weight, goal, activity] of [
+                [95, 'lose-fat', 'Sedentary'],
+                [70, 'gain-muscle', 'Athlete'],
+                [80, 'maintain', 'Moderate'],
+            ]) {
+                const progress = getTodayMacroProgress({
+                    logs: {}, currentDate: '2026-08-30', weight, gender: 'male', goal, activityLevel: activity,
+                });
+                expect(progress.proteinTarget).toBe(calculateProteinTarget(weight, goal, activity));
+            }
         });
     });
 

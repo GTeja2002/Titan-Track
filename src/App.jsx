@@ -446,7 +446,7 @@ export default function App() {
 
             {/* TAB 4: PROGRESS */}
             {activeTab === 'Progress' && (
-              <div className="space-y-6 animate-scale-in">
+              <div className="space-y-4 animate-scale-in">
                 {/* The body-fat silhouette viewer is opt-in. Showing a gallery
                     of bodies by fat percentage to someone who did not ask for
                     it is the most harmful thing this app could do by default,
@@ -478,10 +478,13 @@ export default function App() {
                 {state.trackWellbeing !== false && (
                   <WellbeingCard state={state} update={update} />
                 )}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <TrendCard state={state} />
-                  <HealthWellnessInsights state={state} update={update} />
-                </div>
+                {/* HealthWellnessInsights is a whole seven-card section, not a
+                    card. Sitting it in a two-column grid beside TrendCard
+                    squeezed it into a tall narrow column and stretched the
+                    trend card to match, which is where the huge empty panel
+                    came from. Each now takes the full width. */}
+                <TrendCard state={state} />
+                <HealthWellnessInsights state={state} update={update} />
               </div>
             )}
 

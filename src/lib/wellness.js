@@ -12,7 +12,7 @@
  * bpHistory in useAppState.js).
  */
 
-import { calculateBMI } from './calculations.js';
+import { calculateBMI, calculateProteinTarget } from './calculations.js';
 import { getLocalDateString } from './date.js';
 
 /** Every date string in the trailing `days`-day window ending on `endDateStr`
@@ -116,11 +116,14 @@ export function getNutritionConsistency({ logs, currentDate }) {
 /** Today's protein/fiber totals against simple, standard nutrition targets
  * (protein ~1.6g/kg bodyweight, fiber ~25-30g/day) — general nutrition
  * guidance, not a metabolic or lab-based calculation. */
-export function getTodayMacroProgress({ logs, currentDate, weight, gender }) {
+export function getTodayMacroProgress({ logs, currentDate, weight, gender, goal, activityLevel }) {
   const foods = logs[currentDate]?.foods ?? [];
   const protein = Number(foods.reduce((s, f) => s + (f.protein || 0), 0).toFixed(1));
   const fiber = Number(foods.reduce((s, f) => s + (f.fiber || 0), 0).toFixed(1));
-  const proteinTarget = Math.round((weight ?? 70) * 1.6);
+  // This used to be a flat weight * 1.6, which disagreed with the target the
+  // rest of the app shows: at 95kg it read 152g here while the food log and
+  // the metric cards said 76g. Both are now the same function.
+  const proteinTarget = calculateProteinTarget(weight ?? 70, goal, activityLevel);
   const fiberTarget = gender === 'female' ? 25 : 30;
   return { protein, proteinTarget, fiber, fiberTarget };
 }

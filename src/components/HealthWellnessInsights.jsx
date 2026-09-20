@@ -78,7 +78,10 @@ export function HealthWellnessInsights({ state, update }) {
   const recoveryScore = getRecoveryScore({ logs: state.logs, currentDate: state.currentDate, activityLevel: state.activityLevel });
   const weekly = getWeeklyActivitySummary({ logs: state.logs, currentDate: state.currentDate });
   const nutritionConsistency = getNutritionConsistency({ logs: state.logs, currentDate: state.currentDate });
-  const macros = getTodayMacroProgress({ logs: state.logs, currentDate: state.currentDate, weight, gender: state.gender });
+  const macros = getTodayMacroProgress({
+    logs: state.logs, currentDate: state.currentDate, weight,
+    gender: state.gender, goal: state.goal, activityLevel: state.activityLevel,
+  });
 
   const bfRatio = calculateBodyFat(weight, state.height, state.overrideBodyFat, state.manualBodyFat, state.age, state.gender);
   const bodyFatPercent = Math.round(bfRatio * 100);
