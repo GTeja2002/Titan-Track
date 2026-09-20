@@ -4,7 +4,7 @@ import {
   Moon, Sun, Check, Activity, Scale, Dumbbell, User, LogOut,
   Bell, Heart, MessageSquare, Share2, Compass, Settings as SettingsIcon,
   ChevronRight, Calendar, Sparkles, HelpCircle, Utensils, Search,
-  Menu, X, Crown, Home, BarChart3, Users, Leaf
+  Menu, X, Crown, Home, BarChart3, Users, Leaf, Flame, Lightbulb
 } from 'lucide-react';
 import { useAppState } from './lib/useAppState.js';
 import { supabase } from './lib/supabaseClient.js';
@@ -26,6 +26,8 @@ import { Dashboard } from './components/Dashboard.jsx';
 import { PersonalizedPlanCard } from './components/PersonalizedPlanCard.jsx';
 import { NutritionOverview } from './components/NutritionOverview.jsx';
 import { getLocalDateString } from './lib/date.js';
+import { computeStreak, MAX_FREEZES } from './lib/streak.js';
+import { MetricRow } from './components/MetricRow.jsx';
 
 /** The one definition of the app's sections. The sidebar, the mobile drawer
  *  and the bottom tab bar all read from this. */
@@ -36,6 +38,13 @@ const NAV_TABS = [
   { id: 'Progress', label: 'Progress', icon: BarChart3 },
   { id: 'Community', label: 'Community', icon: Users },
   { id: 'Settings', label: 'Settings', icon: SettingsIcon },
+];
+
+/** Warmups suggested on the Workouts page. Static guidance, not a plan. */
+const WARMUPS = [
+  'Dynamic Stretching (5m)',
+  'Joint Mobility Prep (5m)',
+  'Light Jogging on Spot (3m)',
 ];
 
 /** Phones get five thumb-sized destinations; Settings stays in the drawer. */
@@ -96,6 +105,13 @@ export default function App() {
   }
 
   const username = state.name || (state.email || '').split('@')[0] || 'Teja';
+
+  // The workouts page shows the same streak as the dashboard, read from the
+  // one implementation rather than counted again here.
+  const workoutStreak = computeStreak(state.logs, state.currentDate, {
+    restDays: state.restDays || [],
+    freezesAvailable: state.streakFreezes ?? MAX_FREEZES,
+  }).streak;
 
   return (
     <div className="min-h-screen flex text-[var(--text)] transition-all duration-300" style={{ background: 'var(--bg)' }}>
@@ -354,18 +370,74 @@ export default function App() {
 
             {/* TAB 3: WORKOUTS */}
             {activeTab === 'Workouts' && (
-              <div className="grid grid-cols-12 gap-5 animate-scale-in">
-                <div className="col-span-12 lg:col-span-8">
+              <div className="grid grid-cols-12 items-start gap-4 animate-scale-in">
+                <div className="col-span-12 lg:col-span-8 flex flex-col gap-4">
+                  {/* Page header */}
+                  <div className="panel-card rounded-[20px] p-5 flex items-center gap-4">
+                    <span
+                      className="flex h-12 w-12 items-center justify-center rounded-2xl shrink-0"
+                      style={{ background: 'var(--primary-soft)' }}
+                    >
+                      <Dumbbell size={24} style={{ color: 'var(--primary)' }} strokeWidth={2.2} />
+                    </span>
+                    <div>
+                      <h1 className="text-[22px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>
+                        Stay Active, Stay Healthy
+                      </h1>
+                      <p className="text-[13px] font-medium mt-0.5" style={{ color: 'var(--text-dim)' }}>
+                        Your workouts help you stay stronger, healthier and more energized.
+                      </p>
+                    </div>
+                  </div>
+
                   <ActivityCard state={state} update={update} />
+
+                  <MetricRow
+                    state={state}
+                    onOpenNutrition={() => setActiveTab('Nutrition')}
+                    onOpenWorkouts={() => setActiveTab('Workouts')}
+                  />
                 </div>
-                <div className="col-span-12 lg:col-span-4 flex flex-col gap-5">
+
+                <div className="col-span-12 lg:col-span-4 flex flex-col gap-4">
+                  {/* Streak, warm so it does not compete with the brand green */}
+                  <div className="rounded-[20px] p-5" style={{ background: '#FFF8EA', border: '1px solid #F1E3C7' }}>
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.07em]" style={{ color: '#A56212' }}>
+                        <Flame size={14} /> Current Streak
+                      </span>
+                      <Calendar size={16} style={{ color: '#A56212' }} />
+                    </div>
+                    <p className="mt-2 text-[28px] font-bold leading-none tracking-tight" style={{ color: 'var(--text)' }}>
+                      {workoutStreak} <span className="text-[15px] font-bold" style={{ color: 'var(--text-dim)' }}>day{workoutStreak === 1 ? '' : 's'}</span>
+                    </p>
+                    <p className="mt-1 text-[12px] font-medium" style={{ color: 'var(--text-dim)' }}>Keep it going!</p>
+                  </div>
+
                   <EnergyCard state={state} />
-                  <div className="glass rounded-3xl p-6 border border-white/5 shadow-sm text-left">
-                    <h4 className="font-extrabold text-[var(--text)] text-sm mb-3">Suggested Warmups</h4>
-                    <ul className="space-y-3 text-xs text-[var(--text-dim)] font-semibold">
-                      <li className="flex items-center gap-2 p-2 rounded-xl bg-white/5"><span className="text-primary font-bold">1</span> Dynamic Stretching (5m)</li>
-                      <li className="flex items-center gap-2 p-2 rounded-xl bg-white/5"><span className="text-primary font-bold">2</span> Joint Mobility Prep (5m)</li>
-                      <li className="flex items-center gap-2 p-2 rounded-xl bg-white/5"><span className="text-primary font-bold">3</span> Light Jogging on Spot (3m)</li>
+
+                  <div className="panel-card rounded-[20px] p-5 text-left">
+                    <div className="mb-3 flex items-center gap-2.5">
+                      <Lightbulb size={18} style={{ color: 'var(--primary)' }} strokeWidth={2.2} />
+                      <h4 className="text-[15px] font-black tracking-tight" style={{ color: 'var(--text)' }}>Suggested Warmups</h4>
+                    </div>
+                    <ul className="flex flex-col">
+                      {WARMUPS.map((w, i) => (
+                        <li
+                          key={w}
+                          className="flex items-center gap-3 py-2.5"
+                          style={{ borderBottom: i < WARMUPS.length - 1 ? '1px solid var(--border)' : 'none' }}
+                        >
+                          <span
+                            className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white shrink-0"
+                            style={{ background: 'var(--primary)' }}
+                          >
+                            {i + 1}
+                          </span>
+                          <span className="flex-1 text-[13px] font-semibold" style={{ color: 'var(--text)' }}>{w}</span>
+                          <ChevronRight size={16} style={{ color: 'var(--text-faint)' }} />
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 </div>

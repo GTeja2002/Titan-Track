@@ -1,12 +1,14 @@
 /* ---------------- components/ActivityCard.jsx ---------------- */
 
-import { Activity, Scale, Flame, Dumbbell, Footprints, RotateCcw } from 'lucide-react';
+import { useRef } from 'react';
+import { Scale, Dumbbell, Footprints, RotateCcw, Zap, ArrowRight, PersonStanding, Target } from 'lucide-react';
 import { calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCalories, calculateWalkCalories } from '../lib/calculations.js';
 import { getLocalDateString } from '../lib/date.js';
 import { createEmptyLog } from '../lib/useAppState.js';
 
 export function ActivityCard({ state, update }) {
   const log = state.logs[state.currentDate];
+  const walkInputRef = useRef(null);
 
   const setField = (field, value) => {
     const val = value === '' ? '' : (parseFloat(value) || 0);
@@ -33,11 +35,11 @@ export function ActivityCard({ state, update }) {
   const walkBurn = calculateWalkCalories(log?.walk || 0, state.weight ?? 70);
 
   return (
-    <div className="glass card-lift card-edge h-full rounded-3xl p-6 flex flex-col" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
+    <div className="panel-card h-full rounded-[20px] p-5 flex flex-col text-left">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
-          <Dumbbell size={14} style={{ color: 'var(--accent)' }} />
-          Activity & Gym
+          <Zap size={15} style={{ color: 'var(--primary)' }} />
+          Activity &amp; Gym
         </div>
         {state.gymStarted && (
           <button
@@ -53,10 +55,10 @@ export function ActivityCard({ state, update }) {
       {!state.gymStarted ? (
         <button
           onClick={() => update((prev) => ({ ...prev, gymStarted: true }))}
-          className="mb-4 flex items-center justify-center gap-2 rounded-2xl py-3.5 font-semibold text-white transition hover:scale-[1.02] active:scale-95"
-          style={{ background: 'var(--grad-primary-cta)', boxShadow: '0 4px 14px var(--primary-glow)' }}
+          className="mb-4 flex items-center justify-center gap-2.5 rounded-[14px] py-4 text-[15px] font-bold text-white transition hover:brightness-105 active:scale-[0.99]"
+          style={{ background: 'linear-gradient(90deg, #0F6B55 0%, #2AA37F 100%)' }}
         >
-          <Flame size={18} /> Start Gym Journey
+          <Dumbbell size={18} /> Start Gym Journey <ArrowRight size={16} />
         </button>
       ) : (
         <div className="mb-4 rounded-2xl border p-4" style={{ background: 'var(--primary-soft)', borderColor: 'var(--primary)' }}>
@@ -74,10 +76,15 @@ export function ActivityCard({ state, update }) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 flex-1">
-        <div className="rounded-2xl border p-4 flex flex-col" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-          <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold" style={{ color: 'var(--text-dim)' }}>
-            <Footprints size={14} style={{ color: 'var(--info)' }} /> Walking
+      <div className="grid grid-cols-1 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] gap-3.5 flex-1">
+        <div className="rounded-[16px] border p-4 flex flex-col" style={{ background: 'var(--surface-solid)', borderColor: 'var(--border)' }}>
+          <div className="mb-3 flex items-center gap-2">
+            <PersonStanding size={17} style={{ color: 'var(--primary)' }} />
+            <span className="text-[14px] font-bold" style={{ color: 'var(--text)' }}>Today&apos;s Activity</span>
+          </div>
+
+          <label className="mb-1.5 flex items-center gap-2 text-[13px] font-semibold" style={{ color: 'var(--text-dim)' }}>
+            <Footprints size={15} style={{ color: 'var(--m-water)' }} /> Walking
           </label>
           <input
             type="number"
@@ -85,29 +92,64 @@ export function ActivityCard({ state, update }) {
             value={log?.walk || ''}
             onChange={(e) => setField('walk', e.target.value)}
             placeholder="0"
-            className="w-full bg-transparent text-2xl font-bold outline-none"
+            ref={walkInputRef}
+            aria-label="Walking distance in kilometres"
+            className="w-full bg-transparent text-[28px] font-bold outline-none"
             style={{ color: 'var(--text)' }}
           />
-          <div className="mt-1 flex items-center justify-between text-[11px]" style={{ color: 'var(--text-faint)' }}>
+          <div className="mt-0.5 flex items-center justify-between text-[12px]" style={{ color: 'var(--text-dim)' }}>
             <span>km</span>
-            {walkBurn > 0 && <span style={{ color: 'var(--info)' }}>~{walkBurn} kcal</span>}
+            {walkBurn > 0 && <span style={{ color: 'var(--m-water-ink)' }}>~{walkBurn} kcal</span>}
           </div>
+
+          <button
+            type="button"
+            onClick={() => walkInputRef.current?.focus()}
+            className="mt-auto flex items-center justify-center gap-1.5 rounded-[12px] py-2.5 text-[13px] font-bold transition hover:brightness-[0.97] active:scale-[0.99]"
+            style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }}
+          >
+            Log Activity <ArrowRight size={14} />
+          </button>
         </div>
 
-        <div className="rounded-2xl border p-4 flex flex-col" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-          <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold" style={{ color: 'var(--text-dim)' }}>
-            <Scale size={14} style={{ color: 'var(--accent)' }} /> Weight
-          </label>
-          <input
-            type="number"
-            step="0.1"
-            value={log?.weight || ''}
-            onChange={(e) => setField('weight', e.target.value)}
-            placeholder="0"
-            className="w-full bg-transparent text-2xl font-bold outline-none"
-            style={{ color: 'var(--text)' }}
-          />
-          <div className="mt-1 text-[11px]" style={{ color: 'var(--text-faint)' }}>kg today</div>
+        <div className="rounded-[16px] border p-4 flex gap-4" style={{ background: 'var(--surface-solid)', borderColor: 'var(--border)' }}>
+          <div className="flex flex-col flex-1 min-w-0">
+            <div className="mb-3 flex items-center gap-2">
+              <Scale size={17} style={{ color: 'var(--primary)' }} />
+              <span className="text-[14px] font-bold" style={{ color: 'var(--text)' }}>Today&apos;s Stats</span>
+            </div>
+
+            <label className="mb-1.5 flex items-center gap-2 text-[13px] font-semibold" style={{ color: 'var(--text-dim)' }}>
+              <Scale size={15} style={{ color: 'var(--m-steps)' }} /> Weight
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={log?.weight || ''}
+              onChange={(e) => setField('weight', e.target.value)}
+              placeholder="0"
+              aria-label="Weight in kilograms"
+              className="w-full bg-transparent text-[28px] font-bold outline-none"
+              style={{ color: 'var(--text)' }}
+            />
+            <div className="mt-0.5 text-[12px]" style={{ color: 'var(--text-dim)' }}>kg today</div>
+          </div>
+
+          <div
+            className="relative hidden sm:flex w-[46%] shrink-0 flex-col justify-center overflow-hidden rounded-[14px] p-3.5"
+            style={{ background: 'var(--primary-soft)' }}
+          >
+            <Target size={18} style={{ color: 'var(--primary)' }} className="mb-2" />
+            <p className="text-[12.5px] font-semibold leading-snug" style={{ color: 'var(--text)' }}>
+              Small steps every day lead to big results!
+            </p>
+            <img
+              src="/assets/decor/leaf.png"
+              alt=""
+              aria-hidden="true"
+              className="pointer-events-none absolute -bottom-3 -right-4 w-[64%] object-contain opacity-70"
+            />
+          </div>
         </div>
       </div>
     </div>
