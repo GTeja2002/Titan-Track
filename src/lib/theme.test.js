@@ -167,6 +167,49 @@ describe('theme gradient tokens', () => {
         }
     });
 
+    const WELLNESS = ['body', 'fitness', 'recovery', 'heart', 'cognitive', 'metabolic', 'nutrition'];
+
+    it('gives every wellness card a full token set', () => {
+        for (const c of WELLNESS) {
+            for (const part of ['tint', 'disc', 'ink', 'accent']) {
+                expect(css, `--w-${c}-${part}`).toContain(`--w-${c}-${part}:`);
+            }
+        }
+    });
+
+    /** First value of a token anywhere in the sheet. The wellness tokens live
+     *  in their own :root block near the end, not the main one. */
+    const cssToken = (name) => {
+        const m = css.match(new RegExp('--' + name + ':\\s*(#[0-9A-Fa-f]{6})'));
+        return m ? m[1] : null;
+    };
+
+    it('keeps every wellness label readable on its own card tint', () => {
+        // The label and icon are printed on the tint, not on white, so that is
+        // the pairing that has to pass.
+        for (const c of WELLNESS) {
+            const ink = cssToken(`w-${c}-ink`);
+            const tint = cssToken(`w-${c}-tint`);
+            expect(ink, `${c} ink`).toBeTruthy();
+            expect(tint, `${c} tint`).toBeTruthy();
+            expect(contrast(ink, tint), `${c} ink on tint`).toBeGreaterThanOrEqual(4.5);
+        }
+    });
+
+    it('makes every wellness tint clearly coloured rather than near-white', () => {
+        for (const c of WELLNESS) {
+            expect(contrast(cssToken(`w-${c}-tint`), '#FFFFFF'), `${c} tint vs white`).toBeGreaterThan(1.1);
+        }
+    });
+
+    it('gives every wellness card a dark-mode tint', () => {
+        const dark = block(DARK_BLOCK) || '';
+        const rest = css.slice(css.indexOf('body.dark'));
+        for (const c of WELLNESS) {
+            expect(dark.includes(`--w-${c}-tint`) || rest.includes(`--w-${c}-tint`), `${c} dark tint`).toBe(true);
+        }
+    });
+
     it('never declares position on .glass', () => {
         // This file's rules come after @tailwind utilities, so a `position` on
         // .glass has the same specificity as Tailwind's .fixed / .absolute but

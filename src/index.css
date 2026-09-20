@@ -1327,3 +1327,48 @@ body.dark {
   border-color: var(--m-water) !important;
   box-shadow: 0 0 0 3px var(--m-water-glow);
 }
+
+/* ================================================================
+ * Wellness insight cards
+ *
+ * Each card owns a pastel tint with a matching icon tile and ink. The inks
+ * are solved to clear 4.5:1 against their own tint — the surface they are
+ * actually printed on — rather than against white.
+ * ================================================================ */
+:root {
+  --w-body-tint: #DAF4E6;      --w-body-disc: #C5EFD9;      --w-body-ink: #1F7A4B;      --w-body-accent: #2FA96A;
+  --w-fitness-tint: #E6E0EE;   --w-fitness-disc: #D8CFE5;   --w-fitness-ink: #7554A3;   --w-fitness-accent: #7C5CA8;
+  --w-recovery-tint: #D9E8F4;  --w-recovery-disc: #C5DDF0;  --w-recovery-ink: #276BA0;  --w-recovery-accent: #3E8ECC;
+  --w-heart-tint: #F6D8DD;     --w-heart-disc: #F2C2CA;     --w-heart-ink: #BD223C;     --w-heart-accent: #D9455E;
+  --w-cognitive-tint: #DAF3E3; --w-cognitive-disc: #C6EED5; --w-cognitive-ink: #217A42; --w-cognitive-accent: #2E9E57;
+  --w-metabolic-tint: #E6D9F4; --w-metabolic-disc: #D9C5EF; --w-metabolic-ink: #803BCF; --w-metabolic-accent: #8B4FD0;
+  --w-nutrition-tint: #F8E7D6; --w-nutrition-disc: #F5DBBF; --w-nutrition-ink: #9B5913; --w-nutrition-accent: #E08A2E;
+}
+
+body.dark {
+  /* Deep tints and lifted inks, so the cards keep their identity without
+     glaring against a dark page. */
+  --w-body-tint: #10241A;      --w-body-disc: #17331F;      --w-body-ink: #5FD79C;      --w-body-accent: #43C88A;
+  --w-fitness-tint: #1C1728;   --w-fitness-disc: #271F36;   --w-fitness-ink: #B79ADA;   --w-fitness-accent: #9E7FC9;
+  --w-recovery-tint: #101F2B;  --w-recovery-disc: #172B3B;  --w-recovery-ink: #82BDE8;  --w-recovery-accent: #5EA8DE;
+  --w-heart-tint: #2A1219;     --w-heart-disc: #3A1923;     --w-heart-ink: #F08098;     --w-heart-accent: #E4677E;
+  --w-cognitive-tint: #0F2418; --w-cognitive-disc: #163322; --w-cognitive-ink: #5FD08C;  --w-cognitive-accent: #45BE71;
+  --w-metabolic-tint: #1D1330; --w-metabolic-disc: #281A42; --w-metabolic-ink: #B98CEB;  --w-metabolic-accent: #A46FE0;
+  --w-nutrition-tint: #2A1C0E; --w-nutrition-disc: #3A2714; --w-nutrition-ink: #EFAE68;  --w-nutrition-accent: #E8A055;
+}
+
+/* The card itself. Borders are a deeper step of the same tint, so the edge
+ * belongs to the card rather than being a generic grey line. */
+.wellness-card {
+  border-radius: 20px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.wellness-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px rgba(20, 35, 50, 0.10);
+}
