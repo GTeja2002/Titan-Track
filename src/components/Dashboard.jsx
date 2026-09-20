@@ -542,12 +542,6 @@ export function Dashboard({
             className="absolute inset-0 z-0 pointer-events-none"
             style={{ background: 'linear-gradient(115deg, var(--w-body-tint) 0%, var(--surface-solid) 68%)' }}
           />
-          <img
-            src="/assets/decor/leaf.png"
-            alt=""
-            aria-hidden="true"
-            className="pointer-events-none absolute -right-6 top-0 z-0 h-full w-[58%] object-contain opacity-60"
-          />
 
           <div className="relative z-10 grid grid-cols-1 sm:grid-cols-12 items-center gap-4">
             <div className="sm:col-span-7">
@@ -588,14 +582,21 @@ export function Dashboard({
             </div>
 
             <div className="relative sm:col-span-5 flex items-center justify-center">
-              <img
-                src="/assets/homepage/healthy_bowl.png"
-                alt=""
-                aria-hidden="true"
-                className="h-[168px] w-[168px] object-contain"
-                style={{ filter: 'drop-shadow(0 12px 22px rgba(0,0,0,0.16))' }}
-                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/placeholders/food.png"; }}
-              />
+              {/* The bowl keeps the circular soft-green backdrop and the slow
+                  hover rotate it has always had. */}
+              <div
+                className="relative flex h-[176px] w-[176px] items-center justify-center rounded-full p-3 animate-scale-in"
+                style={{ background: 'var(--grad-primary-soft)' }}
+              >
+                <img
+                  src="/assets/homepage/healthy_bowl.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="h-full w-full rounded-full object-contain transition duration-1000 hover:rotate-12"
+                  style={{ filter: 'drop-shadow(0 15px 25px rgba(0, 0, 0, 0.15))' }}
+                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/placeholders/food.png"; }}
+                />
+              </div>
             </div>
           </div>
 
