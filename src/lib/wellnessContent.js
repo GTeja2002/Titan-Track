@@ -4,6 +4,7 @@
 export const recipes = [
     {
         name: 'Oats & Berry Bowl',
+        desc: 'A healthy and delicious start to your day.',
         cal: 320,
         time: '10 mins',
         image: '/assets/recipes/oats-and-berry-bowl.png',
@@ -26,6 +27,7 @@ export const recipes = [
     },
     {
         name: 'Chickpea Salad',
+        desc: 'High protein, fresh and filling.',
         cal: 450,
         time: '15 mins',
         image: '/assets/recipes/chickpea-salad.png',
@@ -51,6 +53,7 @@ export const recipes = [
     },
     {
         name: 'Quinoa Veg Bowl',
+        desc: 'Packed with nutrients and flavor.',
         cal: 500,
         time: '20 mins',
         image: '/assets/recipes/quinoa-veg-bowl.png',
@@ -74,6 +77,7 @@ export const recipes = [
     },
     {
         name: 'Lentil Soup',
+        desc: 'Warm, healthy and comforting.',
         cal: 300,
         time: '25 mins',
         image: '/assets/recipes/lentil-soup.png',

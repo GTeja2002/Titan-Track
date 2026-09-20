@@ -3,7 +3,8 @@ import { useState, useMemo, useEffect } from 'react';
 import {
   Flame, Droplet, Footprints, Check, Play, ChevronLeft, ChevronRight,
   TrendingDown, TrendingUp, Trophy, ArrowRight, Bell, Search, Star,
-  Plus, Trash2, Edit, X, CalendarDays, ChevronDown, Zap, Utensils, Database
+  Plus, Trash2, Edit, X, CalendarDays, ChevronDown, Zap, Utensils, Database,
+  Scale, User, Dumbbell, BarChart3, Activity, Heart, Clock
 } from 'lucide-react';
 import { calculateBMI, calculateBodyFat, calculateLeanMass, getBMICategory, calculateProteinTarget, normalizeWaterMl, FOOD_DB } from '../lib/calculations.js';
 import { getLocalDateString, shiftDateString } from '../lib/date.js';
@@ -16,6 +17,21 @@ import { AchievementsCard } from './AchievementsCard.jsx';
 
 /** Metric hue per meal slot, cycled down the daily list so the rows read as a
  *  sequence rather than four identical cards. */
+/** Body-stat rows. Kept beside the component so the list is data rather than
+ *  four near-identical blocks of markup, and each row names the metric hue its
+ *  icon and badge are drawn from. */
+const BODY_STAT_ROWS = ({ activeWeight, weightDiffStr, bodyFatPercent, bfDiffStr, leanMass, leanDiffStr, bmi, bmiCategoryLabel }) => [
+  { label: 'Weight', icon: Scale, hue: 'steps', value: `${activeWeight} kg`, badge: weightDiffStr },
+  { label: 'Body Fat', icon: Activity, hue: 'calories', value: `${bodyFatPercent}%`, badge: bfDiffStr },
+  { label: 'Muscle Mass', icon: Dumbbell, hue: 'streak', value: `${leanMass} kg`, badge: leanDiffStr },
+  {
+    label: 'BMI', icon: BarChart3, hue: 'protein',
+    value: bmi > 0 ? bmi.toFixed(1) : '——',
+    badge: bmiCategoryLabel,
+    alert: /obese|over|under/i.test(bmiCategoryLabel || ''),
+  },
+];
+
 const MEAL_SLOTS = ['calories', 'steps', 'protein', 'water'];
 
 export function Dashboard({
@@ -210,6 +226,37 @@ export function Dashboard({
     return chartPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
   }, [chartPoints]);
 
+  // Y-axis ticks for the weight chart, derived from the same scale the points
+  // are plotted on so the labels line up with the line.
+  const chartAxis = useMemo(() => {
+    if (weightHistory.length === 0) return { ticks: [] };
+    const weights = weightHistory.map((h) => h.weight);
+    let minW = Math.min(...weights);
+    let maxW = Math.max(...weights);
+    if (minW === maxW) { minW -= 2; maxW += 2; }
+    else {
+      const pad = (maxW - minW) * 0.15 || 1;
+      minW -= pad; maxW += pad;
+    }
+    const ticks = [];
+    for (let i = 0; i <= 4; i++) {
+      const value = minW + ((maxW - minW) * i) / 4;
+      ticks.push({ value: Math.round(value), y: 90 - (i / 4) * 60 });
+    }
+    return { ticks, minW, maxW };
+  }, [weightHistory]);
+
+  // Closing the line back along the baseline gives a shape the gradient can
+  // fill, which is what reads as "progress" rather than a bare stroke.
+  const areaD = useMemo(() => {
+    if (chartPoints.length < 2) return '';
+    const first = chartPoints[0];
+    const last = chartPoints[chartPoints.length - 1];
+    return `${pathD} L ${last.x} 112 L ${first.x} 112 Z`;
+  }, [chartPoints, pathD]);
+
+  const latestPoint = chartPoints.length ? chartPoints[chartPoints.length - 1] : null;
+
   // Personalized greeting name
   const displayName = state.name || (state.email ? state.email.split('@')[0] : 'Teja');
 
@@ -375,6 +422,21 @@ export function Dashboard({
   // Recipe Slider Carousel controls
   const [recipeIdx, setRecipeIdx] = useState(0);
   const [activeRecipeModal, setActiveRecipeModal] = useState(null);
+
+  // Saved recipes live in app state so a heart survives a reload, rather than
+  // being local-only decoration.
+  const savedRecipes = state.savedRecipes || [];
+  const toggleSavedRecipe = (name) => {
+    update((prev) => {
+      const current = prev.savedRecipes || [];
+      return {
+        ...prev,
+        savedRecipes: current.includes(name)
+          ? current.filter((n) => n !== name)
+          : [...current, name],
+      };
+    });
+  };
   const [activeTipModal, setActiveTipModal] = useState(null);
 
 
@@ -863,150 +925,209 @@ export function Dashboard({
 
       </section>
 
-      {/* 5. Your Progress Section: SVG Chart + Stats */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between border-b pb-2 border-[#E7E6E0] dark:border-[#2C332E]">
-          <h2 className="text-lg font-black tracking-tight text-[#171817] dark:text-[#F4F5F2]">Your Progress</h2>
-          <button onClick={() => goToTab('Progress')} className="text-xs font-bold text-primary hover:underline hover:text-primary-hover">
-            View Progress &gt;
-          </button>
-        </div>
+      {/* 5. Your Progress + Body Stats */}
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
-          {/* Left: Line chart plotting Weight progress */}
-          <div className="lg:col-span-7 bg-white dark:bg-[#1C211E] rounded-3xl p-6 border border-[#E7E6E0] dark:border-[#2C332E] shadow-sm text-left space-y-4">
-            <div>
-              <p className="text-xs font-bold text-[#171817] dark:text-[#F4F5F2]">Weight Progress</p>
-              <p className="text-[10px] text-[#5E8F83] dark:text-[#70A497] font-semibold flex items-center gap-1.5 mt-0.5">
-                <TrendingDown size={12} />
-                You're doing great! Last 30 Days
-              </p>
+        {/* Weight trend */}
+        <div className="lg:col-span-7 panel-card rounded-[22px] p-6 text-left">
+          <div className="flex items-start justify-between gap-3 mb-5">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full shrink-0" style={{ background: 'var(--primary-soft)' }}>
+                <TrendingUp size={19} style={{ color: 'var(--primary)' }} strokeWidth={2.4} />
+              </span>
+              <div>
+                <h3 className="text-[17px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>Your Progress</h3>
+                <p className="text-[12.5px] font-medium mt-0.5" style={{ color: 'var(--text-dim)' }}>
+                  You&apos;re doing great! Last 30 Days
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => goToTab('Progress')}
+              className="flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[12.5px] font-bold transition hover:brightness-[0.97] active:scale-95 shrink-0"
+              style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }}
+            >
+              Last 30 Days
+              <ChevronDown size={14} />
+            </button>
+          </div>
+
+          {/* Chart panel */}
+          <div className="rounded-[16px] p-4" style={{ background: 'var(--bg-2)' }}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg shrink-0" style={{ background: 'var(--surface-solid)' }}>
+                <Scale size={14} style={{ color: 'var(--primary)' }} />
+              </span>
+              <span className="text-[13px] font-bold" style={{ color: 'var(--text)' }}>Weight</span>
             </div>
 
-            {/* Custom SVG line Chart */}
-            <div className="w-full h-44 relative bg-transparent rounded-2xl border border-[#EEEEEA] dark:border-[#2C332E] p-4 flex flex-col justify-end">
-              <svg className="w-full h-full" viewBox="0 0 500 120" preserveAspectRatio="none">
-                {/* Horizontal gridlines */}
-                <line x1="0" y1="20" x2="500" y2="20" stroke="var(--color-border-subtle)" strokeWidth="1" />
-                <line x1="0" y1="60" x2="500" y2="60" stroke="var(--color-border-subtle)" strokeWidth="1" />
-                <line x1="0" y1="100" x2="500" y2="100" stroke="var(--color-border-subtle)" strokeWidth="1" />
+            <div className="relative w-full" style={{ height: 168 }}>
+              <svg className="w-full h-full" viewBox="0 0 500 130" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="weight-area" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.22" />
+                    <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
 
-                {/* Line graph fitting path */}
+                {/* Gridlines, aligned to the value ticks */}
+                {chartAxis.ticks.map((t) => (
+                  <line
+                    key={t.y}
+                    x1="46" y1={t.y} x2="490" y2={t.y}
+                    stroke="var(--color-border-subtle)" strokeWidth="1"
+                  />
+                ))}
+
+                {areaD && <path d={areaD} fill="url(#weight-area)" />}
+
                 {pathD && (
                   <path
                     d={pathD}
                     fill="none"
-                    stroke="var(--color-primary)"
-                    strokeWidth="3.5"
+                    stroke="var(--primary)"
+                    strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
                   />
                 )}
 
-                {/* Dots on points */}
-                {chartPoints.map((pt, i) => (
+                {latestPoint && (
                   <circle
-                    key={i}
-                    cx={pt.x}
-                    cy={pt.y}
-                    r="4.5"
-                    fill="var(--color-primary)"
-                    stroke="var(--color-bg)"
-                    strokeWidth="1.5"
+                    cx={latestPoint.x} cy={latestPoint.y} r="5"
+                    fill="var(--primary)" stroke="var(--surface-solid)" strokeWidth="2.5"
                   />
-                ))}
-
-                {/* Labels floating */}
-                {chartPoints.map((pt, i) => (
-                  <text
-                    key={i}
-                    x={pt.x}
-                    y={pt.y + 18}
-                    fill="#858982"
-                    fontSize="8.5"
-                    textAnchor="middle"
-                    fontWeight="bold"
-                  >
-                    {pt.weight} kg
-                  </text>
-                ))}
+                )}
               </svg>
 
-              {/* x-axis date labels */}
-              <div className="flex justify-between items-center text-[8.5px] font-bold text-[#858982] dark:text-[#818982] mt-2 px-6">
-                {chartPoints.map((pt, i) => (
-                  <span key={i}>{pt.dateLabel}</span>
+              {/* Value ticks, as HTML so they keep their type size regardless of
+                  the SVG's non-uniform scaling. */}
+              <div className="pointer-events-none absolute inset-0">
+                {chartAxis.ticks.map((t) => (
+                  <span
+                    key={t.value}
+                    className="absolute text-[11px] font-semibold"
+                    style={{ left: 0, top: `${(t.y / 130) * 100}%`, transform: 'translateY(-50%)', color: 'var(--text-faint)' }}
+                  >
+                    {t.value}
+                  </span>
                 ))}
+
+                {/* Latest reading, pinned to the end of the line */}
+                {latestPoint && (
+                  <span
+                    className="absolute rounded-lg px-2.5 py-1 text-[12px] font-bold text-white whitespace-nowrap"
+                    style={{
+                      left: `${(latestPoint.x / 500) * 100}%`,
+                      top: `${(latestPoint.y / 130) * 100}%`,
+                      transform: 'translate(-86%, -190%)',
+                      background: 'var(--primary)',
+                    }}
+                  >
+                    {latestPoint.weight} kg
+                  </span>
+                )}
               </div>
+            </div>
+
+            {/* First and last date only, as the reference shows */}
+            {chartPoints.length > 0 && (
+              <div className="mt-1 flex justify-between text-[11px] font-semibold" style={{ color: 'var(--text-faint)' }}>
+                <span>{chartPoints[0].dateLabel}</span>
+                <span>{chartPoints[chartPoints.length - 1].dateLabel}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Body stats */}
+        <div className="lg:col-span-5 panel-card rounded-[22px] p-6 text-left flex flex-col">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full shrink-0" style={{ background: 'var(--chip-bg)' }}>
+              <User size={19} style={{ color: 'var(--text)' }} strokeWidth={2.2} />
+            </span>
+            <div>
+              <h3 className="text-[17px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>Body Stats</h3>
+              <p className="text-[12.5px] font-medium mt-0.5" style={{ color: 'var(--text-dim)' }}>Keep pushing!</p>
             </div>
           </div>
 
-          {/* Right: Body stats listing matches details */}
-          <div className="lg:col-span-5 bg-white dark:bg-[#1C211E] rounded-3xl p-6 border border-[#E7E6E0] dark:border-[#2C332E] shadow-sm text-left flex flex-col justify-between space-y-4">
-            <div>
-              <p className="text-xs font-bold text-[#171817] dark:text-[#F4F5F2]">Body Stats</p>
-              <p className="text-[10px] text-[#858982] dark:text-[#818982] font-medium mt-0.5">Keep pushing!</p>
-            </div>
+          <div className="flex-1 flex flex-col justify-center">
+            {BODY_STAT_ROWS({ activeWeight, weightDiffStr, bodyFatPercent, bfDiffStr, leanMass, leanDiffStr, bmi, bmiCategoryLabel }).map((row, i, arr) => {
+              const Icon = row.icon;
+              return (
+                <button
+                  key={row.label}
+                  type="button"
+                  onClick={() => goToTab('Progress')}
+                  aria-label={`${row.label}: ${row.value}. Open Progress`}
+                  className="flex w-full items-center gap-3 py-3 text-left transition hover:opacity-80"
+                  style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}
+                >
+                  <span
+                    className="flex h-10 w-10 items-center justify-center rounded-xl shrink-0"
+                    style={{ background: `var(--m-${row.hue}-soft)` }}
+                  >
+                    <Icon size={18} style={{ color: `var(--m-${row.hue}-ink)` }} strokeWidth={2.2} />
+                  </span>
 
-            <div className="space-y-3 flex-1 flex flex-col justify-center">
-              {/* Weight row */}
-              <div className="flex items-center justify-between text-xs py-2 border-b border-[#EEEEEA] dark:border-[#2C332E]">
-                <span className="font-semibold text-[#555954] dark:text-[#B3BAB4] flex items-center gap-1.5">⚖️ Weight</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-[#171817] dark:text-[#F4F5F2]">{activeWeight} kg</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-primary-soft text-primary rounded">{weightDiffStr}</span>
-                </div>
-              </div>
+                  <span className="flex-1 text-[14px] font-semibold" style={{ color: 'var(--text)' }}>
+                    {row.label}
+                  </span>
 
-              {/* Body Fat row */}
-              <div className="flex items-center justify-between text-xs py-2 border-b border-[#EEEEEA] dark:border-[#2C332E]">
-                <span className="font-semibold text-[#555954] dark:text-[#B3BAB4] flex items-center gap-1.5">🧬 Body Fat</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-[#171817] dark:text-[#F4F5F2]">{bodyFatPercent}%</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-primary-soft text-primary rounded">{bfDiffStr}</span>
-                </div>
-              </div>
+                  <span className="text-[15px] font-black" style={{ color: 'var(--text)' }}>{row.value}</span>
 
-              {/* Muscle Mass row */}
-              <div className="flex items-center justify-between text-xs py-2 border-b border-[#EEEEEA] dark:border-[#2C332E]">
-                <span className="font-semibold text-[#555954] dark:text-[#B3BAB4] flex items-center gap-1.5">💪 Muscle Mass</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-[#171817] dark:text-[#F4F5F2]">{leanMass} kg</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-success-soft text-success rounded">{leanDiffStr}</span>
-                </div>
-              </div>
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[11px] font-bold whitespace-nowrap"
+                    style={{
+                      background: row.alert ? 'var(--danger-soft)' : 'var(--primary-soft)',
+                      color: row.alert ? 'var(--danger)' : 'var(--primary)',
+                    }}
+                  >
+                    {row.badge}
+                  </span>
 
-              {/* BMI row */}
-              <div className="flex items-center justify-between text-xs py-2">
-                <span className="font-semibold text-[#555954] dark:text-[#B3BAB4] flex items-center gap-1.5">📊 BMI</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-[#171817] dark:text-[#F4F5F2]">{bmi > 0 ? bmi.toFixed(1) : '——'}</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-success-soft text-success rounded">{bmiCategoryLabel}</span>
-                </div>
-              </div>
-            </div>
+                  <ChevronRight size={17} style={{ color: 'var(--text-faint)' }} className="shrink-0" />
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
 
+
       {/* 6. Healthy Recipes Carousel for You */}
       <section className="space-y-4 text-left">
-        <div className="flex items-center justify-between border-b pb-2 border-[#E7E6E0] dark:border-[#2C332E]">
-          <h2 className="text-lg font-black tracking-tight text-[#171817] dark:text-[#F4F5F2]">Healthy Recipes for You</h2>
-          <div className="flex gap-2">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Utensils size={26} style={{ color: 'var(--primary)' }} className="shrink-0" strokeWidth={2.2} />
+            <div>
+              <h2 className="text-[19px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>
+                Healthy Recipes for You
+              </h2>
+              <p className="text-[12.5px] font-medium mt-0.5" style={{ color: 'var(--text-dim)' }}>
+                Fresh, nutritious and delicious meals for your goals.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-2 shrink-0">
             <button
               onClick={() => scrollRecipes('left')}
-              className="p-1.5 rounded-xl bg-white dark:bg-[#1C211E] border border-[#E7E6E0] dark:border-[#2C332E] text-[#171817] dark:text-[#F4F5F2] hover:bg-[#F7F7F3] dark:hover:bg-[#222823] transition"
+              className="flex h-9 w-9 items-center justify-center rounded-full transition hover:brightness-95 active:scale-95"
+              style={{ background: 'var(--surface-solid)', border: '1px solid var(--border)' }}
               aria-label="Previous recipes"
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={17} style={{ color: 'var(--text)' }} />
             </button>
             <button
               onClick={() => scrollRecipes('right')}
-              className="p-1.5 rounded-xl bg-white dark:bg-[#1C211E] border border-[#E7E6E0] dark:border-[#2C332E] text-[#171817] dark:text-[#F4F5F2] hover:bg-[#F7F7F3] dark:hover:bg-[#222823] transition"
+              className="flex h-9 w-9 items-center justify-center rounded-full transition hover:brightness-95 active:scale-95"
+              style={{ background: 'var(--surface-solid)', border: '1px solid var(--border)' }}
               aria-label="Next recipes"
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={17} style={{ color: 'var(--text)' }} />
             </button>
           </div>
         </div>
@@ -1014,35 +1135,80 @@ export function Dashboard({
         {/* Carousel Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {recipes.map((item, idx) => {
+            // Same hue cycle as the meal list, so a recipe and its meal slot
+            // read as the same colour language.
+            const hue = MEAL_SLOTS[idx % MEAL_SLOTS.length];
+            const saved = savedRecipes.includes(item.name);
             return (
               <div
                 key={item.name}
                 onClick={() => setActiveRecipeModal(item)}
-                className="bg-white dark:bg-[#1C211E] flex flex-col group hover:-translate-y-1 transition duration-300 rounded-2xl overflow-hidden border border-[#E7E6E0] dark:border-[#2C332E] shadow-sm cursor-pointer"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveRecipeModal(item); }
+                }}
+                className="recipe-card group flex flex-col overflow-hidden rounded-[18px] transition duration-300 hover:-translate-y-1 cursor-pointer"
+                style={{
+                  background: 'var(--surface-solid)',
+                  border: '1px solid var(--border)',
+                  borderLeft: `4px solid var(--m-${hue})`,
+                }}
               >
-                <div className="relative aspect-[16/10] overflow-hidden p-2">
+                <div className="relative h-[132px] overflow-hidden">
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="w-full h-full object-cover rounded-xl group-hover:scale-105 transition-transform duration-500"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/placeholders/food.png"; }}
                   />
-                  <div className="absolute top-4 left-4 px-2 py-0.5 bg-black/60 backdrop-blur-md rounded-lg text-[8px] font-bold text-white tracking-widest uppercase">
-                    ⭐ RECIPE
-                  </div>
+
+                  <span
+                    className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-full px-2 py-1 text-[9.5px] font-black uppercase tracking-[0.08em] text-white"
+                    style={{ background: `var(--m-${hue})` }}
+                  >
+                    <Star size={10} className="fill-current" />
+                    Recipe
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); toggleSavedRecipe(item.name); }}
+                    aria-label={saved ? `Remove ${item.name} from saved` : `Save ${item.name}`}
+                    aria-pressed={saved}
+                    className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full transition hover:scale-110 active:scale-95"
+                    style={{ background: 'var(--surface-solid)', boxShadow: '0 2px 8px rgba(0,0,0,0.14)' }}
+                  >
+                    <Heart
+                      size={14}
+                      className={saved ? 'fill-current' : ''}
+                      style={{ color: saved ? 'var(--danger)' : 'var(--text-faint)' }}
+                    />
+                  </button>
                 </div>
 
-                <div className="p-3.5 space-y-1.5 flex-1 flex flex-col justify-between">
-                  <p className="text-xs font-black text-[#171817] dark:text-[#F4F5F2] leading-tight">{item.name}</p>
-                  <div className="flex justify-between items-center text-[10px] text-[#858982] dark:text-[#818982] font-semibold pt-1">
-                    <span className="flex items-center gap-1"><span className="text-[#D9A441]">🥣</span> {item.cal} kcal</span>
-                    <span className="flex items-center gap-1"><span className="text-[#D9A441]">⏱️</span> {item.time}</span>
+                <div className="flex flex-1 flex-col gap-1 p-3.5">
+                  <p className="text-[14.5px] font-bold leading-snug" style={{ color: 'var(--text)' }}>{item.name}</p>
+                  {item.desc && (
+                    <p className="text-[12px] font-medium leading-snug" style={{ color: 'var(--text-dim)' }}>{item.desc}</p>
+                  )}
+
+                  <div className="mt-auto flex items-center justify-between pt-2.5 text-[11.5px] font-bold">
+                    <span className="flex items-center gap-1.5" style={{ color: 'var(--m-water-ink)' }}>
+                      <Flame size={13} />
+                      {item.cal} kcal
+                    </span>
+                    <span className="flex items-center gap-1.5" style={{ color: 'var(--m-protein-ink)' }}>
+                      <Clock size={13} />
+                      {item.time}
+                    </span>
                   </div>
                 </div>
               </div>
             );
           })}
         </div>
+
 
         {/* Inline Recipe Detail Box */}
         {activeRecipeModal && (

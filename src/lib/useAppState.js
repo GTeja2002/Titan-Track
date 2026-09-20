@@ -42,6 +42,8 @@ export const defaultState = {
   streakFreezes: 2,
   streakFreezesUsedOn: [],
   accent: 'evergreen',
+  // Recipes the user hearted on the dashboard.
+  savedRecipes: [],
   // User's available foods list (defaults to empty array - user populates)
   availableFoods: [],
   // Applied filters for Personalized Plan
