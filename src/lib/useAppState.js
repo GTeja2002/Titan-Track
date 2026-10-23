@@ -178,7 +178,9 @@ function newUserState(email, extra = {}) {
     email,
     isOnboarded: false,
     name: email.split('@')[0] || '',
-    logs: { [defaultState.currentDate]: { ...createEmptyLog(), weight: defaultState.weight || 70 } },
+    // No weigh-in until the user enters one: a placeholder 70 kg used to be
+    // saved here and then showed up as a real point in the weight trend.
+    logs: { [defaultState.currentDate]: createEmptyLog() },
     ...extra,
   };
 }
@@ -406,7 +408,8 @@ export function useAppState() {
   const clearLogsHistory = () => {
     commit((prev) => {
       const today = prev.currentDate;
-      const freshLog = { ...createEmptyLog(), weight: prev.weight || 70 };
+      // Keep today's real weigh-in if there is one; never invent one.
+      const freshLog = { ...createEmptyLog(), weight: prev.logs?.[today]?.weight || 0 };
       return {
         ...prev,
         logs: {

@@ -22,3 +22,12 @@ android/keystore.properties
 # Playwright
 test-results/
 playwright-report/
+
+# Database dumps / Supabase CLI working files — may contain personal data.
+# The repository is public: these must never be committed.
+backups/
+*.sql.gz
+*.sql.gz.gpg
+supabase-backup*.sql
+supabase/.temp/
+supabase/.branches/

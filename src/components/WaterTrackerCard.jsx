@@ -52,7 +52,8 @@ export default function WaterTrackerCard({
     const handleAddCustomMl = (e) => {
         e?.preventDefault();
         const mlToAdd = parseInt(customMlInput, 10);
-        if (isNaN(mlToAdd) || mlToAdd <= 0) return;
+        // One drink at a time: 5 litres in a single entry is a typo, not a drink.
+        if (isNaN(mlToAdd) || mlToAdd <= 0 || mlToAdd > 5000) return;
 
         // Send exact mL delta directly
         onWaterChange(mlToAdd);

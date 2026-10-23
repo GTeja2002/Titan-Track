@@ -92,7 +92,7 @@ export function Dashboard({
   const handleWaterChange = (mlDelta) => {
     update((prev) => {
       const today = prev.currentDate;
-      const existingLog = prev.logs[today] || { ...createEmptyLog(), weight: prev.weight || 70 };
+      const existingLog = prev.logs[today] || createEmptyLog(); // never invent a weigh-in
       const currentWaterMl = normalizeWaterMl(existingLog.water);
       const newWaterMl = Math.max(0, currentWaterMl + mlDelta);
       return {
@@ -365,7 +365,7 @@ export function Dashboard({
   const handleToggleMeal = (meal) => {
     const isLogged = isMealIncluded(meal.name);
     update((prev) => {
-      const currentLog = prev.logs[prev.currentDate] || { ...createEmptyLog(), weight: prev.weight || 70 };
+      const currentLog = prev.logs[prev.currentDate] || createEmptyLog(); // never invent a weigh-in
       let newFoods = [...(currentLog.foods || [])];
 
       if (isLogged) {
@@ -400,7 +400,7 @@ export function Dashboard({
 
   const handleToggleWorkout = (workout) => {
     update((prev) => {
-      const currentLog = prev.logs[prev.currentDate] || { ...createEmptyLog(), weight: prev.weight || 70 };
+      const currentLog = prev.logs[prev.currentDate] || createEmptyLog(); // never invent a weigh-in
       if (workout.id === 'walk') {
         const nextWalk = currentLog.walk > 0 ? 0 : 3;
         return {

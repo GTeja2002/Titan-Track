@@ -172,3 +172,16 @@ describe('importLegacyState', () => {
     expect(out.goal).toBe('a');
   });
 });
+
+describe('mergeRemote safety', () => {
+  it('ignores device/account-only keys inside downloaded profile settings', () => {
+    const local = { email: 'me@x.com', userId: 'u-me', syncEpoch: 'ep', logs: {}, customFoods: [], goal: 'a' };
+    const remote = { profiles: [{ settings: { goal: 'b', email: 'attacker@x.com', userId: 'u-other', syncEpoch: 'evil', logs: { x: 1 } }, client_updated_at: '2030-01-01T00:00:00Z' }] };
+    const { state } = mergeRemote(local, remote);
+    expect(state.goal).toBe('b');
+    expect(state.email).toBe('me@x.com');
+    expect(state.userId).toBe('u-me');
+    expect(state.syncEpoch).toBe('ep');
+    expect(state.logs).toEqual({});
+  });
+});

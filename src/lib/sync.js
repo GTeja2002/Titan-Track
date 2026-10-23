@@ -248,7 +248,13 @@ export function mergeRemote(state, remote) {
   let next = { ...state, logs, customFoods };
   const prof = (remote.profiles || [])[0];
   if (prof && !newer(state.settingsUpdatedAt, prof.client_updated_at)) {
-    next = { ...next, ...(prof.settings || {}), logs, customFoods, settingsUpdatedAt: prof.client_updated_at };
+    // Never let downloaded settings overwrite device/account-only keys
+    // (signed-in user id, email, sync epoch…), even if the row was tampered with.
+    const settings = Object.fromEntries(
+      Object.entries(prof.settings && typeof prof.settings === 'object' ? prof.settings : {})
+        .filter(([k]) => !LOCAL_ONLY_KEYS.has(k))
+    );
+    next = { ...next, ...settings, logs, customFoods, settingsUpdatedAt: prof.client_updated_at };
     accepted.profile = true;
   }
   return { state: next, accepted };

@@ -24,7 +24,8 @@
 
   <!-- Google Identity Services — real Google Sign-In. Requires your own OAuth
        Client ID in .env (VITE_GOOGLE_CLIENT_ID), see .env.example. -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Google Identity Services is loaded on demand by the sign-in screen
+       (web only, and only when a Google client ID is configured). -->
 </head>
 
 <body>

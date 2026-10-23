@@ -55,10 +55,23 @@ export function parseBackup(raw) {
     return { ok: false, error: 'That backup has no data in it.' };
   }
   for (const k of EXCLUDED) delete parsed.data[k];
-  if (parsed.data.logs && typeof parsed.data.logs !== 'object') {
+  const data = parsed.data;
+  if (data.logs !== undefined && (typeof data.logs !== 'object' || data.logs === null || Array.isArray(data.logs))) {
     return { ok: false, error: 'That backup’s daily logs are unreadable.' };
   }
-  return { ok: true, data: parsed.data };
+  // A hand-edited or corrupted file must not be able to crash the app after
+  // restore: keep only well-formed days and list items, and drop the rest.
+  if (data.logs) {
+    data.logs = Object.fromEntries(
+      Object.entries(data.logs)
+        .filter(([date, day]) => /^\d{4}-\d{2}-\d{2}$/.test(date) && day && typeof day === 'object' && !Array.isArray(day))
+        .map(([date, day]) => [date, { ...day, foods: Array.isArray(day.foods) ? day.foods.filter((f) => f && typeof f === 'object' && typeof f.name === 'string') : [] }])
+    );
+  }
+  for (const key of ['customFoods', 'favoriteMeals', 'availableFoods', 'savedRecipes', 'bpHistory']) {
+    if (data[key] !== undefined && !Array.isArray(data[key])) delete data[key];
+  }
+  return { ok: true, data };
 }
 
 /** Days of history a backup contains, for the confirmation prompt. */
@@ -71,7 +84,12 @@ export function describeBackup(data) {
 
 const csvCell = (v) => {
   if (v === null || v === undefined) return '';
-  const s = String(v);
+  let s = String(v);
+  // Spreadsheet formula injection: a text cell starting with = + - @ (or a
+  // tab/CR) is run as a formula by Excel / Sheets, e.g. a food named
+  // '=HYPERLINK("http://…")'. Prefix such text with an apostrophe so it is
+  // shown as text. Numbers are left alone so negative values stay numeric.
+  if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s)) s = `'${s}`;
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 

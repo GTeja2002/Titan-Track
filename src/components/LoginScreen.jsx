@@ -71,6 +71,19 @@ export function LoginScreen({ cloud = false, onLocalLogin }) {
     if (err) setError(`Google sign-in failed: ${err}`);
   }, []);
 
+  // Load Google's script only here, only on the web, and only when Google
+  // sign-in is configured — a third-party script can read the whole page, so
+  // it should not be present on every screen (or in the Android app at all).
+  useEffect(() => {
+    if (!useGisButton || document.getElementById('google-gsi')) return;
+    const script = document.createElement('script');
+    script.id = 'google-gsi';
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+  }, [useGisButton]);
+
   // Renders the real Google button once both the GSI script and the target div
   // are ready. Polls briefly because the script tag loads with async/defer, so
   // it isn't guaranteed to be ready the instant this component mounts.
@@ -88,7 +101,7 @@ export function LoginScreen({ cloud = false, onLocalLogin }) {
         return;
       }
       attempts += 1;
-      if (attempts < 25) setTimeout(tryInit, 200);
+      if (attempts < 50) setTimeout(tryInit, 200);
     };
     tryInit();
     return () => { cancelled = true; };

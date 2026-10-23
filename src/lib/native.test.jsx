@@ -38,17 +38,47 @@ describe('native auth callback', () => {
     expect(await handleAuthCallbackUrl('https://example.com/?code=x')).toBeNull();
   });
 
-  it('exchanges the code for a session', async () => {
+  const pending = () => localStorage.setItem('titan_oauth_pending_at', String(Date.now()));
+
+  it('ignores a callback when no sign-in was started (another app opened the link)', async () => {
     const { handleAuthCallbackUrl } = await import('./nativeShell.js');
     const { supabase } = await import('./supabaseClient.js');
-    expect(await handleAuthCallbackUrl('com.titantrack.app://auth-callback?code=abc')).toBeNull();
-    expect(supabase.auth.exchangeCodeForSession).toHaveBeenCalledWith('abc');
+    supabase.auth.exchangeCodeForSession.mockClear();
+    localStorage.removeItem('titan_oauth_pending_at');
+    expect(await handleAuthCallbackUrl('com.titantrack.app://auth-callback?code=planted')).toBeNull();
+    expect(supabase.auth.exchangeCodeForSession).not.toHaveBeenCalled();
   });
 
-  it('surfaces provider errors and failed exchanges', async () => {
+  it('ignores a stale pending sign-in (older than 10 minutes)', async () => {
     const { handleAuthCallbackUrl } = await import('./nativeShell.js');
-    expect(await handleAuthCallbackUrl('com.titantrack.app://auth-callback?error=access_denied&error_description=User+cancelled')).toBe('User cancelled');
-    expect(await handleAuthCallbackUrl('com.titantrack.app://auth-callback?code=bad')).toBe('invalid grant');
-    expect(await handleAuthCallbackUrl('com.titantrack.app://auth-callback')).toMatch(/did not return a code/);
+    const { supabase } = await import('./supabaseClient.js');
+    supabase.auth.exchangeCodeForSession.mockClear();
+    localStorage.setItem('titan_oauth_pending_at', String(Date.now() - 11 * 60 * 1000));
+    expect(await handleAuthCallbackUrl('com.titantrack.app://auth-callback?code=abc')).toBeNull();
+    expect(supabase.auth.exchangeCodeForSession).not.toHaveBeenCalled();
+  });
+
+  it('exchanges the code for a session after a sign-in the user started, once', async () => {
+    const { handleAuthCallbackUrl } = await import('./nativeShell.js');
+    const { supabase } = await import('./supabaseClient.js');
+    supabase.auth.exchangeCodeForSession.mockClear();
+    pending();
+    expect(await handleAuthCallbackUrl('com.titantrack.app://auth-callback?code=abc')).toBeNull();
+    expect(supabase.auth.exchangeCodeForSession).toHaveBeenCalledWith('abc');
+    // A replay of the same link is ignored: the pending flag was consumed.
+    expect(await handleAuthCallbackUrl('com.titantrack.app://auth-callback?code=abc')).toBeNull();
+    expect(supabase.auth.exchangeCodeForSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows fixed messages, never text taken from the link', async () => {
+    const { handleAuthCallbackUrl } = await import('./nativeShell.js');
+    pending();
+    expect(await handleAuthCallbackUrl('com.titantrack.app://auth-callback?error=access_denied&error_description=Call+this+number')).toBe('Google sign-in was cancelled.');
+    pending();
+    expect(await handleAuthCallbackUrl('com.titantrack.app://auth-callback?error=server_error&error_description=Visit+evil.example')).toBe('Google sign-in failed. Please try again.');
+    pending();
+    expect(await handleAuthCallbackUrl('com.titantrack.app://auth-callback?code=bad')).toBe('Google sign-in failed. Please try again.');
+    pending();
+    expect(await handleAuthCallbackUrl('com.titantrack.app://auth-callback')).toBe('Google sign-in failed. Please try again.');
   });
 });

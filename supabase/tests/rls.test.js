@@ -196,3 +196,23 @@ describe('delete_my_account', () => {
     expect(legacy.rows[0].n).toBe(0);
   });
 });
+
+describe('hardening limits (20261024000000)', () => {
+  it('rejects absurd values and oversized JSON, accepts normal rows', async () => {
+    await as(A, 'a@example.com', async () => {
+      const ins = (id, extra) => db.query(
+        `insert into public.meal_entries (id, user_id, log_date, name, cal, protein, snapshot) values ($1, $2, '2026-10-24', 'x', $3, $4, $5)`,
+        [id, A, extra.cal ?? 100, extra.protein ?? 5, JSON.stringify(extra.snapshot ?? {})],
+      );
+      await expect(ins('limit-ok-0001', {})).resolves.toBeTruthy();
+      await expect(ins('limit-cal-0001', { cal: 1e30 })).rejects.toThrow(/meal_entries_cal_max/);
+      await expect(ins('limit-neg-0001', { protein: -5 })).rejects.toThrow(/meal_entries_macros_range/);
+      await expect(ins('limit-big-0001', { snapshot: { blob: 'x'.repeat(40000) } })).rejects.toThrow(/meal_entries_snapshot_size/);
+    });
+  });
+
+  it('touch_updated_at has a fixed search_path', async () => {
+    const r = await db.query(`select proconfig from pg_proc where proname = 'touch_updated_at'`);
+    expect(String(r.rows[0].proconfig)).toMatch(/search_path=/);
+  });
+});

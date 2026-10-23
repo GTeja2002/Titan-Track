@@ -20,32 +20,65 @@ import { dismissTop } from './dismiss.js';
 
 export const NATIVE_AUTH_REDIRECT = 'com.titantrack.app://auth-callback';
 
+// A sign-in the user actually started, so the deep link is only honoured
+// shortly after they tapped "Continue with Google". Stored in localStorage
+// because Android may kill the app while the browser is in front.
+const PENDING_KEY = 'titan_oauth_pending_at';
+const PENDING_TTL_MS = 10 * 60 * 1000;
+
+function markSignInPending() {
+  try { localStorage.setItem(PENDING_KEY, String(Date.now())); } catch { /* storage blocked */ }
+}
+
+function consumeSignInPending(now = Date.now()) {
+  try {
+    const at = Number(localStorage.getItem(PENDING_KEY));
+    localStorage.removeItem(PENDING_KEY);
+    return Number.isFinite(at) && at > 0 && now - at <= PENDING_TTL_MS;
+  } catch {
+    return false;
+  }
+}
+
 export async function nativeGoogleSignIn() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: NATIVE_AUTH_REDIRECT, skipBrowserRedirect: true },
   });
   if (error) return { error: error.message };
+  markSignInPending();
   await Browser.open({ url: data.url });
   return { error: null };
 }
 
-/** Handles the deep link back from Google. Returns an error message or null. */
+/**
+ * Handles the deep link back from Google. Returns a message to show, or null.
+ *
+ * Any app on the phone can open this URL, so: links that arrive when no
+ * sign-in was started are ignored, and the text shown never comes from the
+ * link itself (it could be made to say anything). PKCE already stops a
+ * planted code from working — the exchange needs a verifier only this app
+ * has.
+ */
 export async function handleAuthCallbackUrl(url) {
   if (!url || !url.startsWith(NATIVE_AUTH_REDIRECT)) return null;
+  if (!consumeSignInPending()) return null;
   await Browser.close().catch(() => {});
   let params;
   try {
     params = new URL(url).searchParams;
   } catch {
-    return 'Sign-in link was malformed.';
+    return 'Google sign-in failed. Please try again.';
   }
-  const err = params.get('error_description') || params.get('error');
-  if (err) return err;
+  if (params.get('error') || params.get('error_description')) {
+    return params.get('error') === 'access_denied'
+      ? 'Google sign-in was cancelled.'
+      : 'Google sign-in failed. Please try again.';
+  }
   const code = params.get('code');
-  if (!code) return 'Sign-in did not return a code.';
+  if (!code) return 'Google sign-in failed. Please try again.';
   const { error } = await supabase.auth.exchangeCodeForSession(code);
-  return error ? error.message : null;
+  return error ? 'Google sign-in failed. Please try again.' : null;
 }
 
 let started = false;

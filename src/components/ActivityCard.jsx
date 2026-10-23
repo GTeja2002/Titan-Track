@@ -12,8 +12,12 @@ export function ActivityCard({ state, update, health = null, onEditProfile }) {
 
   // Walk (km) and gym (minutes) for the viewed day. Weight is no longer
   // edited here — it belongs to the profile editor (one source of truth).
+  // Bounds stop typos and pasted junk from corrupting totals (a negative
+  // walk used to make "calories burned" negative).
+  const LIMITS = { walk: 200, gym: 1440 }; // km, minutes per day
   const setField = (field, value) => {
-    const val = value === '' ? '' : (parseFloat(value) || 0);
+    const n = parseFloat(value);
+    const val = value === '' ? '' : Math.min(LIMITS[field] ?? Infinity, Math.max(0, Number.isFinite(n) ? n : 0));
     update((prev) => {
       const date = prev.currentDate;
       const currentLog = prev.logs[date] || createEmptyLog();

@@ -161,3 +161,36 @@ describe('backup identity safety', async () => {
     expect(parsed.data).toEqual({ goal: 'g' });
   });
 });
+
+describe('export and restore safety', async () => {
+  const { buildMealsCsv, parseBackup } = await import('./backup.js');
+  it('neutralises spreadsheet formulas in food names, keeps negative numbers numeric', () => {
+    const csv = buildMealsCsv({ logs: { '2026-10-24': { foods: [
+      { name: '=HYPERLINK("http://evil")', qty: 1, cal: 10 },
+      { name: '+cmd', qty: 1, cal: 5 },
+      { name: '@SUM(A1)', qty: 1, cal: 5 },
+      { name: 'Idli', qty: -1, cal: 39 },
+    ] } } });
+    const lines = csv.trim().split('\r\n');
+    expect(lines[1]).toContain(`"'=HYPERLINK(""http://evil"")"`);
+    expect(lines[2]).toContain("'+cmd");
+    expect(lines[3]).toContain("'@SUM(A1)");
+    expect(lines[4]).toContain(',-1,');
+  });
+
+  it('drops malformed days, items and list fields from a restored file', () => {
+    const r = parseBackup({ app: 'titantrack', version: 1, data: {
+      logs: { '2026-10-24': { foods: [{ name: 'ok' }, null, 5, { cal: 1 }] }, 'not-a-date': {}, '2026-10-25': 'oops' },
+      customFoods: 'nope', favoriteMeals: [],
+    } });
+    expect(r.ok).toBe(true);
+    expect(Object.keys(r.data.logs)).toEqual(['2026-10-24']);
+    expect(r.data.logs['2026-10-24'].foods).toEqual([{ name: 'ok' }]);
+    expect(r.data.customFoods).toBeUndefined();
+    expect(r.data.favoriteMeals).toEqual([]);
+  });
+
+  it('rejects logs that are not an object', () => {
+    expect(parseBackup({ app: 'titantrack', version: 1, data: { logs: [] } }).ok).toBe(false);
+  });
+});

@@ -87,7 +87,7 @@ export function PersonalizedPlanCard({
 
         update((prev) => {
             const today = prev.currentDate;
-            const existingLog = prev.logs[today] || { ...createEmptyLog(), weight: prev.weight || 70 };
+            const existingLog = prev.logs[today] || createEmptyLog(); // never invent a weigh-in
             const updatedFoods = [...(existingLog.foods || []), newFoodEntry];
 
             return {
