@@ -1,0 +1,99 @@
+# Tests + web build on every push/PR, then a debug APK you can download from
+# the run's "Artifacts" section and install on your phone.
+#
+# Set these in GitHub → Settings → Secrets and variables → Actions:
+#   VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY   (required for accounts/sync)
+#   VITE_GOOGLE_CLIENT_ID                        (optional)
+# For a signed release APK (optional, manual run only):
+#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+name: CI
+
+on:
+  push:
+    branches: [main, 'feature/**']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Also build a signed release APK'
+        type: boolean
+        default: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
+  android:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+
+      - name: Write production env from secrets
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+        run: |
+          if [ -z "$VITE_SUPABASE_URL" ]; then
+            echo "::warning::VITE_SUPABASE_URL secret not set — this APK runs in local-only mode (no accounts, no cloud sync)."
+          fi
+          {
+            echo "VITE_SUPABASE_URL=$VITE_SUPABASE_URL"
+            echo "VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY"
+            echo "VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID"
+          } > .env.production
+
+      - run: npx vite build --mode production
+      - run: npx cap sync android
+      - run: chmod +x android/gradlew
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: titantrack-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+
+      - name: Build signed release APK
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.release }}
+        working-directory: android
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          TITANTRACK_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          TITANTRACK_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          TITANTRACK_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_B64" || { echo "::error::ANDROID_KEYSTORE_BASE64 secret is missing"; exit 1; }
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          export TITANTRACK_KEYSTORE_FILE="$RUNNER_TEMP/release.jks"
+          ./gradlew assembleRelease --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.release }}
+        with:
+          name: titantrack-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30

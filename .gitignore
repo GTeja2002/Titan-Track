@@ -4,3 +4,17 @@ dist
 .env.local
 *.log
 .DS_Store
+
+# Real env files (templates are *.example)
+.env.development
+.env.production
+.env.*.local
+
+# Android signing — never commit these
+*.jks
+*.keystore
+android/keystore.properties
+
+# Built APKs
+*.apk
+*.aab

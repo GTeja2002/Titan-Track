@@ -8,6 +8,7 @@ import { FOOD_DB, calculateProteinTarget } from '../lib/calculations.js';
 import { generatePersonalizedPlan } from '../lib/personalizedPlanEngine.js';
 import { createEmptyLog } from '../lib/useAppState.js';
 import { createMealEntry, defaultMealForTime, planMealAsFood } from '../lib/nutrition.js';
+import { useDismiss } from '../lib/dismiss.js';
 
 export function PersonalizedPlanCard({
     state,
@@ -45,6 +46,7 @@ export function PersonalizedPlanCard({
 
     // Add Available Food Modal / Input State
     const [isAddFoodModalOpen, setIsAddFoodModalOpen] = useState(false);
+    useDismiss(isAddFoodModalOpen, () => setIsAddFoodModalOpen(false));
     const [foodSearchQuery, setFoodSearchQuery] = useState('');
     const [customFoodInput, setCustomFoodInput] = useState('');
 

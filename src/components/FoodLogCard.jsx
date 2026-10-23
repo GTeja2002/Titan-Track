@@ -15,6 +15,7 @@ import {
   addEntries, removeEntry, replaceEntry, upsertCustomFood, deleteCustomFood, liveCustomFoods,
 } from '../lib/mealLog.js';
 import { CustomFoodModal } from './CustomFoodModal.jsx';
+import { useDismiss } from '../lib/dismiss.js';
 
 const unitShort = (unit) => (unit === 'piece' ? 'pc' : UNITS[unit]?.short ?? unit ?? '');
 
@@ -58,7 +59,8 @@ function CompleteCalories({ entry, onSave }) {
   );
 }
 
-function MyFoodsModal({ foods, onEdit, onDelete, onClose }) {
+function MyFoodsModal({ foods, onEdit, onDelete, onClose, covered }) {
+  useDismiss(!covered, onClose);
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-label="My foods" onClick={(e) => e.stopPropagation()} className="w-full sm:max-w-md max-h-[85vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl p-5 text-left" style={{ background: 'var(--surface-solid)', border: '1px solid var(--border)' }}>
@@ -606,6 +608,7 @@ export function FoodLogCard({ state, update }) {
 
       {myFoodsOpen && !customModal && (
         <MyFoodsModal
+          covered={!!customModal}
           foods={myFoods}
           onEdit={(f) => setCustomModal({ mode: 'edit', initial: f, editingFood: f })}
           onDelete={(f) => update((prev) => deleteCustomFood(prev, f.id))}

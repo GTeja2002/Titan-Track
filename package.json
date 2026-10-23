@@ -7,15 +7,26 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:prod": "vite build --mode production",
+    "android:sync": "vite build --mode production && cap sync android",
+    "android:open": "cap open android",
+    "android:apk:debug": "npm run android:sync && cd android && gradlew assembleDebug",
+    "android:apk:release": "npm run android:sync && cd android && gradlew assembleRelease",
+    "android:icons": "python scripts/android-icons.py"
   },
   "dependencies": {
+    "@capacitor/android": "^7.6.9",
+    "@capacitor/app": "^7.1.2",
+    "@capacitor/browser": "^7.0.5",
+    "@capacitor/core": "^7.6.9",
     "@supabase/supabase-js": "^2.116.0",
     "lucide-react": "^0.383.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.6.9",
     "@electric-sql/pglite": "^0.2.17",
     "@testing-library/react": "^16.3.3",
     "@vitejs/plugin-react": "^4.3.1",

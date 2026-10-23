@@ -16,6 +16,7 @@ import WaterTrackerCard from './WaterTrackerCard.jsx';
 import { MetricCard } from './MetricCard.jsx';
 import { AchievementsCard } from './AchievementsCard.jsx';
 import { LockedFeature } from './shared/LockedFeature.jsx';
+import { useDismiss } from '../lib/dismiss.js';
 
 /** Metric hue per meal slot, cycled down the daily list so the rows read as a
  *  sequence rather than four identical cards. */
@@ -289,6 +290,7 @@ export function Dashboard({
 
   const [selectedPlanWeekday, setSelectedPlanWeekday] = useState(() => getWeekdayName(state.currentDate));
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  useDismiss(isPlanModalOpen, () => setIsPlanModalOpen(false));
   const [editorWeekday, setEditorWeekday] = useState('Monday');
   const [mealSearch, setMealSearch] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -451,6 +453,7 @@ export function Dashboard({
     });
   };
   const [activeTipModal, setActiveTipModal] = useState(null);
+  useDismiss(!!activeTipModal, () => setActiveTipModal(null));
 
 
 

@@ -1,6 +1,7 @@
 /* ---------------- components/CalendarModal.jsx ---------------- */
 
 import { useState } from 'react';
+import { useDismiss } from '../lib/dismiss.js';
 import { createPortal } from 'react-dom';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getLocalDateString } from '../lib/date.js';
@@ -13,6 +14,7 @@ export function dayHasLog(logs, dateStr) {
 
 export function CalendarModal({ state, onSelectDate }) {
   const [open, setOpen] = useState(false);
+  useDismiss(open, () => setOpen(false));
   const [calDate, setCalDate] = useState(() => new Date(state.currentDate + 'T00:00:00'));
 
   const year = calDate.getFullYear();

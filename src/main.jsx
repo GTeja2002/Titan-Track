@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import './index.css';
+import { isNativeApp } from './lib/platform.js';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -17,7 +18,9 @@ createRoot(document.getElementById('root')).render(
 // dev Vite serves your source modules from the same origin — so a dev
 // registration caches the modules on first load and then serves those stale
 // copies forever, making every later edit invisible in the browser.
-if ('serviceWorker' in navigator) {
+// Not inside the Android app: its files are already on the device, and a
+// cache-first worker there would keep serving old code after an app update.
+if ('serviceWorker' in navigator && !isNativeApp()) {
   if (import.meta.env.PROD) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js').catch((err) => {

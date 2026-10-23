@@ -7,7 +7,8 @@
  * they can be filled in later; an approximate value can be marked as an
  * estimate. Nothing here presents a guess as a measured fact.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useDismiss } from '../lib/dismiss.js';
 import { X, Info } from 'lucide-react';
 import {
   UNITS, MEAL_TYPES, NUTRITION_SOURCES, validateCustomFood, validateQuantity,
@@ -60,11 +61,7 @@ export function CustomFoodModal({
   const [saveToMyFoods, setSaveToMyFoods] = useState(true);
   const [submitted, setSubmitted] = useState(false);
 
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  useDismiss(true, onClose);
 
   const basis = UNITS[unit].basis;
   const perLabel = basis === 'per100' ? `per 100 ${UNITS[unit].short}` : `per 1 ${UNITS[unit].short}`;

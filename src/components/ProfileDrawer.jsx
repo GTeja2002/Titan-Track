@@ -1,6 +1,7 @@
 /* ---------------- components/ProfileDrawer.jsx ---------------- */
 
 import { useState } from 'react';
+import { useDismiss } from '../lib/dismiss.js';
 import { X, Download, Upload } from 'lucide-react';
 import { calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCalories } from '../lib/calculations.js';
 import { getLocalDateString } from '../lib/date.js';
@@ -39,6 +40,8 @@ function ToggleRow({ label, hint, checked, onChange }) {
 export function ProfileDrawer({ state, update, isOpen, onClose }) {
   const [backupMessage, setBackupMessage] = useState('');
   const [backupError, setBackupError] = useState(false);
+
+  useDismiss(isOpen, onClose);
 
   // Every hook must run before this early return, or the hook order changes
   // between renders when the drawer opens and closes.

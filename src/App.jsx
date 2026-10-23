@@ -1,5 +1,5 @@
 /* ---------------- App.jsx ---------------- */
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Moon, Sun, Check, Activity, Scale, Dumbbell, User, LogOut,
   Settings as SettingsIcon,
@@ -33,6 +33,8 @@ import { useFeatureFlags } from './lib/useFeatureFlags.js';
 import { FullScreenMessage } from './components/shared/FullScreenMessage.jsx';
 import { DataExportCard, DeleteAccountCard } from './components/AccountCards.jsx';
 import { HistoryCard } from './components/HistoryCard.jsx';
+import { useDismiss } from './lib/dismiss.js';
+import { startNativeShell } from './lib/nativeShell.js';
 
 /** The one definition of the app's sections. The sidebar, the mobile drawer
  *  and the bottom tab bar all read from this. */
@@ -93,6 +95,24 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  useDismiss(isMobileSidebarOpen, () => setIsMobileSidebarOpen(false));
+
+  // Android back: overlays close first (lib/dismiss.js), then any tab goes
+  // back to the Dashboard, then the app is backgrounded.
+  const activeTabRef = useRef(activeTab);
+  useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
+  useEffect(() => {
+    startNativeShell({
+      onBack: () => {
+        if (activeTabRef.current !== 'Dashboard') {
+          setActiveTab('Dashboard');
+          return true;
+        }
+        return false;
+      },
+      onAuthError: (msg) => window.alert(`Sign-in failed: ${msg}`),
+    });
+  }, []);
 
   const toggleTheme = () => update((prev) => ({ ...prev, isDarkMode: !prev.isDarkMode }));
   const onSelectDate = (date) => update((prev) => ({ ...prev, currentDate: date }));

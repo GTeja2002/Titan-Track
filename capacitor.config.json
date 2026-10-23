@@ -1,0 +1,16 @@
+{
+  "appId": "com.titantrack.app",
+  "appName": "TitanTrack",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "App": {}
+  }
+}

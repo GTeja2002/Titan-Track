@@ -13,6 +13,10 @@
  */
 import { supabase } from './supabaseClient.js';
 import { AUTH_REDIRECT_URL } from './config.js';
+import { isNativeApp } from './platform.js';
+import { nativeGoogleSignIn, NATIVE_AUTH_REDIRECT } from './nativeShell.js';
+
+const redirectUrl = () => (isNativeApp() ? NATIVE_AUTH_REDIRECT : AUTH_REDIRECT_URL);
 
 export const cloudAuthEnabled = !!supabase;
 
@@ -28,7 +32,7 @@ const friendly = (error) => {
 export async function sendEmailCode(email) {
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { shouldCreateUser: true, emailRedirectTo: AUTH_REDIRECT_URL },
+    options: { shouldCreateUser: true, emailRedirectTo: redirectUrl() },
   });
   return { error: friendly(error) };
 }
@@ -46,9 +50,10 @@ export async function signInWithGoogleIdToken(credential) {
 
 /** Redirect-based Google sign-in (used where the GIS button can't run). */
 export async function signInWithGoogleRedirect() {
+  if (isNativeApp()) return nativeGoogleSignIn();
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: AUTH_REDIRECT_URL },
+    options: { redirectTo: redirectUrl() },
   });
   return { error: friendly(error) };
 }
