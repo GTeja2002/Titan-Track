@@ -125,8 +125,14 @@ begin
     execute format('create policy %I_owner_insert on public.%I for insert to authenticated with check (user_id = auth.uid())', t, t);
     execute format('create policy %I_owner_update on public.%I for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid())', t, t);
     execute format('create policy %I_owner_delete on public.%I for delete to authenticated using (user_id = auth.uid())', t, t);
-    execute format('revoke all on public.%I from anon', t);
-    execute format('grant select, insert, update, delete on public.%I to authenticated', t);
+    execute format(
+      'revoke all privileges on table public.%I from anon, authenticated',
+      t
+    );
+    execute format(
+      'grant select, insert, update, delete on table public.%I to authenticated',
+      t
+    );
   end loop;
 end $$;
 
@@ -143,8 +149,8 @@ create table if not exists public.app_settings (
 alter table public.app_settings enable row level security;
 drop policy if exists app_settings_read on public.app_settings;
 create policy app_settings_read on public.app_settings for select to anon, authenticated using (true);
-revoke insert, update, delete on public.app_settings from anon, authenticated;
-grant select on public.app_settings to anon, authenticated;
+revoke all privileges on table public.app_settings from anon, authenticated;
+grant select on table public.app_settings to anon, authenticated;
 insert into public.app_settings (key, value)
   values ('feature_flags', '{"achievements": false, "competitions": false}')
   on conflict (key) do nothing;
