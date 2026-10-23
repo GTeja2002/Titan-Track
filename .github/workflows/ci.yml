@@ -58,11 +58,20 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      # Set up Android SDK without requesting the obsolete "tools" package.
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v4
-        with:
-          packages: platform-tools
+      # ubuntu-latest already ships the Android SDK ($ANDROID_HOME). The
+      # setup-android action re-downloaded the command-line tools and then
+      # stalled on interactive licence prompts, so use the preinstalled SDK,
+      # accept licences non-interactively, and install exactly what
+      # Capacitor 7 compiles against (android-35). Gradle fetches anything
+      # else it needs now that the licences are accepted.
+      - name: Prepare preinstalled Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$SDKMANAGER" || { echo "::error::sdkmanager not found under $ANDROID_HOME"; exit 1; }
+          yes | "$SDKMANAGER" --licenses > /dev/null
+          "$SDKMANAGER" --install "platforms;android-35" "build-tools;35.0.0" "platform-tools" > /dev/null
+          echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 
       - run: npm ci
 
