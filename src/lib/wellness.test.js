@@ -7,7 +7,6 @@ import {
     getTodayMacroProgress,
     appendBpReading,
 } from './wellness.js';
-import { pruneOldLogs } from './useAppState.js';
 import { calculateProteinTarget } from './calculations.js';
 
 describe('wellness.js unit tests', () => {
@@ -193,28 +192,6 @@ describe('wellness.js unit tests', () => {
             expect(nextHistory.length).toBe(20);
             expect(nextHistory[0].systolic).toBe(115);
             expect(nextHistory[0].diastolic).toBe(75);
-        });
-    });
-
-    describe('pruneOldLogs', () => {
-        it('prunes daily logs older than 365 days relative to current date', () => {
-            const currentDate = '2026-08-30';
-            const logs = {
-                '2026-08-30': { walk: 2 }, // today (keep)
-                '2025-08-31': { walk: 3 }, // 364 days ago (keep)
-                '2025-08-30': { walk: 1 }, // 365 days ago (keep)
-                '2025-08-29': { walk: 4 }, // 366 days ago (prune)
-                '2024-05-12': { walk: 5 }, // legacy (prune)
-            };
-
-            const result = pruneOldLogs(logs, currentDate);
-
-            expect(result['2026-08-30']).toBeDefined();
-            expect(result['2025-08-31']).toBeDefined();
-            expect(result['2025-08-30']).toBeDefined();
-            expect(result['2025-08-29']).toBeUndefined();
-            expect(result['2024-05-12']).toBeUndefined();
-            expect(Object.keys(result).length).toBe(3);
         });
     });
 });

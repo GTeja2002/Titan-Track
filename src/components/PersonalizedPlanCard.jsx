@@ -7,6 +7,7 @@ import { recipes } from '../lib/wellnessContent.js';
 import { FOOD_DB, calculateProteinTarget } from '../lib/calculations.js';
 import { generatePersonalizedPlan } from '../lib/personalizedPlanEngine.js';
 import { createEmptyLog } from '../lib/useAppState.js';
+import { createMealEntry, defaultMealForTime, planMealAsFood } from '../lib/nutrition.js';
 
 export function PersonalizedPlanCard({
     state,
@@ -75,17 +76,11 @@ export function PersonalizedPlanCard({
 
     // Handle logging a recommended meal to today's Food Log
     const handleLogRecommendedMeal = (meal) => {
-        const newFoodEntry = {
-            name: meal.name,
-            cal: meal.cal,
-            protein: meal.protein || 0,
-            carbs: meal.carbs || 0,
-            fat: meal.fat || 0,
-            fiber: meal.fiber || 0,
+        const newFoodEntry = createMealEntry({
+            food: planMealAsFood({ ...meal, image: meal.image || '/assets/placeholders/food.png' }),
             qty: 1,
-            unit: 'serving',
-            image: meal.image || '/assets/placeholders/food.png'
-        };
+            mealType: defaultMealForTime(),
+        });
 
         update((prev) => {
             const today = prev.currentDate;

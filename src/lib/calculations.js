@@ -290,108 +290,13 @@ export function getNearestBodyImage(gender, bodyFatPercent, useManual, manualBod
   return `/assets/${gender}/${folderLabel}/${selectedView}.png`;
 }
 
-/* ---------------- data/foods.js ---------------- */
-export const FOOD_DB = [
-  { name: 'Multigrain Oats', unit: 'g', calPer100: 389, proteinPer100: 13, carbsPer100: 66, fatPer100: 7, fiberPer100: 10, image: '/assets/food/multigrain-oats.png' },
-  { name: 'Milk', unit: 'ml', calPer100: 61, proteinPer100: 3.2, carbsPer100: 4.8, fatPer100: 3.3, fiberPer100: 0, image: '/assets/food/milk.jpg' },
-  { name: 'Egg White', unit: 'piece', calPerPiece: 17, proteinPerPiece: 3.6, carbsPerPiece: 0.2, fatPerPiece: 0.1, fiberPerPiece: 0, image: '/assets/food/egg-white.png' },
-  { name: 'Boiled Egg (whole)', unit: 'piece', calPerPiece: 78, proteinPerPiece: 6.3, carbsPerPiece: 0.6, fatPerPiece: 5.3, fiberPerPiece: 0, image: '/assets/food/boiled-egg.png' },
-  { name: 'Cooked Rice', unit: 'g', calPer100: 130, proteinPer100: 2.7, carbsPer100: 28, fatPer100: 0.3, fiberPer100: 0.4, image: '/assets/food/cooked-rice.png' },
-  { name: 'Dal (cooked)', unit: 'g', calPer100: 116, proteinPer100: 9, carbsPer100: 20, fatPer100: 0.4, fiberPer100: 8, image: '/assets/food/dal.png' },
-  { name: 'Mixed Vegetable Curry', unit: 'g', calPer100: 90, proteinPer100: 2, carbsPer100: 10, fatPer100: 5, fiberPer100: 3, image: '/assets/food/vegetable-curry.png' },
-  { name: 'Chapati', unit: 'piece', calPerPiece: 70, proteinPerPiece: 2.5, carbsPerPiece: 15, fatPerPiece: 0.5, fiberPerPiece: 2, image: '/assets/food/roti.png' },
-  { name: 'Chicken Curry', unit: 'g', calPer100: 165, proteinPer100: 16, carbsPer100: 4, fatPer100: 10, fiberPer100: 0.5, image: '/assets/food/chicken-curry.png' },
-  { name: 'Mutton Curry', unit: 'g', calPer100: 250, proteinPer100: 18, carbsPer100: 4, fatPer100: 18, fiberPer100: 0.5, image: '/assets/food/mutton-curry.png' },
-  { name: 'Chicken Biryani', unit: 'g', calPer100: 200, proteinPer100: 9, carbsPer100: 24, fatPer100: 7, fiberPer100: 1, image: '/assets/food/biryani.png' },
-  { name: 'Paneer', unit: 'g', calPer100: 265, proteinPer100: 18, carbsPer100: 3.5, fatPer100: 20, fiberPer100: 0, image: '/assets/food/cottage-cheese.png' },
-  { name: 'Curd / Yogurt', unit: 'g', calPer100: 60, proteinPer100: 3.5, carbsPer100: 4.7, fatPer100: 3.3, fiberPer100: 0, image: '/assets/food/yogurt.png' },
-  { name: 'Banana', unit: 'piece', calPerPiece: 105, proteinPerPiece: 1.3, carbsPerPiece: 27, fatPerPiece: 0.4, fiberPerPiece: 3.1, image: '/assets/food/banana.png' },
-  { name: 'Apple', unit: 'piece', calPerPiece: 95, proteinPerPiece: 0.5, carbsPerPiece: 25, fatPerPiece: 0.3, fiberPerPiece: 4.4, image: '/assets/food/apple.png' },
-  { name: 'Brown Bread Slice', unit: 'piece', calPerPiece: 80, proteinPerPiece: 4, carbsPerPiece: 14, fatPerPiece: 1, fiberPerPiece: 2, image: '/assets/food/brown-bread.png' },
-  { name: 'Peanut Butter (tbsp)', unit: 'piece', calPerPiece: 95, proteinPerPiece: 4, carbsPerPiece: 3, fatPerPiece: 8, fiberPerPiece: 1, image: '/assets/food/peanut-butter.png' },
-  { name: 'Tea with Milk & Sugar', unit: 'piece', calPerPiece: 40, proteinPerPiece: 1, carbsPerPiece: 6, fatPerPiece: 1.3, fiberPerPiece: 0, image: '/assets/food/tea.jpg' },
-  { name: 'Black Coffee', unit: 'piece', calPerPiece: 5, proteinPerPiece: 0.3, carbsPerPiece: 0, fatPerPiece: 0, fiberPerPiece: 0, image: '/assets/food/black-coffee.jpg' },
-  { name: 'Idli', unit: 'piece', calPerPiece: 39, proteinPerPiece: 2, carbsPerPiece: 8, fatPerPiece: 0.2, fiberPerPiece: 0.5, image: '/assets/food/idli.png' },
-  { name: 'Plain Dosa', unit: 'piece', calPerPiece: 133, proteinPerPiece: 3, carbsPerPiece: 21, fatPerPiece: 4, fiberPerPiece: 1, image: '/assets/food/dosa.png' },
-  { name: 'Sambar', unit: 'g', calPer100: 65, proteinPer100: 3, carbsPer100: 9, fatPer100: 2, fiberPer100: 2.5, image: '/assets/food/sambar.png' },
-  { name: 'Poha', unit: 'g', calPer100: 130, proteinPer100: 2.5, carbsPer100: 27, fatPer100: 1.5, fiberPer100: 1, image: '/assets/food/poha.png' },
-  { name: 'Upma', unit: 'g', calPer100: 120, proteinPer100: 3, carbsPer100: 20, fatPer100: 3, fiberPer100: 1.5, image: '/assets/food/upma.png' },
-  { name: 'Samosa', unit: 'piece', calPerPiece: 260, proteinPerPiece: 4, carbsPerPiece: 28, fatPerPiece: 15, fiberPerPiece: 2, image: '/assets/food/samosa.jpg' },
-  { name: 'Biscuits (2 pcs)', unit: 'piece', calPerPiece: 90, proteinPerPiece: 1.5, carbsPerPiece: 14, fatPerPiece: 3, fiberPerPiece: 0.5, image: '/assets/food/biscuits.jpg' },
-  { name: 'Peanuts (roasted)', unit: 'g', calPer100: 567, proteinPer100: 26, carbsPer100: 16, fatPer100: 49, fiberPer100: 8.5, image: '/assets/food/peanuts-roasted.png' },
-  { name: 'French Fries', unit: 'g', calPer100: 312, proteinPer100: 3.4, carbsPer100: 41, fatPer100: 15, fiberPer100: 3.8, image: '/assets/food/french-fries.jpg' },
-  { name: 'Pizza Slice', unit: 'piece', calPerPiece: 285, proteinPerPiece: 12, carbsPerPiece: 36, fatPerPiece: 10, fiberPerPiece: 2.5, image: '/assets/food/pizza-slice.png' },
-  { name: 'Ice Cream', unit: 'g', calPer100: 207, proteinPer100: 3.5, carbsPer100: 24, fatPer100: 11, fiberPer100: 0.7, image: '/assets/food/ice-cream.jpg' },
-  { name: 'Bread Slice (white)', unit: 'piece', calPerPiece: 75, proteinPerPiece: 2.6, carbsPerPiece: 14, fatPerPiece: 1, fiberPerPiece: 0.8, image: '/assets/food/bread.png' },
-  { name: 'Buttermilk', unit: 'ml', calPer100: 40, proteinPer100: 1.5, carbsPer100: 4.8, fatPer100: 1.5, fiberPer100: 0, image: '/assets/food/buttermilk.jpg' },
-  { name: 'Cake Slice', unit: 'piece', calPerPiece: 235, proteinPerPiece: 3.5, carbsPerPiece: 35, fatPerPiece: 9, fiberPerPiece: 0.7, image: '/assets/food/cake.jpg' },
-  { name: 'Cashews', unit: 'g', calPer100: 553, proteinPer100: 18, carbsPer100: 30, fatPer100: 44, fiberPer100: 3.3, image: '/assets/food/cashews.png' },
-  { name: 'Chicken Sandwich', unit: 'piece', calPerPiece: 320, proteinPerPiece: 22, carbsPerPiece: 30, fatPerPiece: 12, fiberPerPiece: 2.5, image: '/assets/food/chicken-sandwich.jpg' },
-  { name: 'Chicken Soup', unit: 'g', calPer100: 45, proteinPer100: 4.5, carbsPer100: 3, fatPer100: 1.5, fiberPer100: 0.3, image: '/assets/food/chicken-soup.jpg' },
-  { name: 'Chicken Wrap', unit: 'piece', calPerPiece: 350, proteinPerPiece: 24, carbsPerPiece: 32, fatPerPiece: 13, fiberPerPiece: 2.5, image: '/assets/food/chicken-wrap.jpg' },
-  { name: 'Chocolate Bar', unit: 'g', calPer100: 546, proteinPer100: 4.9, carbsPer100: 61, fatPer100: 31, fiberPer100: 3.4, image: '/assets/food/chocolate.jpg' },
-  { name: 'Chole (Chickpea Curry)', unit: 'g', calPer100: 145, proteinPer100: 7.5, carbsPer100: 20, fatPer100: 4.5, fiberPer100: 6, image: '/assets/food/chole.png' },
-  { name: 'Coconut Water', unit: 'ml', calPer100: 19, proteinPer100: 0.7, carbsPer100: 3.7, fatPer100: 0.2, fiberPer100: 1.1, image: '/assets/food/coconut-water.jpg' },
-  { name: 'Boiled Corn', unit: 'g', calPer100: 96, proteinPer100: 3.4, carbsPer100: 21, fatPer100: 1.5, fiberPer100: 2.4, image: '/assets/food/corn.jpg' },
-  { name: 'Cornflakes with Milk', unit: 'g', calPer100: 150, proteinPer100: 4.5, carbsPer100: 28, fatPer100: 2, fiberPer100: 1, image: '/assets/food/cornflakes.png' },
-  { name: 'Dates (dried)', unit: 'piece', calPerPiece: 20, proteinPerPiece: 0.2, carbsPerPiece: 5.3, fatPerPiece: 0, fiberPerPiece: 0.6, image: '/assets/food/dates.jpg' },
-  { name: 'Egg Omelette', unit: 'piece', calPerPiece: 155, proteinPerPiece: 11, carbsPerPiece: 1.5, fatPerPiece: 12, fiberPerPiece: 0, image: '/assets/food/egg-omelette.png' },
-  { name: 'Fish Curry', unit: 'g', calPer100: 130, proteinPer100: 15, carbsPer100: 4, fatPer100: 6, fiberPer100: 0.5, image: '/assets/food/fish-curry.png' },
-  { name: 'Fruit Juice', unit: 'ml', calPer100: 45, proteinPer100: 0.5, carbsPer100: 11, fatPer100: 0.1, fiberPer100: 0.2, image: '/assets/food/fruit-juice.jpg' },
-  { name: 'Grapes', unit: 'g', calPer100: 69, proteinPer100: 0.7, carbsPer100: 18, fatPer100: 0.2, fiberPer100: 0.9, image: '/assets/food/grapes.png' },
-  { name: 'Green Tea', unit: 'piece', calPerPiece: 2, proteinPerPiece: 0, carbsPerPiece: 0, fatPerPiece: 0, fiberPerPiece: 0, image: '/assets/food/green-tea.jpg' },
-  { name: 'Grilled Chicken Breast', unit: 'g', calPer100: 165, proteinPer100: 31, carbsPer100: 0, fatPer100: 3.6, fiberPer100: 0, image: '/assets/food/grilled-chicken.png' },
-  { name: 'Grilled Fish', unit: 'g', calPer100: 140, proteinPer100: 24, carbsPer100: 0, fatPer100: 4.5, fiberPer100: 0, image: '/assets/food/grilled-fish.png' },
-  { name: 'Guava', unit: 'piece', calPerPiece: 68, proteinPerPiece: 2.6, carbsPerPiece: 14, fatPerPiece: 1, fiberPerPiece: 5.4, image: '/assets/food/guava.png' },
-  { name: 'Honey (tbsp)', unit: 'piece', calPerPiece: 64, proteinPerPiece: 0.1, carbsPerPiece: 17, fatPerPiece: 0, fiberPerPiece: 0, image: '/assets/food/honey.jpg' },
-  { name: 'Hummus', unit: 'g', calPer100: 166, proteinPer100: 8, carbsPer100: 14, fatPer100: 10, fiberPer100: 6, image: '/assets/food/hummus.png' },
-  { name: 'Kiwi', unit: 'piece', calPerPiece: 42, proteinPerPiece: 0.8, carbsPerPiece: 10, fatPerPiece: 0.4, fiberPerPiece: 2.1, image: '/assets/food/kiwi.png' },
-  { name: 'Mango', unit: 'piece', calPerPiece: 150, proteinPerPiece: 1.4, carbsPerPiece: 38, fatPerPiece: 0.9, fiberPerPiece: 3.7, image: '/assets/food/mango.png' },
-  { name: 'Mixed Nuts', unit: 'g', calPer100: 607, proteinPer100: 20, carbsPer100: 21, fatPer100: 54, fiberPer100: 7, image: '/assets/food/mixed-nuts.png' },
-  { name: 'Momos (steamed)', unit: 'piece', calPerPiece: 45, proteinPerPiece: 2, carbsPerPiece: 6, fatPerPiece: 1.3, fiberPerPiece: 0.4, image: '/assets/food/momos.jpg' },
-  { name: 'Muesli', unit: 'g', calPer100: 360, proteinPer100: 10, carbsPer100: 66, fatPer100: 6, fiberPer100: 8, image: '/assets/food/muesli.png' },
-  { name: 'Mushroom Soup', unit: 'g', calPer100: 55, proteinPer100: 1.8, carbsPer100: 5, fatPer100: 3, fiberPer100: 0.8, image: '/assets/food/mushroom-soup.jpg' },
-  { name: 'Noodles (Hakka)', unit: 'g', calPer100: 190, proteinPer100: 5, carbsPer100: 32, fatPer100: 5, fiberPer100: 1.5, image: '/assets/food/noodles.jpg' },
-  { name: 'Orange', unit: 'piece', calPerPiece: 62, proteinPerPiece: 1.2, carbsPerPiece: 15, fatPerPiece: 0.2, fiberPerPiece: 3.1, image: '/assets/food/orange.png' },
-  { name: 'Pakora', unit: 'piece', calPerPiece: 90, proteinPerPiece: 2.5, carbsPerPiece: 8, fatPerPiece: 5.5, fiberPerPiece: 1.2, image: '/assets/food/pakora.jpg' },
-  { name: 'Pancakes', unit: 'piece', calPerPiece: 90, proteinPerPiece: 2.5, carbsPerPiece: 11, fatPerPiece: 3.5, fiberPerPiece: 0.5, image: '/assets/food/pancakes.png' },
-  { name: 'Papaya', unit: 'g', calPer100: 43, proteinPer100: 0.5, carbsPer100: 11, fatPer100: 0.3, fiberPer100: 1.7, image: '/assets/food/papaya.png' },
-  { name: 'Paratha (plain)', unit: 'piece', calPerPiece: 260, proteinPerPiece: 5.5, carbsPerPiece: 32, fatPerPiece: 12, fiberPerPiece: 2.5, image: '/assets/food/paratha.png' },
-  { name: 'Pasta (white sauce)', unit: 'g', calPer100: 160, proteinPer100: 5, carbsPer100: 22, fatPer100: 6, fiberPer100: 1.5, image: '/assets/food/pasta.jpg' },
-  { name: 'Pav Bhaji', unit: 'g', calPer100: 150, proteinPer100: 3.5, carbsPer100: 18, fatPer100: 7, fiberPer100: 3, image: '/assets/food/pav-bhaji.jpg' },
-  { name: 'Pineapple', unit: 'g', calPer100: 50, proteinPer100: 0.5, carbsPer100: 13, fatPer100: 0.1, fiberPer100: 1.4, image: '/assets/food/pineapple.png' },
-  { name: 'Pomegranate', unit: 'g', calPer100: 83, proteinPer100: 1.7, carbsPer100: 19, fatPer100: 1.2, fiberPer100: 4, image: '/assets/food/pomegranate.png' },
-  { name: 'Protein Bar', unit: 'piece', calPerPiece: 200, proteinPerPiece: 20, carbsPerPiece: 20, fatPerPiece: 7, fiberPerPiece: 3, image: '/assets/food/protein-bar.jpg' },
-  { name: 'Rajma (Kidney Bean Curry)', unit: 'g', calPer100: 140, proteinPer100: 8, carbsPer100: 20, fatPer100: 3, fiberPer100: 6.5, image: '/assets/food/rajma.png' },
-  { name: 'Roasted Chana', unit: 'g', calPer100: 364, proteinPer100: 20, carbsPer100: 61, fatPer100: 5, fiberPer100: 17, image: '/assets/food/roasted-chana.png' },
-  { name: 'Fruit Smoothie', unit: 'ml', calPer100: 70, proteinPer100: 1.5, carbsPer100: 15, fatPer100: 0.8, fiberPer100: 1, image: '/assets/food/smoothie.jpg' },
-  { name: 'Sprouts Salad', unit: 'g', calPer100: 100, proteinPer100: 7, carbsPer100: 17, fatPer100: 0.8, fiberPer100: 5, image: '/assets/food/sprouts.png' },
-  { name: 'Strawberry', unit: 'g', calPer100: 32, proteinPer100: 0.7, carbsPer100: 7.7, fatPer100: 0.3, fiberPer100: 2, image: '/assets/food/strawberry.png' },
-  { name: 'Sweet Corn Soup', unit: 'g', calPer100: 60, proteinPer100: 2, carbsPer100: 10, fatPer100: 1.2, fiberPer100: 1, image: '/assets/food/sweet-corn-soup.jpg' },
-  { name: 'Sweet Potato (boiled)', unit: 'g', calPer100: 86, proteinPer100: 1.6, carbsPer100: 20, fatPer100: 0.1, fiberPer100: 3, image: '/assets/food/sweet-potato.jpg' },
-  { name: 'Tomato Soup', unit: 'g', calPer100: 35, proteinPer100: 1, carbsPer100: 7, fatPer100: 0.5, fiberPer100: 1, image: '/assets/food/tomato-soup.jpg' },
-  { name: 'Medu Vada', unit: 'piece', calPerPiece: 143, proteinPerPiece: 4, carbsPerPiece: 15, fatPerPiece: 8, fiberPerPiece: 1.5, image: '/assets/food/vada.jpg' },
-  { name: 'Veg Sandwich', unit: 'piece', calPerPiece: 250, proteinPerPiece: 7, carbsPerPiece: 34, fatPerPiece: 9, fiberPerPiece: 3, image: '/assets/food/veg-sandwich.jpg' },
-  { name: 'Vegetable Bowl', unit: 'g', calPer100: 70, proteinPer100: 2.5, carbsPer100: 12, fatPer100: 1.5, fiberPer100: 3.5, image: '/assets/food/vegetable-bowl.png' },
-  { name: 'Vegetable Soup', unit: 'g', calPer100: 40, proteinPer100: 1.5, carbsPer100: 7, fatPer100: 0.8, fiberPer100: 1.5, image: '/assets/food/vegetable-soup.jpg' },
-  { name: 'Walnuts', unit: 'g', calPer100: 654, proteinPer100: 15, carbsPer100: 14, fatPer100: 65, fiberPer100: 6.7, image: '/assets/food/walnuts.png' },
-  { name: 'Watermelon', unit: 'g', calPer100: 30, proteinPer100: 0.6, carbsPer100: 8, fatPer100: 0.2, fiberPer100: 0.4, image: '/assets/food/watermelon.png' },
-  { name: 'Veg Wrap', unit: 'piece', calPerPiece: 260, proteinPerPiece: 7, carbsPerPiece: 36, fatPerPiece: 9, fiberPerPiece: 3.5, image: '/assets/food/wrap.jpg' },
-  { name: 'Potato Chips', unit: 'g', calPer100: 536, proteinPer100: 7, carbsPer100: 53, fatPer100: 35, fiberPer100: 4.5, image: '/assets/food/chips.jpg' },
-  { name: 'Oats & Berry Bowl', unit: 'g', calPer100: 150, proteinPer100: 4.5, carbsPer100: 27, fatPer100: 3, fiberPer100: 4, image: '/assets/food/oats-and-berry-bowl.png' },
-];
-
-export const QUICK_CHIPS = [
-  { label: 'Oats 150g', food: 'Multigrain Oats', qty: 150 },
-  { label: 'Milk 250ml', food: 'Milk', qty: 250 },
-  { label: '2 Egg Whites', food: 'Egg White', qty: 2 },
-  { label: 'Rice 100g', food: 'Cooked Rice', qty: 100 },
-  { label: 'Dal 100g', food: 'Dal (cooked)', qty: 100 },
-  { label: 'Veg Curry 100g', food: 'Mixed Vegetable Curry', qty: 100 },
-  { label: '2 Chapatis', food: 'Chapati', qty: 2 },
-  { label: 'Chicken 250g', food: 'Chicken Curry', qty: 250 },
-  { label: 'Biryani 300g', food: 'Chicken Biryani', qty: 300 },
-];
+/* Built-in food list. The data lives in src/data/foods.json so the list can
+ * be edited (or later loaded from the database) without touching logic. Your
+ * own foods are stored per account as custom foods — see lib/nutrition.js. */
+import foodData from '../data/foods.json';
+import { calcNutrition } from './nutrition.js';
+export const FOOD_DB = foodData.foods;
+export const QUICK_CHIPS = foodData.quickChips;
 
 export function findFood(name) {
   const n = name.trim().toLowerCase();
@@ -399,22 +304,15 @@ export function findFood(name) {
   return FOOD_DB.find((f) => f.name.toLowerCase() === n) ?? null;
 }
 
+// Thin wrappers kept for existing callers; the arithmetic lives in
+// lib/nutrition.js so there is exactly one implementation of it.
 export function calcCal(food, qty) {
-  if (!food || !qty) return 0;
-  if (food.unit === 'piece') return Math.round((food.calPerPiece ?? 0) * qty);
-  return Math.round((qty / 100) * (food.calPer100 ?? 0));
+  return calcNutrition(food, qty).cal;
 }
 
 export function calcMacros(food, qty) {
-  if (!food || !qty) return { protein: 0, carbs: 0, fat: 0, fiber: 0 };
-  const scale = food.unit === 'piece' ? qty : qty / 100;
-  const suffix = food.unit === 'piece' ? 'PerPiece' : 'Per100';
-  return {
-    protein: Number((scale * (food[`protein${suffix}`] ?? 0)).toFixed(1)),
-    carbs: Number((scale * (food[`carbs${suffix}`] ?? 0)).toFixed(1)),
-    fat: Number((scale * (food[`fat${suffix}`] ?? 0)).toFixed(1)),
-    fiber: Number((scale * (food[`fiber${suffix}`] ?? 0)).toFixed(1)),
-  };
+  const { protein, carbs, fat, fiber } = calcNutrition(food, qty);
+  return { protein, carbs, fat, fiber };
 }
 
 /** Water logs have two historical shapes: older entries stored a count of

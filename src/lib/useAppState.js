@@ -7,6 +7,8 @@ import { DEFAULT_GOAL } from './goals.js';
 import { accentAttribute } from './accents.js';
 import { readLocal, readLocalJSON, writeLocal, removeLocal } from './storage.js';
 import { recordUserLogin, updateUserDirectoryRecord } from './userLogger.js';
+import { createEmptyLogShape } from './logShape.js';
+import { ensureEntryIds } from './mealLog.js';
 
 export const defaultState = {
   isDarkMode: false,
@@ -46,6 +48,9 @@ export const defaultState = {
   savedRecipes: [],
   // User's available foods list (defaults to empty array - user populates)
   availableFoods: [],
+  // Foods the user defined with "+ What I Eat". Soft-deleted entries keep a
+  // deletedAt so the deletion syncs; see lib/nutrition.js and lib/mealLog.js.
+  customFoods: [],
   // Applied filters for Personalized Plan
   appliedPlanFilters: {
     trainingFocus: 'General Fitness',
@@ -158,29 +163,8 @@ export const defaultState = {
   }
 };
 
-export function pruneOldLogs(logs, currentDate) {
-  if (!logs || !currentDate) return logs;
-  // Determine cutoff date (365 days ago relative to currentDate)
-  const current = new Date(currentDate + 'T00:00:00');
-  const cutoff = new Date(current.getTime());
-  cutoff.setDate(cutoff.getDate() - 365);
-
-  const nextLogs = { ...logs };
-  let cleaned = false;
-
-  Object.keys(nextLogs).forEach((dateKey) => {
-    const logDate = new Date(dateKey + 'T00:00:00');
-    if (!isNaN(logDate.getTime()) && logDate < cutoff) {
-      delete nextLogs[dateKey];
-      cleaned = true;
-    }
-  });
-
-  return cleaned ? nextLogs : logs;
-}
-
 export function createEmptyLog() {
-  return { foods: [], walk: 0, gym: 0, weight: 0, water: 0 };
+  return createEmptyLogShape();
 }
 
 export function useAppState() {
@@ -227,8 +211,15 @@ export function useAppState() {
     }, 300);
   }, []);
 
+  // Every update passes through ensureEntryIds so food entries added by any
+  // code path get an id (needed for edits, de-duplication and sync). It
+  // returns the same object when nothing changed, so this costs nothing.
   const update = useCallback((updater) => {
-    setState((prev) => updater(prev));
+    setState((prev) => {
+      const next = updater(prev);
+      const logs = ensureEntryIds(next.logs);
+      return logs === next.logs ? next : { ...next, logs };
+    });
   }, []);
 
   // Single source of truth for persistence: any state change — from update(),
@@ -264,14 +255,9 @@ export function useAppState() {
 
   useEffect(() => {
     if (state.email && state.isOnboarded) {
+      // History is never pruned. Logs used to be deleted after 365 days;
+      // they are now kept indefinitely (see README "Data retention").
       ensureLog(state.currentDate);
-      setState((prev) => {
-        const nextLogs = pruneOldLogs(prev.logs, prev.currentDate);
-        if (nextLogs !== prev.logs) {
-          return { ...prev, logs: nextLogs };
-        }
-        return prev;
-      });
     }
   }, [state.currentDate, state.email, state.isOnboarded, ensureLog]);
 

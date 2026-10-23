@@ -9,6 +9,7 @@ import {
 import { calculateBMI, calculateBodyFat, calculateLeanMass, getBMICategory, calculateProteinTarget, normalizeWaterMl, FOOD_DB } from '../lib/calculations.js';
 import { getLocalDateString, shiftDateString } from '../lib/date.js';
 import { createEmptyLog } from '../lib/useAppState.js';
+import { createMealEntry, defaultMealForTime, planMealAsFood } from '../lib/nutrition.js';
 import { recipes, tips } from '../lib/wellnessContent.js';
 import { PersonalizedPlanCard } from './PersonalizedPlanCard.jsx';
 import WaterTrackerCard from './WaterTrackerCard.jsx';
@@ -365,17 +366,7 @@ export function Dashboard({
       if (isLogged) {
         newFoods = newFoods.filter((f) => !f.name.toLowerCase().includes(meal.name.toLowerCase()));
       } else {
-        newFoods.push({
-          name: meal.name,
-          cal: meal.cal,
-          protein: meal.protein,
-          carbs: meal.carbs,
-          fat: meal.fat,
-          fiber: meal.fiber,
-          qty: 1,
-          unit: 'serving',
-          image: meal.image
-        });
+        newFoods.push(createMealEntry({ food: planMealAsFood(meal), qty: 1, mealType: defaultMealForTime() }));
       }
 
       return {
