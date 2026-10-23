@@ -27,5 +27,12 @@ export default defineConfig(({ mode }) => ({
   test: {
     // Playwright specs run in a real browser via `npm run test:e2e`.
     exclude: [...configDefaults.exclude, 'e2e/**'],
+    // Unit tests must never pick up a developer's .env and talk to a live
+    // Supabase project. Cloud behaviour is tested with mocked clients.
+    env: {
+      VITE_SUPABASE_URL: '',
+      VITE_SUPABASE_ANON_KEY: '',
+      VITE_GOOGLE_CLIENT_ID: '',
+    },
   },
 }));
