@@ -1,11 +1,17 @@
+
 # Tests + web build on every push/PR, then a debug APK you can download from
 # the run's "Artifacts" section and install on your phone.
 #
 # Set these in GitHub → Settings → Secrets and variables → Actions:
 #   VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY   (required for accounts/sync)
 #   VITE_GOOGLE_CLIENT_ID                        (optional)
+#
 # For a signed release APK (optional, manual run only):
-#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+#   ANDROID_KEYSTORE_BASE64
+#   ANDROID_KEYSTORE_PASSWORD
+#   ANDROID_KEY_ALIAS
+#   ANDROID_KEY_PASSWORD
+
 name: CI
 
 on:
@@ -22,12 +28,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+
       - run: npm ci
       - run: npm test
       - run: npm run build
@@ -35,17 +44,26 @@ jobs:
   android:
     needs: test
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
-      - uses: android-actions/setup-android@v3
+
+      # Set up Android SDK without requesting the obsolete "tools" package.
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
+
       - run: npm ci
 
       - name: Write production env from secrets
@@ -63,18 +81,25 @@ jobs:
             echo "VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID"
           } > .env.production
 
-      - run: npx vite build --mode production
-      - run: npx cap sync android
-      - run: chmod +x android/gradlew
+      - name: Build production web app
+        run: npx vite build --mode production
+
+      - name: Sync Capacitor Android project
+        run: npx cap sync android
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x android/gradlew
 
       - name: Build debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
         with:
           name: titantrack-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
           retention-days: 30
 
       - name: Build signed release APK
@@ -91,9 +116,11 @@ jobs:
           export TITANTRACK_KEYSTORE_FILE="$RUNNER_TEMP/release.jks"
           ./gradlew assembleRelease --no-daemon
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload signed release APK
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.release }}
+        uses: actions/upload-artifact@v4
         with:
           name: titantrack-release-apk
           path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
           retention-days: 30
