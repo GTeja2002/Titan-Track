@@ -197,12 +197,30 @@ on a connected phone.
   installing the other.
 
 ### What's handled on mobile
-Sign-in (emailed code works in-app; Google goes out to the system browser and
-back), the bottom tab bar, safe areas, the keyboard, and the Android back
-button (closes the open sheet, then goes back to Dashboard, then backgrounds
-the app). The app resyncs when it returns to the foreground or the network
-comes back. Your data survives reinstalls: sign in again and it restores from
-the cloud.
+* **Layout:** bottom tab bar (Home, Meals, Activity, Progress, Profile), a
+  compact top bar, safe-area insets, and 2×2 metric tiles. Full design notes
+  are in [MOBILE_DESIGN.md](MOBILE_DESIGN.md).
+* **Status bar:** follows the app theme (`@capacitor/status-bar`). The
+  WebView isn't drawn under it.
+* **Keyboard:** `adjustResize`. The tab bar hides while typing, and the
+  field you're in scrolls into view inside sheets.
+* **Back button:** closes the open sheet, then the previous tab, then
+  backgrounds the app.
+* **Sign-in:** an emailed code works in-app. Google opens the system
+  browser and returns through `com.titantrack.app://auth-callback`.
+* **Network and lifecycle:** an offline banner shows while disconnected.
+  The app resyncs on return to the foreground and when the network comes
+  back.
+* **Data:** survives reinstalls. Sign in again and it restores from the
+  cloud.
+* **Permissions:** INTERNET only.
+
+**Still needs a real phone:** none of the above has been checked on a
+device or emulator yet. Browser tests can't prove WebView keyboard
+behaviour, status-bar colours or the Google deep link. After installing the
+APK, check: sign in with Google, then return to the app; type in
+"+ What I Eat" with the keyboard up; use back from a sheet; turn airplane
+mode on, log something, turn it off, and confirm it syncs.
 
 ---
 
@@ -229,8 +247,8 @@ users.
 
 | Command | What it covers |
 |---|---|
-| `npm test` | 278 unit and integration tests: nutrition maths and validation, sync (two devices, retries, offline, deletions, last-write-wins), migration + RLS on real Postgres (PGlite), cloud sign-in UI, locked features, custom-food UI |
-| `npm run test:e2e` | Playwright, desktop + Pixel 7: log a custom food, reload, data still there; validation; locked features; no sideways scrolling; history |
+| `npm test` | 283 unit and integration tests: nutrition maths and validation, sync (two devices, retries, offline, deletions, last-write-wins), migration + RLS on real Postgres (PGlite), cloud sign-in UI, locked features, custom-food UI |
+| `npm run test:e2e` | Playwright: critical flows on desktop + Pixel 7, plus `responsive.spec.js` at 320/360/390/430px, landscape, desktop, 130% text, empty profile, offline, keyboard-height sheet |
 | `npm run build:prod` | Production build with the localhost guard |
 
 **Manual cloud-sync check** (after section 2):

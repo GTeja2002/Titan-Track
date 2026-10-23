@@ -22,6 +22,8 @@ accounts, an email just labels a profile in this browser, and the login
 screen says so. With Supabase configured you get real accounts (an emailed
 one-time code, or Google) and per-user cloud sync.
 
+**Mobile layout, design tokens and the screen audit: [docs/MOBILE_DESIGN.md](docs/MOBILE_DESIGN.md).**
+
 **Going to production, building the Android APK, setting up the domain,
 backups and retention: see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).**
 
