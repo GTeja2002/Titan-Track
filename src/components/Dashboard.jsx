@@ -16,6 +16,7 @@ import { PersonalizedPlanCard } from './PersonalizedPlanCard.jsx';
 import WaterTrackerCard from './WaterTrackerCard.jsx';
 import { MetricRow } from './MetricRow.jsx';
 import { TodayCard } from './TodayCard.jsx';
+import { HealthConnectCard } from './HealthConnectCard.jsx';
 import { AchievementsCard } from './AchievementsCard.jsx';
 import { LockedFeature } from './shared/LockedFeature.jsx';
 import { useDismiss } from '../lib/dismiss.js';
@@ -55,7 +56,8 @@ export function Dashboard({
   addAvailableFood,
   removeAvailableFood,
   applyPlanFilters,
-  flags = {}
+  flags = {},
+  health = null
 }) {
   // Navigation helper to switch parent tabs
   const goToTab = (tabName) => {
@@ -679,6 +681,14 @@ export function Dashboard({
           onOpenWorkouts={() => goToTab('Workouts')}
         />
       </div>
+
+      {/* Android: step counting via Health Connect (renders nothing once
+          connected, and nothing on the web). */}
+      {health && (
+        <div className="order-3 lg:order-none">
+          <HealthConnectCard health={health} />
+        </div>
+      )}
 
       {/* Phone: one-tap actions and today's meals, in place of the desktop hero. */}
       <div className="order-3 lg:hidden">

@@ -4,4 +4,6 @@
     <string name="title_activity_main">TitanTrack</string>
     <string name="package_name">com.titantrack.app</string>
     <string name="custom_url_scheme">com.titantrack.app</string>
+    <!-- Shown by Health Connect's "privacy policy" link (bundled with the app). -->
+    <string name="privacy_policy_url">file:///android_asset/public/privacy.html</string>
 </resources>

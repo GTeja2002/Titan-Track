@@ -47,6 +47,7 @@ export function getDailyTotals(state) {
   const waterTarget = state.waterTargetMl || Math.max(MIN_WATER_TARGET_ML, Math.round(weight * WATER_ML_PER_KG));
 
   const steps = log.steps || 0;
+  const stepsSource = log.stepsSource || null;
 
   const pct = (value, target) => (target > 0 ? (value / target) * 100 : 0);
 
@@ -55,7 +56,7 @@ export function getDailyTotals(state) {
     calories, calorieTarget, caloriesPct: pct(calories, calorieTarget),
     protein, proteinTarget, proteinPct: pct(protein, proteinTarget),
     water, waterTarget, waterPct: pct(water, waterTarget),
-    steps, stepsTarget: STEPS_TARGET, stepsPct: pct(steps, STEPS_TARGET),
+    steps, stepsSource, stepsTarget: STEPS_TARGET, stepsPct: pct(steps, STEPS_TARGET),
   };
 }
 

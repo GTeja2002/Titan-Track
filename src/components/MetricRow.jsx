@@ -56,7 +56,7 @@ export function MetricRow({ state, onOpenNutrition, onOpenWorkouts }) {
         value={t.steps}
         target={t.stepsTarget}
         unit="steps"
-        footnote={t.steps >= t.stepsTarget ? 'Target met' : `${Math.max(0, t.stepsTarget - t.steps).toLocaleString()} to go`}
+        footnote={`${t.steps >= t.stepsTarget ? 'Target met' : `${Math.max(0, t.stepsTarget - t.steps).toLocaleString()} to go`}${t.stepsSource === 'health_connect' ? ' · Health Connect' : ''}`}
         progress={t.stepsPct}
         onOpen={onOpenWorkouts}
       />

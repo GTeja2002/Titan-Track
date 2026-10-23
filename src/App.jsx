@@ -35,6 +35,7 @@ import { PageHeader } from './components/layout/PageHeader.jsx';
 import { OfflineBanner } from './components/shared/OfflineBanner.jsx';
 import { startNativeShell, applyStatusBar } from './lib/nativeShell.js';
 import { useKeyboardAware } from './lib/useKeyboardAware.js';
+import { useHealthSteps } from './lib/useHealthSteps.js';
 
 /**
  * The app's sections. `label` is the desktop sidebar name; `short` is the
@@ -140,6 +141,8 @@ export default function App() {
   }, []);
 
   useKeyboardAware();
+  // Android: today's steps from Health Connect (no-op on the web).
+  const health = useHealthSteps({ enabled: !!state.email && !!state.isOnboarded, update });
   useEffect(() => { applyStatusBar(!!state.isDarkMode); }, [state.isDarkMode]);
 
   const toggleTheme = () => update((prev) => ({ ...prev, isDarkMode: !prev.isDarkMode }));
@@ -314,6 +317,7 @@ export default function App() {
                 removeAvailableFood={removeAvailableFood}
                 applyPlanFilters={applyPlanFilters}
                 flags={flags}
+                health={health}
               />
             )}
 
