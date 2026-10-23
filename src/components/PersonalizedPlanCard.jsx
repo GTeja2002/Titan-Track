@@ -7,6 +7,7 @@ import { recipes } from '../lib/wellnessContent.js';
 import { FOOD_DB, calculateProteinTarget } from '../lib/calculations.js';
 import { generatePersonalizedPlan } from '../lib/personalizedPlanEngine.js';
 import { createEmptyLog } from '../lib/useAppState.js';
+import { getCalorieTarget } from '../lib/dailyTotals.js';
 import { createMealEntry, defaultMealForTime, planMealAsFood } from '../lib/nutrition.js';
 import { useDismiss } from '../lib/dismiss.js';
 
@@ -23,8 +24,8 @@ export function PersonalizedPlanCard({
     const foodsLogged = currentLog.foods || [];
 
     // Single Source of Truth: Calorie & Protein Targets from Fitness State
-    const calorieTarget = state.calorieTarget || 0;
     const activeWeight = currentLog.weight > 0 ? currentLog.weight : (state.weight || 70);
+    const calorieTarget = state.isOnboarded ? getCalorieTarget(state, activeWeight) : 0;
     const proteinTarget = calculateProteinTarget(activeWeight, state.goal, state.activityLevel);
 
     // Today's consumed calories

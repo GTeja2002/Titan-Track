@@ -6,7 +6,8 @@
  * the same colour wherever it appears.
  */
 import { Flame, Zap, Droplet, Footprints, ArrowRight } from 'lucide-react';
-import { normalizeWaterMl, calculateProteinTarget, calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCalories } from '../lib/calculations.js';
+import { normalizeWaterMl, calculateProteinTarget} from '../lib/calculations.js';
+import { getCalorieTarget } from '../lib/dailyTotals.js';
 
 function Tile({ metric, icon: Icon, label, value, target, unit = '' }) {
   const pct = target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0;
@@ -51,10 +52,7 @@ export function NutritionOverview({ state, onViewDetails }) {
 
   const totalCal = foods.reduce((sum, f) => sum + (f.cal || 0), 0);
 
-  const bmr = calculateBMR(state.gender, state.age, activeWeight, state.height);
-  const tdee = calculateTDEE(bmr, state.activityLevel);
-  const days = getRemainingDays(state.currentDate, state.goalTargetDate);
-  const calorieTarget = calculateDailyCalories(state.goal, tdee, activeWeight, state.goalWeight, days);
+  const calorieTarget = getCalorieTarget(state, activeWeight);
 
   const totalProtein = Number(foods.reduce((sum, f) => sum + (f.protein || 0), 0).toFixed(1));
   const proteinTarget = calculateProteinTarget(activeWeight, state.goal, state.activityLevel);

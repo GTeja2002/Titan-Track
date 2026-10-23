@@ -75,7 +75,13 @@ export function calculateDailyCalories(goal, tdee, weight = 70, goalWeight = 70,
   // even if `goal` is still 'lose-fat' or 'maintain' (e.g. the goal-weight
   // slider was moved without also updating the goal chip) — instead of
   // silently applying a deficit to someone who's trying to gain weight.
-  const diff = goalWeight - weight; // positive = needs to gain, negative = needs to lose
+  // A missing goal weight (null — the default for goals that are not about
+  // the scale) must not be read as 0 kg: `null - 70` is -70, which used to
+  // hand everyone without a goal weight the maximum 1000 kcal deficit.
+  const hasWeights = Number.isFinite(Number(weight)) && Number(weight) > 0
+    && goalWeight !== null && goalWeight !== undefined && goalWeight !== ''
+    && Number.isFinite(Number(goalWeight)) && Number(goalWeight) > 0;
+  const diff = hasWeights ? Number(goalWeight) - Number(weight) : 0; // positive = gain, negative = lose
 
   if (diff > 0.1) {
     const reqSurplus = days > 0 ? Math.round((diff * 7700) / days) : 250;

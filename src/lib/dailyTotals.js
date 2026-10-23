@@ -7,7 +7,7 @@
  * same arithmetic in three places and three chances for them to disagree.
  */
 import {
-  calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCalories,
+  calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCaloriesForAge,
   calculateProteinTarget, normalizeWaterMl,
 } from './calculations.js';
 
@@ -17,23 +17,34 @@ export const STEPS_TARGET = 10000;
 const WATER_ML_PER_KG = 35;
 const MIN_WATER_TARGET_ML = 500;
 
+/**
+ * The one daily calorie target, used by every screen. Live from today's
+ * weight, and age-safe (an under-18 never gets a deficit). Screens used to
+ * disagree: the dashboard read a stored value while others recomputed it
+ * without the age rule.
+ */
+export function getCalorieTarget(state, weightOverride) {
+  const log = (state.logs && state.logs[state.currentDate]) || {};
+  const weight = weightOverride ?? (log.weight > 0 ? log.weight : (state.weight ?? 70));
+  const bmr = calculateBMR(state.gender, state.age, weight, state.height);
+  const tdee = calculateTDEE(bmr, state.activityLevel);
+  const days = getRemainingDays(state.currentDate, state.goalTargetDate);
+  return calculateDailyCaloriesForAge(state.age, state.goal, tdee, weight, state.goalWeight, days);
+}
+
 export function getDailyTotals(state) {
   const log = (state.logs && state.logs[state.currentDate]) || {};
   const foods = log.foods || [];
   const weight = log.weight > 0 ? log.weight : (state.weight ?? 70);
 
-  const bmr = calculateBMR(state.gender, state.age, weight, state.height);
-  const tdee = calculateTDEE(bmr, state.activityLevel);
-  const days = getRemainingDays(state.currentDate, state.goalTargetDate);
-
   const calories = foods.reduce((sum, f) => sum + (f.cal || 0), 0);
-  const calorieTarget = calculateDailyCalories(state.goal, tdee, weight, state.goalWeight, days);
+  const calorieTarget = getCalorieTarget(state, weight);
 
   const protein = Number(foods.reduce((sum, f) => sum + (f.protein || 0), 0).toFixed(1));
   const proteinTarget = calculateProteinTarget(weight, state.goal, state.activityLevel);
 
   const water = normalizeWaterMl(log.water);
-  const waterTarget = Math.max(MIN_WATER_TARGET_ML, Math.round(weight * WATER_ML_PER_KG));
+  const waterTarget = state.waterTargetMl || Math.max(MIN_WATER_TARGET_ML, Math.round(weight * WATER_ML_PER_KG));
 
   const steps = log.steps || 0;
 

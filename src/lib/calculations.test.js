@@ -223,3 +223,22 @@ describe('getRemainingDays fallback horizon', () => {
         expect(getRemainingDays('2030-01-01', null)).toBe(DEFAULT_GOAL_HORIZON_DAYS);
     });
 });
+
+describe('calorie target consistency', async () => {
+  const { calculateDailyCalories } = await import('./calculations.js');
+  const { getCalorieTarget } = await import('./dailyTotals.js');
+  it('a missing goal weight is not treated as "lose everything"', () => {
+    expect(calculateDailyCalories('stay-consistent', 2573, 70, null, 90)).toBe(2573);
+    expect(calculateDailyCalories('stay-consistent', 2573, 70, undefined, 90)).toBe(2573);
+    expect(calculateDailyCalories('stay-consistent', 2573, 70, '', 90)).toBe(2573);
+  });
+  it('still applies a deficit when a real lower goal weight is set', () => {
+    expect(calculateDailyCalories('lose-fat', 2573, 80, 70, 90)).toBeLessThan(2573);
+  });
+  it('one shared target, age-safe for under-18s', () => {
+    const base = { gender: 'male', age: 24, height: 172, weight: 70, activityLevel: 'Moderate', goal: 'stay-consistent', goalWeight: null, currentDate: '2026-10-23', logs: {} };
+    expect(getCalorieTarget(base)).toBe(2573);
+    const teen = { ...base, age: 16, goal: 'lose-fat', goalWeight: 60 };
+    expect(getCalorieTarget(teen)).toBeGreaterThanOrEqual(getCalorieTarget({ ...teen, goal: 'maintain', goalWeight: null }));
+  });
+});

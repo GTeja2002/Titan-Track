@@ -1,7 +1,8 @@
 /* ---------------- components/EnergyCard.jsx ---------------- */
 
 import { Zap, ArrowDownCircle, ArrowUpCircle, Target, Flame } from 'lucide-react';
-import { calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCalories, calculateWalkCalories } from '../lib/calculations.js';
+import { calculateWalkCalories } from '../lib/calculations.js';
+import { getCalorieTarget } from '../lib/dailyTotals.js';
 
 export function StatRow({ icon, label, value, unit, color }) {
   return (
@@ -24,10 +25,7 @@ export function StatRow({ icon, label, value, unit, color }) {
 
 export function EnergyCard({ state }) {
   const activeWeight = (state.logs[state.currentDate]?.weight > 0) ? state.logs[state.currentDate].weight : (state.weight ?? 70);
-  const bmr = calculateBMR(state.gender, state.age, activeWeight, state.height);
-  const tdee = calculateTDEE(bmr, state.activityLevel);
-  const days = getRemainingDays(state.currentDate, state.goalTargetDate);
-  const calorieTarget = calculateDailyCalories(state.goal, tdee, activeWeight, state.goalWeight, days);
+  const calorieTarget = getCalorieTarget(state, activeWeight);
 
   const log = state.logs[state.currentDate];
   const intake = log ? log.foods.reduce((s, f) => s + (f.cal || 0), 0) : 0;

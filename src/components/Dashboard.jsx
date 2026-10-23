@@ -9,6 +9,7 @@ import {
 import { calculateBMI, calculateBodyFat, calculateLeanMass, getBMICategory, calculateProteinTarget, normalizeWaterMl, FOOD_DB } from '../lib/calculations.js';
 import { getLocalDateString, shiftDateString } from '../lib/date.js';
 import { createEmptyLog } from '../lib/useAppState.js';
+import { getCalorieTarget, getDailyTotals } from '../lib/dailyTotals.js';
 import { createMealEntry, defaultMealForTime, planMealAsFood } from '../lib/nutrition.js';
 import { recipes, tips } from '../lib/wellnessContent.js';
 import { PersonalizedPlanCard } from './PersonalizedPlanCard.jsx';
@@ -36,6 +37,15 @@ const BODY_STAT_ROWS = ({ activeWeight, weightDiffStr, bodyFatPercent, bfDiffStr
 ];
 
 const MEAL_SLOTS = ['calories', 'steps', 'protein', 'water'];
+
+function legacyWaterTarget() {
+  try {
+    const n = parseInt(localStorage.getItem('titantrack_water_target'), 10);
+    return n >= 500 && n <= 10000 ? n : null;
+  } catch {
+    return null;
+  }
+}
 
 export function Dashboard({
   state,
@@ -67,23 +77,13 @@ export function Dashboard({
   // Weight composition details
   const activeWeight = log.weight > 0 ? log.weight : (state.weight || 70);
   const proteinTarget = calculateProteinTarget(activeWeight, state.goal, state.activityLevel);
-  const calorieTarget = state.calorieTarget || 2000;
+  const calorieTarget = getCalorieTarget(state, activeWeight);
 
-  // Custom / Dynamic Water Target persistence
-  const [waterTarget, setWaterTarget] = useState(() => {
-    try {
-      const saved = localStorage.getItem('titantrack_water_target');
-      if (saved) {
-        const parsed = parseInt(saved, 10);
-        if (!isNaN(parsed) && parsed >= 500 && parsed <= 10000) {
-          return parsed;
-        }
-      }
-    } catch {
-      // fallback
-    }
-    return Math.round(activeWeight * 35);
-  });
+  // The water target is a per-user setting that syncs with the account
+  // (state.waterTargetMl). It used to live in a device-wide localStorage key
+  // shared by every account on the phone; that value is read once as a
+  // fallback so nobody loses a target they had set.
+  const waterTarget = state.waterTargetMl || legacyWaterTarget() || getDailyTotals(state).waterTarget;
 
   const handleWaterChange = (mlDelta) => {
     update((prev) => {
@@ -105,12 +105,7 @@ export function Dashboard({
   };
 
   const handleWaterTargetChange = (newTargetMl) => {
-    try {
-      localStorage.setItem('titantrack_water_target', newTargetMl.toString());
-    } catch (err) {
-      console.error('Failed to save water target:', err);
-    }
-    setWaterTarget(newTargetMl);
+    update((prev) => ({ ...prev, waterTargetMl: newTargetMl }));
   };
 
   const bfRatio = calculateBodyFat(activeWeight, state.height, state.overrideBodyFat, state.manualBodyFat, state.age, state.gender);
@@ -262,11 +257,12 @@ export function Dashboard({
   const latestPoint = chartPoints.length ? chartPoints[chartPoints.length - 1] : null;
 
   // Personalized greeting name
-  const displayName = state.name || (state.email ? state.email.split('@')[0] : 'Teja');
+  const displayName = state.name || (state.email ? state.email.split('@')[0] : '');
 
   // Today's Goal completeness calculation (percent of calories + water + steps accomplished)
   const caloriesPct = Math.min(100, Math.round((totalCal / calorieTarget) * 100));
-  const waterPct = Math.min(100, Math.round((waterLog / 8) * 100));
+  // Water is stored in ml (older logs in glasses — normalizeWaterMl handles both).
+  const waterPct = Math.min(100, Math.round((normalizeWaterMl(waterLog) / waterTarget) * 100));
   const stepsPct = Math.min(100, Math.round((dailySteps / stepsTarget) * 100));
   const goalOverallProgress = Math.round((caloriesPct + waterPct + stepsPct) / 3) || 0;
 
