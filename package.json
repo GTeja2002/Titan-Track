@@ -14,7 +14,8 @@
     "android:apk:debug": "npm run android:sync && cd android && gradlew assembleDebug",
     "android:apk:release": "npm run android:sync && cd android && gradlew assembleRelease",
     "android:icons": "python scripts/android-icons.py",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "headers": "node scripts/security-headers.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.6.9",
@@ -33,13 +34,13 @@
     "@electric-sql/pglite": "^0.2.17",
     "@playwright/test": "^1.64.1",
     "@testing-library/react": "^16.3.3",
-    "@vitejs/plugin-react": "^4.3.1",
+    "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.6.1",
     "jsdom": "^25.0.1",
     "postcss": "^8.5.28",
     "supabase": "^2.121.0",
     "tailwindcss": "^3.4.4",
-    "vite": "^5.3.1",
-    "vitest": "^4.1.11"
+    "vite": "^7.3.7",
+    "vitest": "^4.1.12"
   }
 }
