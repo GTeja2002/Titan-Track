@@ -7,7 +7,6 @@ import {
   Menu, X, Home, BarChart3, Users, Leaf, Flame, Lightbulb
 } from 'lucide-react';
 import { useAppState } from './lib/useAppState.js';
-import { supabase } from './lib/supabaseClient.js';
 import { LoginScreen } from './components/LoginScreen.jsx';
 import { OnboardingScreen } from './components/OnboardingScreen.jsx';
 import { GoalCard } from './components/GoalCard.jsx';
@@ -31,6 +30,9 @@ import { MetricRow } from './components/MetricRow.jsx';
 import { CommunityPage } from './components/CommunityPage.jsx';
 import { LockedFeature } from './components/shared/LockedFeature.jsx';
 import { useFeatureFlags } from './lib/useFeatureFlags.js';
+import { FullScreenMessage } from './components/shared/FullScreenMessage.jsx';
+import { DataExportCard, DeleteAccountCard } from './components/AccountCards.jsx';
+import { HistoryCard } from './components/HistoryCard.jsx';
 
 /** The one definition of the app's sections. The sidebar, the mobile drawer
  *  and the bottom tab bar all read from this. */
@@ -50,6 +52,20 @@ const WARMUPS = [
   'Light Jogging on Spot (3m)',
 ];
 
+/** The footer/settings sync line. Says what actually happened, never just
+ *  "synced" because Supabase happens to be configured. */
+function syncStatusLabel(sync, cloud) {
+  if (!cloud) return 'auto-saved on this device';
+  switch (sync.phase) {
+    case 'synced': return 'saved to your account';
+    case 'syncing': return 'syncing…';
+    case 'pending': return `saved on this device · ${sync.pending} change${sync.pending === 1 ? '' : 's'} waiting to sync`;
+    case 'offline': return 'offline — saved on this device, will sync when back online';
+    case 'error': return 'saved on this device · cloud sync failed, will retry';
+    default: return 'saved on this device';
+  }
+}
+
 /** Phones get five thumb-sized destinations; Settings stays in the drawer. */
 const BOTTOM_TABS = NAV_TABS.filter((t) => t.id !== 'Settings');
 
@@ -59,8 +75,14 @@ export default function App() {
     update,
     savedFlash,
     storageFailed,
+    cloud,
+    authReady,
+    restoring,
+    syncStatus,
+    syncNow,
     login,
     logout,
+    deleteAccount,
     completeOnboarding,
     clearLogsHistory,
     addAvailableFood,
@@ -84,14 +106,21 @@ export default function App() {
   // nothing was saved anywhere and the user needs to know.
   const saveStatusLabel = storageFailed
     ? 'could not save — storage full or blocked'
-    : supabase
-      ? 'synced to cloud'
-      : 'auto-saved locally';
+    : syncStatusLabel(syncStatus, cloud);
+  const statusIsBad = storageFailed || syncStatus.phase === 'error';
 
   const flags = useFeatureFlags();
 
+  if (!authReady) {
+    return <FullScreenMessage title="TitanTrack" body="Checking your sign-in…" />;
+  }
+
   if (!state.email) {
-    return <LoginScreen onLogin={login} />;
+    return <LoginScreen cloud={cloud} onLocalLogin={login} />;
+  }
+
+  if (restoring) {
+    return <FullScreenMessage title="Restoring your data" body="Fetching your logs from the cloud. This only happens the first time on a new device." />;
   }
 
   if (!state.isOnboarded) {
@@ -450,6 +479,10 @@ export default function App() {
                     trend card to match, which is where the huge empty panel
                     came from. Each now takes the full width. */}
                 <TrendCard state={state} />
+                <HistoryCard
+                  state={state}
+                  onOpenDay={(date) => { onSelectDate(date); setActiveTab('Nutrition'); }}
+                />
                 <HealthWellnessInsights state={state} update={update} />
               </div>
             )}
@@ -491,7 +524,9 @@ export default function App() {
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-bold text-[var(--text)]">
                     <div>
                       <p className="font-extrabold text-[var(--text)]">{state.email}</p>
-                      <p className="text-[10px] text-[var(--text-dim)] mt-0.5 font-medium">Logged in via local storage</p>
+                      <p className="text-[10px] text-[var(--text-dim)] mt-0.5 font-medium">
+                        {cloud ? 'Cloud account — your data syncs across devices' : 'Local profile — stored in this browser only'}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -510,11 +545,40 @@ export default function App() {
                   </div>
                 </div>
 
+                {cloud && (
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-[var(--text-dim)]">Cloud sync</h4>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-bold text-[var(--text)]">
+                      <div>
+                        <p className="font-extrabold" style={{ color: statusIsBad ? 'var(--danger)' : 'var(--text)' }}>{saveStatusLabel}</p>
+                        <p className="text-[10px] text-[var(--text-dim)] mt-0.5 font-medium">
+                          {syncStatus.lastSyncedAt
+                            ? `Last synced ${new Date(syncStatus.lastSyncedAt).toLocaleString()}`
+                            : 'Not synced yet on this device'}
+                          {syncStatus.error && syncStatus.phase === 'error' ? ` · ${syncStatus.error}` : ''}
+                        </p>
+                      </div>
+                      <button
+                        onClick={syncNow}
+                        disabled={syncStatus.phase === 'syncing'}
+                        className="py-2 px-4 rounded-xl border border-[var(--border)] text-[var(--text)] hover:border-[var(--border-strong)] transition disabled:opacity-50"
+                      >
+                        {syncStatus.phase === 'syncing' ? 'Syncing…' : 'Sync now'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <DataExportCard state={state} />
+
                 {/* Clear history option */}
                 <div className="p-4 rounded-2xl bg-warning-soft border border-warning/10 space-y-4 flex justify-between items-center">
                   <div>
                     <p className="text-xs font-black text-warning">Clear Logs History</p>
-                    <p className="text-[10px] text-[var(--text-dim)] mt-0.5 font-medium">Purge all logged activities, food logs, weights tracking, and water data (keeps today's active values).</p>
+                    <p className="text-[10px] text-[var(--text-dim)] mt-0.5 font-medium">
+                      Purge all logged activities, food logs, weights tracking, and water data (keeps today's active values).
+                      {cloud ? ' This also deletes them from your cloud account on every device.' : ''}
+                    </p>
                   </div>
                   <button
                     onClick={() => {
@@ -533,7 +597,11 @@ export default function App() {
                 <div className="p-4 rounded-2xl bg-rose-500/5 border border-rose-500/10 space-y-4 flex justify-between items-center">
                   <div>
                     <p className="text-xs font-black text-rose-400">Sign Out</p>
-                    <p className="text-[10px] text-[var(--text-dim)] mt-0.5 font-medium">This will clear your active session credentials</p>
+                    <p className="text-[10px] text-[var(--text-dim)] mt-0.5 font-medium">
+                      {cloud
+                        ? 'Your data stays safe in your account and is removed from this device.'
+                        : 'Closes this local profile. Its data stays in this browser.'}
+                    </p>
                   </div>
                   <button
                     onClick={logout}
@@ -542,6 +610,8 @@ export default function App() {
                     Logout
                   </button>
                 </div>
+
+                {cloud && <DeleteAccountCard onDelete={deleteAccount} />}
               </div>
             )}
 
@@ -579,10 +649,10 @@ export default function App() {
           </footer>
 
           {/* Sync notification banner */}
-          <footer className="mt-4 flex items-center justify-center gap-2 text-xs" style={{ color: storageFailed ? 'var(--danger)' : 'var(--text-faint)' }}>
+          <footer className="mt-4 flex items-center justify-center gap-2 text-xs" style={{ color: statusIsBad ? 'var(--danger)' : 'var(--text-faint)' }}>
             <span
               className="h-1.5 w-1.5 rounded-full animate-pulse-dot"
-              style={{ background: storageFailed ? 'var(--danger)' : 'var(--primary)' }}
+              style={{ background: statusIsBad ? 'var(--danger)' : 'var(--primary)' }}
             />
             <span>{todayLabel} · {saveStatusLabel}</span>
           </footer>

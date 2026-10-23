@@ -129,3 +129,35 @@ describe('accents', () => {
         expect(missing).toEqual([]);
     });
 });
+
+describe('CSV export', async () => {
+  const { buildMealsCsv, buildDailyCsv } = await import('./backup.js');
+  const state = {
+    logs: {
+      '2026-10-23': { water: 750, steps: 4200, foods: [
+        { name: 'Paneer, "tikka"', qty: 150, unit: 'g', cal: 300, protein: 27, mealType: 'lunch', source: 'user_entered' },
+        { name: 'Soup', qty: 1, unit: 'bowl', cal: 0, calUnknown: true, source: 'unknown' },
+      ] },
+    },
+  };
+  it('escapes commas and quotes, and marks unknown calories', () => {
+    const lines = buildMealsCsv(state).trim().split('\r\n');
+    expect(lines).toHaveLength(3);
+    expect(lines[1]).toContain('"Paneer, ""tikka"""');
+    expect(lines[2]).toContain(',no,');
+  });
+  it('summarises each day', () => {
+    const lines = buildDailyCsv(state).trim().split('\r\n');
+    expect(lines[1]).toBe('2026-10-23,300,27,750,4200,0,0,,2');
+  });
+});
+
+describe('backup identity safety', async () => {
+  const { buildBackup, parseBackup } = await import('./backup.js');
+  it('never exports or imports account/sync identifiers', () => {
+    const b = buildBackup({ email: 'a@x.com', userId: 'u1', syncEpoch: 'e', settingsUpdatedAt: 't', goal: 'g' });
+    expect(b.data).toEqual({ goal: 'g' });
+    const parsed = parseBackup({ app: 'titantrack', version: 1, data: { userId: 'other', syncEpoch: 'x', goal: 'g' } });
+    expect(parsed.data).toEqual({ goal: 'g' });
+  });
+});

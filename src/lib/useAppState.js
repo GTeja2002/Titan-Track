@@ -1,12 +1,14 @@
 /* ---------------- lib/useAppState.js ---------------- */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCaloriesForAge } from './calculations.js';
-import { pushStateToSupabase, pullStateFromSupabase } from './supabaseClient.js';
+import { supabase } from './supabaseClient.js';
+import { getSession, onAuthChange, signOut, deleteMyAccount } from './auth.js';
+import { stampChanges, newSyncEpoch, clearSnapshot } from './sync.js';
+import { useCloudSync } from './useCloudSync.js';
 import { getLocalDateString } from './date.js';
 import { DEFAULT_GOAL } from './goals.js';
 import { accentAttribute } from './accents.js';
 import { readLocal, readLocalJSON, writeLocal, removeLocal } from './storage.js';
-import { recordUserLogin, updateUserDirectoryRecord } from './userLogger.js';
 import { createEmptyLogShape } from './logShape.js';
 import { ensureEntryIds } from './mealLog.js';
 
@@ -167,26 +169,47 @@ export function createEmptyLog() {
   return createEmptyLogShape();
 }
 
+const userKeyFor = (email) => `titan_user_${email.toLowerCase()}`;
+
+/** A fresh state for an account with nothing saved on this device. */
+function newUserState(email, extra = {}) {
+  return {
+    ...defaultState,
+    email,
+    isOnboarded: false,
+    name: email.split('@')[0] || '',
+    logs: { [defaultState.currentDate]: { ...createEmptyLog(), weight: defaultState.weight || 70 } },
+    ...extra,
+  };
+}
+
+const loggedOutState = () => ({ ...defaultState, email: '', isOnboarded: false });
+
+/**
+ * Two modes:
+ *   - Cloud (Supabase configured): you are whoever Supabase Auth says you are.
+ *     Nothing opens without a verified session; data syncs to your account.
+ *   - Local-only (no Supabase env, e.g. a dev checkout): the old behaviour —
+ *     an email labels a profile stored in this browser. No cloud, no account.
+ */
 export function useAppState() {
+  const cloud = !!supabase;
   const [state, setState] = useState(() => {
+    if (cloud) return loggedOutState(); // wait for the session check below
     const lastEmail = readLocal('titan_last_email') || '';
     if (lastEmail) {
-      const parsed = readLocalJSON(`titan_user_${lastEmail.toLowerCase()}`);
+      const parsed = readLocalJSON(userKeyFor(lastEmail));
       if (parsed) {
         return { ...defaultState, ...parsed, email: lastEmail, isOnboarded: parsed.isOnboarded ?? false };
       }
-      return {
-        ...defaultState,
-        email: lastEmail,
-        isOnboarded: false,
-        name: lastEmail.split('@')[0] || '',
-        logs: {
-          [defaultState.currentDate]: { ...createEmptyLog(), weight: defaultState.weight || 70 }
-        }
-      };
+      return newUserState(lastEmail);
     }
-    return { ...defaultState, email: '', isOnboarded: false };
+    return loggedOutState();
   });
+  const [authReady, setAuthReady] = useState(!cloud);
+  // True while a signed-in account with no copy on this device is being
+  // restored from the cloud, so returning users don't see onboarding.
+  const [restoring, setRestoring] = useState(false);
 
   const [savedFlash, setSavedFlash] = useState(false);
   const [storageFailed, setStorageFailed] = useState(false);
@@ -196,9 +219,8 @@ export function useAppState() {
     if (!next.email) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      const userKey = `titan_user_${next.email.toLowerCase()}`;
-      const wrote = writeLocal(userKey, JSON.stringify(next));
-      writeLocal('titan_last_email', next.email);
+      const wrote = writeLocal(userKeyFor(next.email), JSON.stringify(next));
+      if (!cloud) writeLocal('titan_last_email', next.email);
       // Storage can be full or blocked. Surface that rather than flashing
       // "saved" over a write that never happened.
       setStorageFailed(!wrote);
@@ -206,21 +228,27 @@ export function useAppState() {
         setSavedFlash(true);
         setTimeout(() => setSavedFlash(false), 1000);
       }
-      // Cloud sync is best-effort and never blocks the (already-instant) local save.
-      pushStateToSupabase(userKey, next);
     }, 300);
-  }, []);
+  }, [cloud]);
 
-  // Every update passes through ensureEntryIds so food entries added by any
-  // code path get an id (needed for edits, de-duplication and sync). It
-  // returns the same object when nothing changed, so this costs nothing.
-  const update = useCallback((updater) => {
+  /** Applies a user action: entry ids for anything new, and timestamps on
+   *  whatever changed so sync can resolve conflicts (lib/sync.js). */
+  const commit = useCallback((updater) => {
     setState((prev) => {
-      const next = updater(prev);
+      let next = typeof updater === 'function' ? updater(prev) : updater;
+      if (next === prev) return prev;
       const logs = ensureEntryIds(next.logs);
-      return logs === next.logs ? next : { ...next, logs };
+      if (logs !== next.logs) next = { ...next, logs };
+      return stampChanges(prev, next);
     });
   }, []);
+  const update = commit;
+
+  const { syncStatus, syncNow, flushSync } = useCloudSync(state, setState);
+
+  useEffect(() => {
+    if (restoring && syncStatus.firstSyncDone) setRestoring(false);
+  }, [restoring, syncStatus.firstSyncDone]);
 
   // Single source of truth for persistence: any state change — from update(),
   // ensureLog(), completeOnboarding(), etc. — flows through here. Keeping
@@ -261,55 +289,101 @@ export function useAppState() {
     }
   }, [state.currentDate, state.email, state.isOnboarded, ensureLog]);
 
-  // Pull this user's cloud copy once per login (covers "signed in on another
-  // device" or "cleared browser data" cases). Runs after the instant
-  // localStorage-backed state is already showing, and is a no-op if Supabase
-  // isn't configured or has nothing saved for this user yet.
-  const pulledForEmailRef = useRef(null);
-  useEffect(() => {
-    if (!state.email || pulledForEmailRef.current === state.email) return;
-    pulledForEmailRef.current = state.email;
-    const emailAtRequestTime = state.email;
-    const userKey = `titan_user_${emailAtRequestTime.toLowerCase()}`;
-    let cancelled = false;
-    pullStateFromSupabase(userKey).then((cloudState) => {
-      if (cancelled || !cloudState) return;
-      setState((prev) => {
-        if (prev.email !== emailAtRequestTime) return prev; // user logged out/switched while this was in flight
-        return { ...defaultState, ...cloudState, email: emailAtRequestTime, isOnboarded: cloudState.isOnboarded ?? prev.isOnboarded };
-      });
+  /** Opens the signed-in account's data: this device's copy if there is one,
+   *  otherwise an empty state that the first sync fills from the cloud. */
+  const openSession = useCallback((session) => {
+    const email = (session.user.email || '').toLowerCase();
+    const userId = session.user.id;
+    const local = readLocalJSON(userKeyFor(email));
+    // A local copy that belongs to a different account id (e.g. the account
+    // was deleted and re-created) is not this user's data.
+    const usable = local && (!local.userId || local.userId === userId) ? local : null;
+    setState((prev) => {
+      if (prev.userId === userId) return prev;
+      const base = usable
+        ? { ...defaultState, ...usable, isOnboarded: usable.isOnboarded ?? false }
+        : newUserState(email);
+      return { ...base, currentDate: defaultState.currentDate, email, userId, syncEpoch: base.syncEpoch || newSyncEpoch() };
     });
-    return () => { cancelled = true; };
-  }, [state.email]);
+    setRestoring((r) => r || !usable);
+  }, []);
 
+  // Session check on start, then follow sign-in / sign-out events. A session
+  // that expires (refresh fails) signs the user out here but leaves their
+  // device copy in place, so unsynced changes are not lost.
+  useEffect(() => {
+    if (!cloud) return undefined;
+    let alive = true;
+    getSession().then((session) => {
+      if (!alive) return;
+      if (session) openSession(session);
+      setAuthReady(true);
+    });
+    const unsubscribe = onAuthChange((event, session) => {
+      if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED')) {
+        openSession(session);
+      } else if (event === 'SIGNED_OUT') {
+        clearTimeout(saveTimer.current);
+        setState(loggedOutState());
+        setRestoring(false);
+      }
+    });
+    return () => { alive = false; unsubscribe(); };
+  }, [cloud, openSession]);
+
+  /** Local-only mode sign-in (no Supabase configured). */
   const login = (email) => {
     const lowerEmail = email.trim().toLowerCase();
     writeLocal('titan_last_email', lowerEmail);
-    const loadedState = readLocalJSON(`titan_user_${lowerEmail}`);
-    const finalState = loadedState
+    const loadedState = readLocalJSON(userKeyFor(lowerEmail));
+    setState(loadedState
       ? { ...defaultState, ...loadedState, email: lowerEmail, isOnboarded: loadedState.isOnboarded ?? false }
-      : {
-        ...defaultState,
-        email: lowerEmail,
-        isOnboarded: false,
-        name: lowerEmail.split('@')[0] || '',
-        logs: {
-          [defaultState.currentDate]: { ...createEmptyLog(), weight: defaultState.weight || 70 }
-        }
-      };
-
-    recordUserLogin(lowerEmail, finalState);
-    setState(finalState);
+      : newUserState(lowerEmail));
   };
 
-  const logout = () => {
-    removeLocal('titan_last_email');
-    pulledForEmailRef.current = null;
-    setState({ ...defaultState, email: '', isOnboarded: false });
+  /** Removes this account's data from the device (cloud mode, on sign-out or
+   *  account deletion) so the next person on a shared phone sees nothing. */
+  const forgetDevice = (email, userId) => {
+    clearTimeout(saveTimer.current);
+    if (email) removeLocal(userKeyFor(email));
+    if (userId) clearSnapshot(userId);
+  };
+
+  /** Signs out. In cloud mode, first makes sure everything reached the cloud;
+   *  if it could not (offline), asks before discarding the device copy.
+   *  Returns false if the user cancelled. */
+  const logout = async () => {
+    if (cloud && state.userId) {
+      const left = await flushSync();
+      if (left > 0 && !window.confirm(
+        `${left} change${left > 1 ? 's have' : ' has'} not reached the cloud yet (you may be offline). ` +
+        'Sign out anyway? Those changes will be lost.'
+      )) return false;
+      const { email, userId } = state;
+      await signOut();
+      forgetDevice(email, userId);
+    } else {
+      clearTimeout(saveTimer.current);
+      removeLocal('titan_last_email');
+    }
+    setState(loggedOutState());
+    return true;
+  };
+
+  /** Permanently deletes the account and all cloud data, then signs out. */
+  const deleteAccount = async () => {
+    if (!cloud || !state.userId) return { error: 'Not signed in to a cloud account.' };
+    const { email, userId } = state;
+    const { error } = await deleteMyAccount();
+    if (error) return { error };
+    forgetDevice(email, userId);
+    await signOut().catch(() => {});
+    setState(loggedOutState());
+    return { error: null };
   };
 
   const completeOnboarding = (details) => {
-    setState((prev) => {
+    commit((prev) => {
       const next = { ...prev, ...details, isOnboarded: true };
       next.logs = { ...(next.logs || {}) };
       const today = next.currentDate;
@@ -325,23 +399,12 @@ export function useAppState() {
         next.age, next.goal, tdee, next.weight, next.goalWeight, days
       );
 
-      updateUserDirectoryRecord(next.email, {
-        name: next.name,
-        age: next.age,
-        gender: next.gender,
-        height: next.height,
-        weight: next.weight,
-        startWeight: next.startWeight,
-        goalWeight: next.goalWeight,
-        isOnboarded: true
-      });
-
       return next;
     });
   };
 
   const clearLogsHistory = () => {
-    setState((prev) => {
+    commit((prev) => {
       const today = prev.currentDate;
       const freshLog = { ...createEmptyLog(), weight: prev.weight || 70 };
       return {
@@ -358,7 +421,7 @@ export function useAppState() {
     const cleanName = foodName.trim();
     if (!cleanName) return;
 
-    setState((prev) => {
+    commit((prev) => {
       const currentList = prev.availableFoods || [];
       // Case-insensitive duplicate check
       const exists = currentList.some((item) => item.toLowerCase() === cleanName.toLowerCase());
@@ -373,7 +436,7 @@ export function useAppState() {
   const removeAvailableFood = (foodName) => {
     if (!foodName) return;
     const targetName = foodName.trim().toLowerCase();
-    setState((prev) => {
+    commit((prev) => {
       const currentList = prev.availableFoods || [];
       const updatedList = currentList.filter((item) => item.trim().toLowerCase() !== targetName);
       return {
@@ -385,7 +448,7 @@ export function useAppState() {
 
   const applyPlanFilters = (newFilters) => {
     if (!newFilters) return;
-    setState((prev) => ({
+    commit((prev) => ({
       ...prev,
       appliedPlanFilters: {
         ...prev.appliedPlanFilters,
@@ -400,8 +463,14 @@ export function useAppState() {
     savedFlash,
     storageFailed,
     createEmptyLog,
+    cloud,
+    authReady,
+    restoring,
+    syncStatus,
+    syncNow,
     login,
     logout,
+    deleteAccount,
     completeOnboarding,
     clearLogsHistory,
     addAvailableFood,

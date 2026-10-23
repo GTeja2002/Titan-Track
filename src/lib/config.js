@@ -20,3 +20,9 @@ export const LOGIN_VIDEO_SRC = import.meta.env.VITE_LOGIN_VIDEO_SRC || '/assets/
 
 export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+/** Where Supabase sends people back after Google sign-in or an email link.
+ *  Defaults to wherever the app is being served from. The Android app sets
+ *  this to its deep link (see README "Android"). */
+export const AUTH_REDIRECT_URL =
+  import.meta.env.VITE_AUTH_REDIRECT_URL || (typeof window !== 'undefined' ? window.location.origin : '');

@@ -1,10 +1,9 @@
 /* ---------------- components/ProfileDrawer.jsx ---------------- */
 
 import { useState } from 'react';
-import { X, Users, Download, Upload } from 'lucide-react';
+import { X, Download, Upload } from 'lucide-react';
 import { calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCalories } from '../lib/calculations.js';
 import { getLocalDateString } from '../lib/date.js';
-import { UserDirectoryModal } from './UserDirectoryModal.jsx';
 import { createEmptyLog } from '../lib/useAppState.js';
 import { goalsForAge } from '../lib/goals.js';
 import { ACCENTS, DEFAULT_ACCENT } from '../lib/accents.js';
@@ -38,7 +37,6 @@ function ToggleRow({ label, hint, checked, onChange }) {
 }
 
 export function ProfileDrawer({ state, update, isOpen, onClose }) {
-  const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);
   const [backupMessage, setBackupMessage] = useState('');
   const [backupError, setBackupError] = useState(false);
 
@@ -404,18 +402,6 @@ export function ProfileDrawer({ state, update, isOpen, onClose }) {
                       className="rounded-xl border bg-slate-50 border-slate-200 px-3 py-2 text-sm outline-none w-full"
                     />
                   </div>
-
-                  {/* User Directory & Login Audit Logs Button */}
-                  <div className="pt-2 border-t border-slate-200/60">
-                    <button
-                      type="button"
-                      onClick={() => setIsUserDirectoryOpen(true)}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition border border-slate-200"
-                    >
-                      <Users size={16} className="text-blue-600" />
-                      View Registered User Directory & Logs
-                    </button>
-                  </div>
                 </div>
 
               </div>
@@ -434,10 +420,6 @@ export function ProfileDrawer({ state, update, isOpen, onClose }) {
         </div>
       </div>
 
-      <UserDirectoryModal
-        isOpen={isUserDirectoryOpen}
-        onClose={() => setIsUserDirectoryOpen(false)}
-      />
     </div>
   );
 }

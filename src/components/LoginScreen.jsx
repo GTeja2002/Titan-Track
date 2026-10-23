@@ -1,26 +1,37 @@
 /* ---------------- components/LoginScreen.jsx ---------------- */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Activity, ArrowLeft, LogIn, Mail, Phone, ShieldCheck, Sparkles } from 'lucide-react';
+import { Activity, ArrowLeft, LogIn, Mail, ShieldCheck, Sparkles, Loader2 } from 'lucide-react';
 import { GoogleLogo } from './shared/GoogleLogo.jsx';
-import { decodeGoogleCredential } from '../lib/auth.js';
+import { sendEmailCode, verifyEmailCode, signInWithGoogleIdToken, signInWithGoogleRedirect } from '../lib/auth.js';
+import { isNativeApp } from '../lib/platform.js';
 import { GOOGLE_CLIENT_ID, LOGIN_VIDEO_SRC } from '../lib/config.js';
 
-export function LoginScreen({ onLogin }) {
-  const [mode, setMode] = useState('email'); // 'email' | 'phone'
+/**
+ * cloud = true:  real accounts via Supabase Auth (emailed code, or Google).
+ *                Signing in fires an auth event that useAppState picks up.
+ * cloud = false: local-only mode (no Supabase configured) — an email labels
+ *                a profile stored in this browser; nothing is verified, and
+ *                the screen says so.
+ */
+export function LoginScreen({ cloud = false, onLocalLogin }) {
   const [identifier, setIdentifier] = useState('');
   const [error, setError] = useState('');
   const [revealed, setRevealed] = useState(false);
+  const [busy, setBusy] = useState(false);
   const googleBtnRef = useRef(null);
   const bgVideoRef = useRef(null);
 
-  // OTP Verification System states
+  // Emailed-code verification
   const [isVerifying, setIsVerifying] = useState(false);
-  const [otpCode, setOtpCode] = useState('');
   const [userInputOtp, setUserInputOtp] = useState('');
-  const [timer, setTimer] = useState(30);
+  const [timer, setTimer] = useState(60);
   const [verificationError, setVerificationError] = useState('');
 
-  // Countdown timer for OTP resend
+  // The Google Identity Services button does not work inside the Android
+  // WebView, so the app uses the redirect flow there.
+  const useGisButton = cloud && !!GOOGLE_CLIENT_ID && !isNativeApp();
+
+  // Countdown timer for resending the code
   useEffect(() => {
     if (!isVerifying || timer <= 0) return;
     const interval = setInterval(() => {
@@ -51,20 +62,20 @@ export function LoginScreen({ onLogin }) {
     }, 5000);
   }, []);
 
-  const handleGoogleCredential = useCallback((response) => {
-    const payload = decodeGoogleCredential(response.credential);
-    if (payload?.email) {
-      onLogin(payload.email);
-    } else {
-      setError('Could not read your Google account email — try email/phone below instead.');
-    }
-  }, [onLogin]);
+  // Google's signed ID token goes to Supabase, which verifies it server-side.
+  const handleGoogleCredential = useCallback(async (response) => {
+    setBusy(true);
+    setError('');
+    const { error: err } = await signInWithGoogleIdToken(response.credential);
+    setBusy(false);
+    if (err) setError(`Google sign-in failed: ${err}`);
+  }, []);
 
   // Renders the real Google button once both the GSI script and the target div
   // are ready. Polls briefly because the script tag loads with async/defer, so
   // it isn't guaranteed to be ready the instant this component mounts.
   useEffect(() => {
-    if (!GOOGLE_CLIENT_ID) return;
+    if (!useGisButton) return;
     let cancelled = false;
     let attempts = 0;
     const tryInit = () => {
@@ -81,56 +92,73 @@ export function LoginScreen({ onLogin }) {
     };
     tryInit();
     return () => { cancelled = true; };
-  }, [handleGoogleCredential]);
+  }, [handleGoogleCredential, useGisButton]);
 
-  const handleSubmit = (e) => {
+  const handleGoogleRedirect = async () => {
+    setBusy(true);
+    setError('');
+    const { error: err } = await signInWithGoogleRedirect();
+    // On success the page navigates away to Google; only errors come back.
+    setBusy(false);
+    if (err) setError(`Google sign-in failed: ${err}`);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const trimmed = identifier.trim();
+    const trimmed = identifier.trim().toLowerCase();
     if (!trimmed) {
-      setError(mode === 'email' ? 'Email is required' : 'Phone number is required');
+      setError('Email is required');
       return;
     }
-    if (mode === 'email') {
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-        setError('Please enter a valid email address');
-        return;
-      }
-    } else {
-      const digits = trimmed.replace(/\D/g, '');
-      if (digits.length < 7 || digits.length > 15) {
-        setError('Please enter a valid phone number');
-        return;
-      }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setError('Please enter a valid email address');
+      return;
     }
     setError('');
-
-    // Generate a secure 6-digit mock OTP code for verification
-    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    setOtpCode(generatedOtp);
+    if (!cloud) {
+      onLocalLogin(trimmed);
+      return;
+    }
+    setBusy(true);
+    const { error: err } = await sendEmailCode(trimmed);
+    setBusy(false);
+    if (err) {
+      setError(err);
+      return;
+    }
+    setIdentifier(trimmed);
     setUserInputOtp('');
     setVerificationError('');
-    setTimer(30);
+    setTimer(60);
     setIsVerifying(true);
   };
 
-  const handleVerifySubmit = (e) => {
+  const handleVerifySubmit = async (e) => {
     e.preventDefault();
-    if (userInputOtp.trim() === otpCode) {
-      setVerificationError('');
-      setIsVerifying(false);
-      onLogin(identifier.trim());
-    } else {
-      setVerificationError('Invalid verification code. Please try again.');
+    const code = userInputOtp.trim();
+    if (code.length !== 6) {
+      setVerificationError('Enter the 6-digit code from the email.');
+      return;
     }
+    setBusy(true);
+    const { error: err } = await verifyEmailCode(identifier, code);
+    setBusy(false);
+    if (err) setVerificationError(err);
+    // On success, the auth state change opens the app.
   };
 
-  const handleResendCode = () => {
-    if (timer > 0) return;
-    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    setOtpCode(generatedOtp);
+  const handleResendCode = async () => {
+    if (timer > 0 || busy) return;
+    setBusy(true);
+    const { error: err } = await sendEmailCode(identifier);
+    setBusy(false);
     setUserInputOtp('');
+    if (err) {
+      setVerificationError(err);
+      return;
+    }
     setVerificationError('');
-    setTimer(30);
+    setTimer(60);
   };
 
   const handleBack = () => {
@@ -194,7 +222,7 @@ export function LoginScreen({ onLogin }) {
         <p className="mt-2.5 text-sm text-white/70 leading-relaxed">Track every rep, every meal, every step — and watch the trend line do the rest.</p>
         <div className="mt-5 flex items-center gap-2 login-chip rounded-full px-3.5 py-2 w-fit">
           <ShieldCheck size={13} className="text-primary" />
-          <span className="text-[11px] font-semibold text-white/80">Your data stays on your device</span>
+          <span className="text-[11px] font-semibold text-white/80">{cloud ? 'Saved securely to your account' : 'Your data stays on this device'}</span>
         </div>
       </div>
 
@@ -217,16 +245,10 @@ export function LoginScreen({ onLogin }) {
             </div>
             <h2 className="text-2xl font-extrabold text-white mb-2 tracking-tight">Verify Your Account</h2>
             <p className="text-xs mb-4 leading-relaxed text-white/50">
-              We have sent a 6-digit confirmation code to your {mode === 'email' ? 'email' : 'phone'}:
+              We sent a 6-digit sign-in code to:
             </p>
             <div className="mb-4 rounded-2xl bg-white/5 border border-white/10 px-4 py-3 text-center">
               <span className="text-xs font-black text-primary break-all">{identifier}</span>
-            </div>
-
-            {/* Test Helper box */}
-            <div className="mb-5 p-3.5 rounded-2xl bg-primary-soft border border-primary/20 text-center animate-pulse">
-              <span className="text-[9px] font-bold uppercase tracking-wider text-primary block mb-1">🛠️ Developer Test OTP</span>
-              <span className="text-2xl font-mono font-black tracking-[0.25em] text-white pl-[0.25em]">{otpCode}</span>
             </div>
 
             <form onSubmit={handleVerifySubmit} className="space-y-4">
@@ -235,6 +257,8 @@ export function LoginScreen({ onLogin }) {
                   6-Digit Verification Code
                 </label>
                 <input
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
                   type="text"
                   maxLength={6}
                   value={userInputOtp}
@@ -256,11 +280,13 @@ export function LoginScreen({ onLogin }) {
 
               <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 rounded-2xl py-3.5 font-bold text-white transition hover:scale-[1.02] active:scale-95 text-sm"
+                disabled={busy}
+                className="w-full flex items-center justify-center gap-2 rounded-2xl py-3.5 font-bold text-white transition hover:scale-[1.02] active:scale-95 text-sm disabled:opacity-60"
                 style={{ background: 'var(--grad-primary-cta)', boxShadow: '0 8px 24px var(--primary-glow)' }}
               >
-                <ShieldCheck size={16} /> <span>Verify & Continue</span>
+                {busy ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />} <span>Verify & Continue</span>
               </button>
+              <p className="text-[10.5px] text-center text-white/35">Didn't get it? Check spam, or wait for the timer and resend.</p>
             </form>
 
             <div className="flex items-center justify-between text-xs font-bold pt-5 mt-5 border-t border-white/5">
@@ -269,7 +295,7 @@ export function LoginScreen({ onLogin }) {
                 onClick={handleBack}
                 className="text-white/40 hover:text-white/80 transition flex items-center gap-1.5"
               >
-                <ArrowLeft size={14} /> Change {mode === 'email' ? 'Email' : 'Phone'}
+                <ArrowLeft size={14} /> Change email
               </button>
 
               {timer > 0 ? (
@@ -293,82 +319,69 @@ export function LoginScreen({ onLogin }) {
             </div>
             <h2 className="text-2xl font-extrabold text-white mb-2 tracking-tight">Sign in to continue</h2>
             <p className="text-xs mb-6 leading-relaxed text-white/50">
-              This isn't a real account system — there's no password, and nothing leaves
-              your browser except the optional Google sign-in below.
+              {cloud
+                ? 'Sign in with Google or get a one-time code by email. Your logs are saved to your account and stay available on any device.'
+                : 'Local mode: cloud accounts are not set up on this build, so there is no password and your data stays in this browser only.'}
             </p>
 
-            {/* Real Google button when configured; an honestly-disabled state when not */}
-            <div className="mb-5">
-              {GOOGLE_CLIENT_ID ? (
-                <div ref={googleBtnRef} className="w-full flex justify-center" />
-              ) : (
-                <button
-                  type="button"
-                  disabled
-                  title="Add a Google OAuth Client ID in the code (GOOGLE_CLIENT_ID) to enable this"
-                  className="w-full flex items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold cursor-not-allowed opacity-70 login-input text-white/70"
-                >
-                  <GoogleLogo size={16} />
-                  Continue with Google
-                </button>
-              )}
-            </div>
+            {cloud && (
+              <>
+                <div className="mb-5">
+                  {useGisButton ? (
+                    <div ref={googleBtnRef} className="w-full flex justify-center" />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleGoogleRedirect}
+                      disabled={busy}
+                      className="w-full flex items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold login-input text-white transition active:scale-95 disabled:opacity-60"
+                    >
+                      <GoogleLogo size={16} />
+                      Continue with Google
+                    </button>
+                  )}
+                </div>
 
-            <div className="flex items-center gap-3 mb-5">
-              <div className="h-px flex-1 bg-white/10" />
-              <span className="text-[10px] uppercase tracking-wider font-bold text-white/30">or</span>
-              <div className="h-px flex-1 bg-white/10" />
-            </div>
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="h-px flex-1 bg-white/10" />
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-white/30">or</span>
+                  <div className="h-px flex-1 bg-white/10" />
+                </div>
+              </>
+            )}
 
-            <div className="segmented-group mb-4" style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)' }}>
-              <button
-                type="button"
-                className={`segment-card py-2 flex items-center justify-center gap-1.5 ${mode === 'email' ? 'active' : ''}`}
-                onClick={() => { setMode('email'); setIdentifier(''); setError(''); }}
-              >
-                <Mail size={14} /> Email
-              </button>
-              <button
-                type="button"
-                className={`segment-card py-2 flex items-center justify-center gap-1.5 ${mode === 'phone' ? 'active' : ''}`}
-                onClick={() => { setMode('phone'); setIdentifier(''); setError(''); }}
-              >
-                <Phone size={14} /> Phone
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div className="flex flex-col gap-1.5 font-bold">
-                <label className="text-[10px] font-bold uppercase tracking-wider pl-1 text-white/40">
-                  {mode === 'email' ? 'Email address' : 'Phone number'}
+                <label htmlFor="login-email" className="text-[10px] font-bold uppercase tracking-wider pl-1 text-white/40">
+                  Email address
                 </label>
                 <input
-                  type={mode === 'email' ? 'email' : 'tel'}
+                  id="login-email"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
                   value={identifier}
                   onChange={(e) => { setIdentifier(e.target.value); setError(''); }}
-                  placeholder={mode === 'email' ? 'yourname@example.com' : '+1 555 123 4567'}
+                  placeholder="yourname@example.com"
                   className="login-input w-full rounded-2xl px-4 py-3.5 text-sm outline-none text-white placeholder-white/25"
                   required
                 />
-                {mode === 'phone' && (
-                  <p className="text-[10px] pl-1 leading-relaxed text-white/35">
-                    No code is sent — like the email option, this just labels your local profile.
-                  </p>
-                )}
               </div>
 
               {error && (
-                <p className="text-xs font-bold text-rose-400 pl-1 text-center bg-rose-500/10 py-2 rounded-xl border border-rose-500/20">
+                <p role="alert" className="text-xs font-bold text-rose-400 pl-1 text-center bg-rose-500/10 py-2 rounded-xl border border-rose-500/20">
                   {error}
                 </p>
               )}
 
               <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 rounded-2xl py-3.5 font-bold text-white transition hover:scale-[1.02] active:scale-95 text-sm"
+                disabled={busy}
+                className="w-full flex items-center justify-center gap-2 rounded-2xl py-3.5 font-bold text-white transition hover:scale-[1.02] active:scale-95 text-sm disabled:opacity-60"
                 style={{ background: 'var(--grad-primary-cta)', boxShadow: '0 8px 24px var(--primary-glow)' }}
               >
-                <LogIn size={16} /> <span>Load My Profile</span>
+                {busy ? <Loader2 size={16} className="animate-spin" /> : cloud ? <Mail size={16} /> : <LogIn size={16} />}
+                <span>{cloud ? 'Email me a code' : 'Open local profile'}</span>
               </button>
             </form>
           </div>
