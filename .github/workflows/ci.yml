@@ -102,7 +102,20 @@ jobs:
 
       - name: Build debug APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        # On failure, surface Gradle's own error text as a job annotation so
+        # it is readable from the run page (and the public API) without
+        # digging through the full log.
+        run: |
+          set +e
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/gradle.log"
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            summary=$(grep -E "What went wrong|^> |^e: |error:|Could not|Execution failed|requires|incompatible|AAR metadata|minCompileSdk|Manifest merger" "$RUNNER_TEMP/gradle.log" | grep -v "^> Task" | head -40)
+            # Join lines with %0A (GitHub's newline escape) so they fit one annotation.
+            summary=$(echo "$summary" | tr -d '\r' | awk '{ gsub(/%/, "%25"); printf "%s%%0A", $0 }')
+            echo "::error title=Gradle build failed::$summary"
+          fi
+          exit $status
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
