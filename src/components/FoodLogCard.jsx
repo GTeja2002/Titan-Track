@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, X, Search, Utensils, RotateCcw, History, BookOpen, Pencil, Trash2 } from 'lucide-react';
+import { Plus, X, Search, Utensils, RotateCcw, History, BookOpen, Pencil, Trash2, Star } from 'lucide-react';
 import { FOOD_DB, QUICK_CHIPS, findFood, calculateProteinTarget } from '../lib/calculations.js';
 import { MacroBar } from './shared/MacroBar.jsx';
 import { portionsFor } from '../lib/portions.js';
@@ -14,6 +14,7 @@ import {
 } from '../lib/nutrition.js';
 import {
   addEntries, removeEntry, replaceEntry, upsertCustomFood, deleteCustomFood, liveCustomFoods,
+  saveFavoriteMeal, removeFavoriteMeal,
 } from '../lib/mealLog.js';
 import { CustomFoodModal } from './CustomFoodModal.jsx';
 import { useDismiss } from '../lib/dismiss.js';
@@ -238,6 +239,23 @@ export function FoodLogCard({ state, update }) {
 
   // One-tap repeats. Most people eat the same things on rotation, so the
   // fastest log is the one that already knows what you eat.
+  // Favourite meals: log a saved set of items in one tap, into the meal
+  // currently selected. Each item becomes a fresh entry with its own id.
+  const favorites = state.favoriteMeals || [];
+  const logFavorite = (fav) => {
+    logEntries(fav.items.map((item) => cloneMealEntry(item, { mealType: meal })));
+    flash(`Added ${fav.name}.`);
+  };
+  const saveAsFavorite = (mealId, mealLabel, entries) => {
+    const name = window.prompt('Name this favourite meal', `My ${mealLabel.toLowerCase()}`);
+    if (!name || !name.trim()) return;
+    update((prev) => saveFavoriteMeal(prev, { name, mealType: mealId === 'other' ? null : mealId, entries }));
+    flash(`Saved "${name.trim()}" to favourites.`);
+  };
+  const removeFavorite = (fav) => {
+    if (window.confirm(`Remove "${fav.name}" from favourites?`)) update((prev) => removeFavoriteMeal(prev, fav.id));
+  };
+
   const frequents = useMemo(
     () => frequentFoods(state.logs, state.currentDate, 6),
     [state.logs, state.currentDate]
@@ -346,6 +364,33 @@ export function FoodLogCard({ state, update }) {
           )}
         </button>
       </div>
+
+      {favorites.length > 0 && (
+        <div className="mb-2.5 flex flex-wrap items-center gap-1.5" aria-label="Favourite meals">
+          <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-faint)' }}>
+            <Star size={11} /> Favourites
+          </span>
+          {favorites.map((fav) => {
+            const kcal = fav.items.reduce((n, it) => n + (it.cal || 0), 0);
+            return (
+              <span key={fav.id} className="flex items-center rounded-full border" style={{ background: 'var(--primary-soft)', borderColor: 'var(--primary)' }}>
+                <button
+                  type="button"
+                  onClick={() => logFavorite(fav)}
+                  className="min-h-[32px] pl-2.5 pr-1.5 text-[11.5px] font-bold"
+                  style={{ color: 'var(--primary)' }}
+                  title={fav.items.map((it) => it.name).join(', ')}
+                >
+                  + {fav.name} · {kcal} kcal
+                </button>
+                <button type="button" onClick={() => removeFavorite(fav)} aria-label={`Remove favourite ${fav.name}`} className="flex h-8 w-7 items-center justify-center" style={{ color: 'var(--primary)' }}>
+                  <X size={12} />
+                </button>
+              </span>
+            );
+          })}
+        </div>
+      )}
 
       {/* Your own rotation first, then the generic chips. Logging what you
           already eat should not require typing it again. */}
@@ -560,7 +605,18 @@ export function FoodLogCard({ state, update }) {
             return (
               <section key={m.id} aria-label={m.label}>
                 <div className="mb-1.5 flex items-center justify-between text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--text-faint)' }}>
-                  <span>{m.label}</span>
+                  <span className="flex items-center gap-2">
+                    {m.label}
+                    <button
+                      type="button"
+                      onClick={() => saveAsFavorite(m.id, m.label, groups[m.id])}
+                      aria-label={`Save ${m.label} as a favourite`}
+                      className="flex min-h-[32px] items-center gap-1 rounded-full px-2 text-[10.5px] font-bold normal-case tracking-normal"
+                      style={{ color: 'var(--primary)', background: 'var(--primary-soft)' }}
+                    >
+                      <Star size={11} /> Save
+                    </button>
+                  </span>
                   <span style={{ fontFamily: 'var(--font-mono)' }}>{sub.cal} kcal{sub.unknownCount ? '+' : ''}</span>
                 </div>
                 <div className="flex flex-col gap-1.5">

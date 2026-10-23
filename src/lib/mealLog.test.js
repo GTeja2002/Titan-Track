@@ -82,3 +82,40 @@ describe('custom foods', () => {
     expect(s.logs.d.foods[0].cal).toBe(265);
   });
 });
+
+describe('favourite meals', async () => {
+  const { saveFavoriteMeal, removeFavoriteMeal } = await import('./mealLog.js');
+  const { cloneMealEntry } = await import('./nutrition.js');
+  const breakfast = [
+    createMealEntry({ food: { id: 'f1', name: 'Idli', unit: 'piece', basis: 'perServing', calories: 39, source: 'builtin' }, qty: 3, mealType: 'breakfast' }),
+    createMealEntry({ food: { id: 'f2', name: 'Sambar', unit: 'g', basis: 'per100', calories: 65, source: 'builtin' }, qty: 150, mealType: 'breakfast' }),
+  ];
+
+  it('stores item snapshots without ids or timestamps', () => {
+    const s = saveFavoriteMeal({ favoriteMeals: [] }, { name: ' My breakfast ', mealType: 'breakfast', entries: breakfast });
+    expect(s.favoriteMeals).toHaveLength(1);
+    expect(s.favoriteMeals[0]).toMatchObject({ name: 'My breakfast', mealType: 'breakfast' });
+    expect(s.favoriteMeals[0].items[0]).toMatchObject({ name: 'Idli', cal: 117 });
+    expect(s.favoriteMeals[0].items[0].id).toBeUndefined();
+    expect(s.favoriteMeals[0].items[0].consumedAt).toBeUndefined();
+  });
+
+  it('logging a favourite creates fresh entries with new ids and the same numbers', () => {
+    const s = saveFavoriteMeal({}, { name: 'B', mealType: 'breakfast', entries: breakfast });
+    const logged = s.favoriteMeals[0].items.map((it) => cloneMealEntry(it, { mealType: 'lunch' }));
+    expect(logged[0].id).toBeTruthy();
+    expect(logged[0].id).not.toBe(breakfast[0].id);
+    expect(logged.map((e) => e.cal)).toEqual([117, 98]);
+    expect(logged[0].mealType).toBe('lunch');
+  });
+
+  it('replaces a favourite with the same name, ignores empty saves, and removes', () => {
+    let s = saveFavoriteMeal({}, { name: 'B', entries: breakfast });
+    s = saveFavoriteMeal(s, { name: 'b', entries: breakfast.slice(0, 1) });
+    expect(s.favoriteMeals).toHaveLength(1);
+    expect(s.favoriteMeals[0].items).toHaveLength(1);
+    expect(saveFavoriteMeal(s, { name: '', entries: breakfast })).toBe(s);
+    expect(saveFavoriteMeal(s, { name: 'X', entries: [] })).toBe(s);
+    expect(removeFavoriteMeal(s, s.favoriteMeals[0].id).favoriteMeals).toHaveLength(0);
+  });
+});

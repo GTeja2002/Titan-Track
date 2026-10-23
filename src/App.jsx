@@ -21,15 +21,15 @@ import { HealthWellnessInsights } from './components/HealthWellnessInsights.jsx'
 import { ProfileDrawer } from './components/ProfileDrawer.jsx';
 import { Dashboard } from './components/Dashboard.jsx';
 import { PersonalizedPlanCard } from './components/PersonalizedPlanCard.jsx';
-import { NutritionOverview } from './components/NutritionOverview.jsx';
 import { getLocalDateString } from './lib/date.js';
 import { computeStreak, MAX_FREEZES } from './lib/streak.js';
-import { MetricRow } from './components/MetricRow.jsx';
 import { CommunityPage } from './components/CommunityPage.jsx';
 import { LockedFeature } from './components/shared/LockedFeature.jsx';
 import { useFeatureFlags } from './lib/useFeatureFlags.js';
 import { FullScreenMessage } from './components/shared/FullScreenMessage.jsx';
 import { HistoryCard } from './components/HistoryCard.jsx';
+import { WeeklySummaryCard } from './components/WeeklySummaryCard.jsx';
+import { DayDetailSheet } from './components/DayDetailSheet.jsx';
 import { SettingsPage } from './components/SettingsPage.jsx';
 import { PageHeader } from './components/layout/PageHeader.jsx';
 import { OfflineBanner } from './components/shared/OfflineBanner.jsx';
@@ -108,6 +108,8 @@ export default function App() {
   } = useAppState();
   const [activeTab, setActiveTabRaw] = useState('Dashboard');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [detailDate, setDetailDate] = useState(null);
+  const [showMealIdeas, setShowMealIdeas] = useState(false);
 
   // Tab history, so Android back retraces the user's steps instead of
   // always jumping home.
@@ -339,18 +341,32 @@ export default function App() {
                   </div>
                   <div className="contents lg:flex lg:col-span-7 lg:flex-col lg:gap-[var(--space-section)]">
                     <div className={phoneOrder(1)}><FoodLogCard state={state} update={update} /></div>
-                    <div className={phoneOrder(2)}><NutritionOverview state={state} onViewDetails={() => setActiveTab('Progress')} /></div>
                   </div>
                 </div>
 
-                <PersonalizedPlanCard
-                  state={state}
-                  update={update}
-                  addAvailableFood={addAvailableFood}
-                  removeAvailableFood={removeAvailableFood}
-                  applyPlanFilters={applyPlanFilters}
-                  onEditProfile={() => setIsProfileOpen(true)}
-                />
+                {/* Meal ideas are useful but long; open on request. */}
+                {showMealIdeas ? (
+                  <PersonalizedPlanCard
+                    state={state}
+                    update={update}
+                    addAvailableFood={addAvailableFood}
+                    removeAvailableFood={removeAvailableFood}
+                    applyPlanFilters={applyPlanFilters}
+                    onEditProfile={() => setIsProfileOpen(true)}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowMealIdeas(true)}
+                    className="m-card flex min-h-[56px] w-full items-center justify-between text-left"
+                  >
+                    <span>
+                      <span className="section-title block">Meal ideas for you</span>
+                      <span className="section-sub">Suggestions that fit your remaining calories and goal</span>
+                    </span>
+                    <span className="text-[13px] font-bold" style={{ color: 'var(--primary)' }}>Show</span>
+                  </button>
+                )}
               </div>
             )}
 
@@ -361,13 +377,6 @@ export default function App() {
                 <div className="flex flex-col gap-[var(--space-section)] lg:grid lg:grid-cols-12 lg:items-start">
                   <div className="contents lg:flex lg:col-span-8 lg:flex-col lg:gap-[var(--space-section)]">
                     <div className={phoneOrder(1)}><ActivityCard state={state} update={update} health={health} onEditProfile={() => setIsProfileOpen(true)} /></div>
-                    <div className={phoneOrder(3)}>
-                      <MetricRow
-                        state={state}
-                        onOpenNutrition={() => setActiveTab('Nutrition')}
-                        onOpenWorkouts={() => setActiveTab('Workouts')}
-                      />
-                    </div>
                   </div>
 
                   <div className="contents lg:flex lg:col-span-4 lg:flex-col lg:gap-[var(--space-section)]">
@@ -416,10 +425,8 @@ export default function App() {
                 {state.trackWellbeing !== false && (
                   <WellbeingCard state={state} update={update} />
                 )}
-                <HistoryCard
-                  state={state}
-                  onOpenDay={(date) => { onSelectDate(date); setActiveTab('Nutrition'); }}
-                />
+                <WeeklySummaryCard state={state} onOpenDay={setDetailDate} />
+                <HistoryCard state={state} onOpenDay={setDetailDate} />
                 <TrendCard state={state} onEditProfile={() => setIsProfileOpen(true)} />
                 {/* The body-fat silhouette viewer is opt-in. Showing a gallery
                     of bodies by fat percentage to someone who did not ask for
@@ -539,6 +546,13 @@ export default function App() {
             );
           })}
         </nav>
+
+        <DayDetailSheet
+          state={state}
+          date={detailDate}
+          onClose={() => setDetailDate(null)}
+          onEditDay={(date) => { setDetailDate(null); onSelectDate(date); setActiveTab('Nutrition'); }}
+        />
 
         <ProfileDrawer
           state={state}

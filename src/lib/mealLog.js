@@ -108,3 +108,21 @@ export function liveCustomFoods(state) {
 }
 
 export { newId };
+
+/* ---- favourite meals ("my usual breakfast") ---- */
+
+/** Saves a meal's entries as a reusable favourite. Stores the nutrition
+ *  snapshot of each item (no ids or timestamps), so logging it later
+ *  creates fresh entries with the same numbers. Same name = replaced. */
+export function saveFavoriteMeal(state, { name, mealType, entries }, now = new Date()) {
+  const clean = String(name || '').trim().slice(0, 40);
+  if (!clean || !entries || entries.length === 0) return state;
+  const items = entries.map(({ id: _id, createdAt: _c, updatedAt: _u, consumedAt: _t, timesLogged: _n, ...snap }) => snap);
+  const list = (state.favoriteMeals || []).filter((f) => f.name.toLowerCase() !== clean.toLowerCase());
+  const fav = { id: newId(), name: clean, mealType: mealType || null, items, createdAt: now.toISOString() };
+  return { ...state, favoriteMeals: [...list, fav] };
+}
+
+export function removeFavoriteMeal(state, favId) {
+  return { ...state, favoriteMeals: (state.favoriteMeals || []).filter((f) => f.id !== favId) };
+}
