@@ -524,8 +524,7 @@ export function Dashboard({
           <div
             className="absolute inset-0 z-0 pointer-events-none"
             style={{
-              background:
-                'radial-gradient(circle at 72% 46%, #BCE6D2 0%, #D3F0E3 32%, #E8F8F1 62%, #FBFEFD 88%, #FFFFFF 100%)',
+              background: 'var(--hero-field)',
             }}
           />
 
@@ -622,7 +621,7 @@ export function Dashboard({
         <div className="order-6 lg:order-none lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-col gap-[var(--space-section)] lg:gap-4">
           <div
             className="rounded-[var(--radius-card)] p-[var(--space-card)]"
-            style={{ background: '#FFF8EA', border: '1px solid #F1E3C7' }}
+            style={{ background: 'var(--m-streak-wash)', border: '1px solid var(--m-streak-edge)' }}
           >
             <div className="flex items-start justify-between gap-2">
               <span className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.07em]" style={{ color: 'var(--m-streak-ink)' }}>

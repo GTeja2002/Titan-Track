@@ -278,6 +278,7 @@ body.dark {
   --m-streak-lift: #F7CB8C;
   --m-streak-soft: #261B0F;
   --m-streak-wash: #2E2010;
+  --m-streak-edge: #4A3519;
   --m-streak-ink: #F4BC72;
 
   --accent: var(--color-success);
@@ -1552,3 +1553,8 @@ body { -webkit-tap-highlight-color: transparent; }
  * typed into keeps the space. */
 body.keyboard-open .bottom-nav { display: none; }
 body.keyboard-open .app-content { padding-bottom: 24px; }
+
+/* Dashboard hero backdrop, per theme (was a fixed light gradient that
+ * washed out the light text in dark mode). */
+:root { --hero-field: radial-gradient(circle at 72% 46%, #BCE6D2 0%, #D3F0E3 32%, #E8F8F1 62%, #FBFEFD 88%, #FFFFFF 100%); }
+body.dark { --hero-field: radial-gradient(circle at 72% 46%, #1E3B30 0%, #19302A 40%, #161F1B 75%, #141A17 100%); }

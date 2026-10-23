@@ -130,6 +130,9 @@ export function HealthWellnessInsights({ state, update }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
         {/* Body Snapshot — the real photo from Body Composition, shown here for
             context. No risk badges: purely visual. */}
+        {/* Body photos are opt-in (Profile → Body composition). This card
+            used to show one even with the setting off. */}
+        {state.showBodyComposition && (
         <WellnessCard
           hue="body"
           icon={<PersonStanding size={18} strokeWidth={2.2} />}
@@ -158,6 +161,7 @@ export function HealthWellnessInsights({ state, update }) {
             </span>
           </div>
         </WellnessCard>
+        )}
 
         {/* Fitness Age */}
         <WellnessCard

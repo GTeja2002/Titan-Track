@@ -27,7 +27,7 @@ for (let i = -6; i <= 0; i++) {
 }
 const state = {
   email: 'teja@example.com', name: 'Teja', isOnboarded: true, age: 24, height: 172, weight: 70, gender: 'male',
-  goal: 'consistency', activityLevel: 'Moderate', currentDate: day(0), logs,
+  goal: 'consistency', activityLevel: 'Moderate', currentDate: day(0), logs, isDarkMode: process.env.DARK === '1',
   customFoods: [{ id: 'cf1', name: 'Pesarattu', unit: 'piece', basis: 'perServing', calories: 110, protein: 5, carbs: 15, fat: 3, fiber: 2, source: 'user_entered', createdAt: 'x', updatedAt: 'x', deletedAt: null }],
 };
 
