@@ -56,6 +56,19 @@ export function hashRecord(rec) {
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
+/**
+ * Sent as client_updated_at when a record has no local timestamp (days the
+ * app creates on its own, entries logged before timestamps existed, a
+ * profile whose settings were never edited). The column is NOT NULL, and a
+ * database default only applies when the column is omitted — an explicit
+ * null is rejected and aborts the whole push. The epoch is exactly how the
+ * conflict check (`newer`) already treats a missing timestamp, so this keeps
+ * the rule unchanged: an unknown time is the oldest, and any genuine local
+ * edit (which always carries a real timestamp) wins.
+ */
+export const UNKNOWN_CLIENT_TIME = '1970-01-01T00:00:00.000Z';
+const clientTime = (...candidates) => candidates.find(Boolean) || UNKNOWN_CLIENT_TIME;
+
 export function entryToRow(e, logDate) {
   return {
     id: e.id,
@@ -74,7 +87,7 @@ export function entryToRow(e, logDate) {
     food_id: e.foodId || null,
     consumed_at: e.consumedAt || null,
     snapshot: e,
-    client_updated_at: e.updatedAt || e.createdAt || null,
+    client_updated_at: clientTime(e.updatedAt, e.createdAt),
   };
 }
 
@@ -84,7 +97,7 @@ export function rowToEntry(row) {
 
 export function dayToRow(date, day) {
   const { foods: _foods, updatedAt, ...data } = day || {};
-  return { log_date: date, data, client_updated_at: updatedAt || null };
+  return { log_date: date, data, client_updated_at: clientTime(updatedAt) };
 }
 
 export function foodToRow(f) {
@@ -99,7 +112,7 @@ export function foodToRow(f) {
     fat: f.fat ?? null,
     fiber: f.fiber ?? null,
     source: f.source === 'builtin' ? 'verified' : (f.source || 'user_entered'),
-    client_updated_at: f.updatedAt || null,
+    client_updated_at: clientTime(f.updatedAt),
     deleted_at: f.deletedAt || null,
   };
 }
@@ -134,7 +147,7 @@ export function toRecords(state) {
   const profile = {
     settings: profileSettings(state),
     timezone: safeTimezone(),
-    client_updated_at: state.settingsUpdatedAt || null,
+    client_updated_at: clientTime(state.settingsUpdatedAt),
   };
   return { meals, days, foods, profile };
 }
@@ -169,7 +182,14 @@ export function pendingCount(d) {
   return d.meals.length + d.days.length + d.foods.length + (d.profile ? 1 : 0) + d.deletedMeals.length + d.deletedDays.length;
 }
 
-const newer = (a, b) => (Date.parse(a || 0) || 0) > (Date.parse(b || 0) || 0);
+// A missing or unparseable timestamp is the oldest possible time (0). Note
+// Date.parse(0) is NOT 0: it parses "0" as the year 2000, which made a record
+// with no local timestamp look newer than a server row at the epoch.
+const timeOf = (t) => {
+  const ms = t ? Date.parse(t) : 0;
+  return Number.isFinite(ms) ? ms : 0;
+};
+const newer = (a, b) => timeOf(a) > timeOf(b);
 
 /**
  * Applies pulled rows to a state (pure). Remote wins unless the local copy of
