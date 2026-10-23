@@ -410,10 +410,10 @@ export function ProfileDrawer({ state, update, isOpen, onClose }) {
               </div>
 
               {/* Footer */}
-              <div className="px-6 py-4 bg-slate-50 border-t border-slate-200/60 flex justify-end gap-3 shrink-0">
+              <div className="px-6 pt-4 bg-slate-50 border-t border-slate-200/60 flex justify-end gap-3 shrink-0" style={{ paddingBottom: 'calc(16px + var(--safe-bottom))' }}>
                 <button
                   onClick={onClose}
-                  className="px-5 py-2.5 text-xs font-bold text-white bg-blue-500 hover:bg-blue-600 rounded-xl transition shadow-md active:scale-95 w-full"
+                  className="min-h-[48px] px-5 text-sm font-bold text-white rounded-xl transition shadow-md active:scale-95 w-full" style={{ background: 'var(--grad-primary-cta)' }}
                 >
                   Save & Close
                 </button>

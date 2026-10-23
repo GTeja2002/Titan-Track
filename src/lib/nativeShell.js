@@ -13,6 +13,7 @@
  */
 import { App as CapApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
+import { StatusBar, Style } from '@capacitor/status-bar';
 import { supabase } from './supabaseClient.js';
 import { isNativeApp } from './platform.js';
 import { dismissTop } from './dismiss.js';
@@ -62,4 +63,18 @@ export function startNativeShell({ onBack, onAuthError } = {}) {
     if (onBack && onBack()) return;
     CapApp.minimizeApp();
   });
+}
+
+/** Matches the Android status bar to the app theme. The WebView sits below
+ *  the status bar (no overlay), so content never hides under it; the CSS
+ *  safe-area insets cover devices that draw edge-to-edge anyway. */
+export async function applyStatusBar(isDark) {
+  if (!isNativeApp()) return;
+  try {
+    await StatusBar.setOverlaysWebView({ overlay: false });
+    await StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light });
+    await StatusBar.setBackgroundColor({ color: isDark ? '#0F1311' : '#F4F7F8' });
+  } catch {
+    /* plugin unavailable (older shell) — the default bar is fine */
+  }
 }

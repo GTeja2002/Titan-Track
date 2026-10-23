@@ -12,7 +12,7 @@ import { Trophy, Users, MessageSquare } from 'lucide-react';
 
 function EmptyPanel({ icon: Icon, title, body }) {
   return (
-    <div className="panel-card rounded-[20px] p-6 text-center">
+    <div className="panel-card rounded-[var(--radius-card)] p-[var(--space-card)] text-center">
       <Icon size={22} className="mx-auto" style={{ color: 'var(--text-faint)' }} />
       <p className="mt-2 text-[13px] font-bold" style={{ color: 'var(--text)' }}>{title}</p>
       <p className="mt-1 text-[12px]" style={{ color: 'var(--text-dim)' }}>{body}</p>

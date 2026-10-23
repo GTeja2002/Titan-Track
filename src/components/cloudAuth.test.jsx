@@ -116,7 +116,7 @@ describe('cloud sign-in', () => {
     await waitFor(() => expect(screen.getAllByText(/Good (morning|afternoon|evening)/).length).toBeGreaterThan(0));
 
     fireEvent.click(screen.getAllByRole('button', { name: /^Settings$/ })[0]);
-    fireEvent.click(screen.getByRole('button', { name: 'Logout' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Sign out/ }));
 
     await screen.findByRole('button', { name: /Email me a code/ });
     expect(h.auth.signOut).toHaveBeenCalled();
@@ -135,7 +135,7 @@ describe('cloud sign-in', () => {
     await waitFor(() => expect(screen.getAllByText(/Good (morning|afternoon|evening)/).length).toBeGreaterThan(0));
 
     fireEvent.click(screen.getAllByRole('button', { name: /^Settings$/ })[0]);
-    fireEvent.click(screen.getByRole('button', { name: 'Logout' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Sign out/ }));
     await waitFor(() => expect(confirmSpy).toHaveBeenCalled());
     expect(confirmSpy.mock.calls[0][0]).toMatch(/not reached the cloud/);
     expect(h.auth.signOut).not.toHaveBeenCalled();

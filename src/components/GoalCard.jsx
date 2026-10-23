@@ -89,7 +89,7 @@ export function GoalCard({ state, update }) {
   };
 
   return (
-    <div className="nutrition-panel h-full rounded-[16px] p-5 flex flex-col">
+    <div className="nutrition-panel h-full rounded-[var(--radius-card)] p-[var(--space-card)] flex flex-col">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
           <TrendingDown size={14} style={{ color: 'var(--primary)' }} />

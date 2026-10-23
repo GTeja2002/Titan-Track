@@ -35,7 +35,7 @@ export function ActivityCard({ state, update }) {
   const walkBurn = calculateWalkCalories(log?.walk || 0, state.weight ?? 70);
 
   return (
-    <div className="panel-card h-full rounded-[20px] p-5 flex flex-col text-left">
+    <div className="panel-card h-full rounded-[var(--radius-card)] p-[var(--space-card)] flex flex-col text-left">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
           <Zap size={15} style={{ color: 'var(--primary)' }} />

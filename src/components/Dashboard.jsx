@@ -14,7 +14,8 @@ import { createMealEntry, defaultMealForTime, planMealAsFood } from '../lib/nutr
 import { recipes, tips } from '../lib/wellnessContent.js';
 import { PersonalizedPlanCard } from './PersonalizedPlanCard.jsx';
 import WaterTrackerCard from './WaterTrackerCard.jsx';
-import { MetricCard } from './MetricCard.jsx';
+import { MetricRow } from './MetricRow.jsx';
+import { TodayCard } from './TodayCard.jsx';
 import { AchievementsCard } from './AchievementsCard.jsx';
 import { LockedFeature } from './shared/LockedFeature.jsx';
 import { useDismiss } from '../lib/dismiss.js';
@@ -237,10 +238,13 @@ export function Dashboard({
       const pad = (maxW - minW) * 0.15 || 1;
       minW -= pad; maxW += pad;
     }
+    // Whole kilos repeat the same label five times over a narrow range
+    // ("70, 70, 70…"), so use one decimal when the span is small.
+    const decimals = maxW - minW < 5 ? 1 : 0;
     const ticks = [];
     for (let i = 0; i <= 4; i++) {
       const value = minW + ((maxW - minW) * i) / 4;
-      ticks.push({ value: Math.round(value), y: 90 - (i / 4) * 60 });
+      ticks.push({ value: Number(value.toFixed(decimals)), y: 90 - (i / 4) * 60 });
     }
     return { ticks, minW, maxW };
   }, [weightHistory]);
@@ -478,22 +482,22 @@ export function Dashboard({
   // Dynamic progress indicators from logs
 
   return (
-    <div className="space-y-5 animate-fade-in pb-10">
+    <div className="page-stack animate-fade-in lg:gap-5">
       {/* 1. Greeting header */}
-      <header className="flex flex-wrap items-start justify-between gap-4">
+      <header className="order-1 lg:order-none flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
           <span className="text-2xl leading-none mt-0.5" aria-hidden="true">{greeting.emoji}</span>
           <div>
             <h1 className="text-[20px] sm:text-[22px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>
-              {greeting.label},
+              {greeting.label}{displayName ? `, ${displayName}` : ''}
             </h1>
-            <p className="text-[12.5px] mt-0.5" style={{ color: 'var(--text-dim)' }}>
-              Keep going! Your healthy habits are making a difference.
+            <p className="text-[13px] mt-0.5" style={{ color: 'var(--text-dim)' }}>
+              {longDate}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="hidden lg:flex items-center gap-3 sm:gap-4">
           <button
             type="button"
             onClick={() => onNavigate && onNavigate('Settings')}
@@ -512,9 +516,9 @@ export function Dashboard({
       </header>
 
       {/* 2. Hero, with the streak and body stats beside it */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 items-start gap-4">
+      <section className="contents lg:grid lg:grid-cols-12 lg:items-start lg:gap-4">
 
-        <div className="lg:col-span-8 panel-card relative overflow-hidden rounded-[24px] p-6">
+        <div className="hidden lg:block lg:col-span-8 panel-card relative overflow-hidden rounded-[var(--radius-card)] p-[var(--space-card)]">
           {/* Soft green field behind the hero, and the leaf artwork bleeding in
               from the right behind the bowl. */}
           <div
@@ -615,9 +619,9 @@ export function Dashboard({
         </div>
 
         {/* Right column: streak, then body stats */}
-        <div className="lg:col-span-4 flex flex-col gap-4">
+        <div className="order-6 lg:order-none lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-col gap-[var(--space-section)] lg:gap-4">
           <div
-            className="rounded-[20px] p-5"
+            className="rounded-[var(--radius-card)] p-[var(--space-card)]"
             style={{ background: '#FFF8EA', border: '1px solid #F1E3C7' }}
           >
             <div className="flex items-start justify-between gap-2">
@@ -632,7 +636,7 @@ export function Dashboard({
             <p className="mt-1 text-[12px] font-medium" style={{ color: 'var(--text-dim)' }}>Keep it going!</p>
           </div>
 
-          <div className="panel-card flex-1 rounded-[20px] p-5">
+          <div className="panel-card flex-1 rounded-[var(--radius-card)] p-[var(--space-card)]">
             <h3 className="text-[15px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>Body Stats</h3>
             <p className="text-[11.5px] font-medium mt-0.5 mb-1" style={{ color: 'var(--text-dim)' }}>Keep pushing!</p>
 
@@ -667,61 +671,31 @@ export function Dashboard({
       </section>
 
 
-      {/* 3. The four headline numbers. No section heading above them: they
-          are the first thing under the greeting and label themselves. */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
-        <MetricCard
-          metric="calories"
-          icon={Flame}
-          label="Calories"
-          value={totalCal}
-          target={calorieTarget}
-          footnote={totalCal >= calorieTarget ? 'Target met!' : `Remaining: ${Math.max(0, calorieTarget - totalCal)} kcal`}
-          progress={(totalCal / calorieTarget) * 100}
-          onOpen={() => goToTab('Nutrition')}
+      {/* 3. The four headline numbers — the same component and the same
+          lib/dailyTotals numbers as the Workouts page, so they cannot drift. */}
+      <div className="order-2 lg:order-none">
+        <MetricRow
+          state={state}
+          onOpenNutrition={() => goToTab('Nutrition')}
+          onOpenWorkouts={() => goToTab('Workouts')}
         />
+      </div>
 
-        <MetricCard
-          metric="protein"
-          icon={Zap}
-          label="Protein"
-          value={totalProtein}
-          target={proteinTarget}
-          unit="g"
-          footnote={totalProtein >= proteinTarget ? 'Target hit!' : `Remaining: ${Math.max(0, proteinTarget - totalProtein)}g`}
-          progress={(totalProtein / proteinTarget) * 100}
-          onOpen={() => goToTab('Nutrition')}
+      {/* Phone: one-tap actions and today's meals, in place of the desktop hero. */}
+      <div className="order-3 lg:hidden">
+        <TodayCard
+          foods={foods}
+          onLogMeal={() => goToTab('Nutrition')}
+          onAddWater={() => handleWaterChange(250)}
+          onLogActivity={() => goToTab('Workouts')}
         />
-
-        <MetricCard
-          metric="water"
-          icon={Droplet}
-          label="Water"
-          value={normalizeWaterMl(waterLog)}
-          target={waterTarget}
-          unit=" ml"
-          footnote={normalizeWaterMl(waterLog) >= waterTarget ? 'Hydrated!' : `Remaining: ${Math.max(0, waterTarget - normalizeWaterMl(waterLog)).toLocaleString()} ml`}
-          progress={(normalizeWaterMl(waterLog) / waterTarget) * 100}
-          onOpen={() => goToTab('Nutrition')}
-        />
-
-        <MetricCard
-          metric="steps"
-          icon={Footprints}
-          label="Steps"
-          value={dailySteps}
-          target={stepsTarget}
-          footnote={dailySteps >= stepsTarget ? 'Goal reached!' : 'Keep going!'}
-          progress={(dailySteps / stepsTarget) * 100}
-          onOpen={() => goToTab('Workouts')}
-        />
-      </section>
+      </div>
 
       {/* 4. Daily meals, motivation and hydration */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <section className="contents lg:grid lg:grid-cols-12 lg:gap-4">
 
         {/* Left Column: Your Daily Meal Plan (Connected to Nutrition & Food Log) */}
-        <div className="lg:col-span-7 panel-card rounded-[20px] p-5 text-left">
+        <div className="order-8 lg:order-none lg:col-span-7 panel-card rounded-[var(--radius-card)] p-[var(--space-card)] text-left">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
             <div className="flex items-start gap-3">
               <Utensils size={28} style={{ color: 'var(--primary)' }} className="mt-1 shrink-0" strokeWidth={2.2} />
@@ -810,7 +784,7 @@ export function Dashboard({
                     <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: dot }} aria-hidden="true" />
 
                     <div className="flex-1 min-w-0">
-                      <p className="text-[14px] font-bold truncate leading-snug" style={{ color: 'var(--text)' }}>
+                      <p className="text-[14px] font-bold line-clamp-2 break-words leading-snug" style={{ color: 'var(--text)' }}>
                         {meal.name}
                       </p>
                       <p className="text-[12px] font-medium mt-0.5" style={{ color: 'var(--text-dim)' }}>
@@ -908,12 +882,12 @@ export function Dashboard({
         </div>
 
         {/* Right Column: Daily Motivation Banner + Water Tracker Cup interface */}
-        <div className="lg:col-span-5 flex flex-col gap-4">
-          {/* Motivation card widget */}
+        <div className="order-4 lg:order-none lg:col-span-5 flex flex-col gap-4">
+          {/* Motivation card widget — decorative, so desktop only */}
           {/* The photo is the card, not a thumbnail beside it: it bleeds to
               the edges and a dark gradient runs in from the left so the text
               keeps its contrast over the bright sunrise. */}
-          <div className="motivation-card relative overflow-hidden rounded-[20px] min-h-[138px] group">
+          <div className="motivation-card relative overflow-hidden rounded-[20px] min-h-[138px] group hidden lg:block">
             <img
               src="/assets/homepage/running.png"
               alt=""
@@ -931,7 +905,7 @@ export function Dashboard({
                 Discipline today, freedom tomorrow.
               </h4>
               <p className="text-[13px] leading-snug text-white/80">
-                You're not just losing weight, you're gaining a new life.
+                Small steps today add up to big changes.
               </p>
             </div>
           </div>
@@ -950,29 +924,29 @@ export function Dashboard({
       </section>
 
       {/* 5. Your Progress */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <section className="order-7 lg:order-none grid grid-cols-1 lg:grid-cols-12 gap-4">
 
         {/* Weight trend */}
-        <div className="lg:col-span-12 panel-card rounded-[20px] p-5 text-left">
+        <div className="lg:col-span-12 panel-card rounded-[var(--radius-card)] p-[var(--space-card)] text-left min-w-0">
           <div className="flex items-start justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
               <span className="flex h-9 w-9 items-center justify-center rounded-full shrink-0" style={{ background: 'var(--primary-soft)' }}>
                 <TrendingUp size={17} style={{ color: 'var(--primary)' }} strokeWidth={2.4} />
               </span>
               <div>
-                <h3 className="text-[16px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>Your Progress</h3>
+                <h3 className="text-[16px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>Weight trend</h3>
                 <p className="text-[12.5px] font-medium mt-0.5" style={{ color: 'var(--text-dim)' }}>
-                  You&apos;re doing great! Last 30 Days
+                  Last 30 days
                 </p>
               </div>
             </div>
             <button
               onClick={() => goToTab('Progress')}
-              className="flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[12.5px] font-bold transition hover:brightness-[0.97] active:scale-95 shrink-0"
+              className="flex min-h-[40px] items-center gap-1 rounded-full px-3.5 text-[12.5px] font-bold transition active:scale-95 shrink-0"
               style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }}
             >
-              Last 30 Days
-              <ChevronDown size={14} />
+              Details
+              <ChevronRight size={14} />
             </button>
           </div>
 
@@ -1069,7 +1043,7 @@ export function Dashboard({
 
 
       {/* 6. Healthy Recipes Carousel for You */}
-      <section className="space-y-4 text-left">
+      <section className="order-9 lg:order-none space-y-4 text-left min-w-0">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Utensils size={26} style={{ color: 'var(--primary)' }} className="shrink-0" strokeWidth={2.2} />
@@ -1252,7 +1226,7 @@ export function Dashboard({
       </section>
 
       {/* 7. Tips & Knowledge Section */}
-      <section className="space-y-4 text-left">
+      <section className="order-10 lg:order-none space-y-4 text-left">
         <div className="flex items-center justify-between border-b pb-2 border-[#E7E6E0] dark:border-[#2C332E]">
           <h2 className="text-lg font-black tracking-tight text-[#171817] dark:text-[#F4F5F2]">Tips & Knowledge</h2>
         </div>
@@ -1319,19 +1293,21 @@ export function Dashboard({
       {/* 8. Achievements & Gamification Section — behind the achievements
           flag (lib/features.js). Locked, it renders no badges and evaluates
           nothing. */}
-      {flags.achievements ? (
-        <AchievementsCard state={state} update={update} />
-      ) : (
-        <LockedFeature
-          compact
-          title="Achievements"
-          description="Badges and milestones for your streaks, hydration and food logging."
-        />
-      )}
+      <div className="order-11 lg:order-none">
+        {flags.achievements ? (
+          <AchievementsCard state={state} update={update} />
+        ) : (
+          <LockedFeature
+            compact
+            title="Achievements"
+            description="Badges and milestones for your streaks, hydration and food logging."
+          />
+        )}
+      </div>
 
       {/* 9. CTA Banner bottom */}
       < section
-        className="rounded-3xl p-6 sm:p-8 border border-primary/20 shadow-md relative overflow-hidden bg-cover bg-center flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-left"
+        className="hidden lg:flex order-12 lg:order-none rounded-3xl p-6 sm:p-8 border border-primary/20 shadow-md relative overflow-hidden bg-cover bg-center flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-left"
         style={{ backgroundImage: `linear-gradient(90deg, rgba(217,119,69,0.95) 0%, rgba(189,96,52,0.9) 100%), url('/assets/homepage/green-banner.png')` }
         }
       >

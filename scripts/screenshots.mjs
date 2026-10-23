@@ -39,7 +39,9 @@ const widths = [
   { name: 'desktop', viewport: { width: 1366, height: 900 }, mobile: false },
 ];
 const only = process.env.WIDTHS ? process.env.WIDTHS.split(',') : null;
-const tabs = (process.env.TABS || 'Dashboard,Nutrition,Workouts,Progress,Community,Settings').split(',');
+const tabs = (process.env.TABS || 'Dashboard,Nutrition,Workouts,Progress,Settings,Community').split(',');
+// Phone tab-bar labels differ from the desktop sidebar names.
+const PHONE_LABEL = { Dashboard: 'Home', Nutrition: 'Meals', Workouts: 'Activity', Progress: 'Progress', Settings: 'Profile' };
 
 const browser = await chromium.launch();
 const report = [];
@@ -55,7 +57,14 @@ for (const w of widths.filter((x) => !only || only.includes(x.name))) {
   await page.goto('http://localhost:4173/');
   await page.waitForTimeout(900);
   for (const tab of tabs) {
-    const btn = page.locator('nav, aside').getByRole('button', { name: tab, exact: true }).locator('visible=true').first();
+    const name = w.mobile ? (PHONE_LABEL[tab] || tab) : tab;
+    let btn = page.locator('nav, aside').getByRole('button', { name, exact: true }).locator('visible=true').first();
+    if (w.mobile && tab === 'Community') {
+      // Community lives inside Profile on phones.
+      await page.locator('nav').getByRole('button', { name: 'Profile', exact: true }).dispatchEvent('click');
+      await page.waitForTimeout(300);
+      btn = page.getByRole('button', { name: /Community & Competitions/ }).first();
+    }
     if (await btn.count()) {
       // Report anything painted on top of the navigation button (a real tap would hit it).
       const covered = await btn.evaluate((el) => {

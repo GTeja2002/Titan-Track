@@ -1,10 +1,8 @@
 /* ---------------- App.jsx ---------------- */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Moon, Sun, Check, Activity, Scale, Dumbbell, User, LogOut,
-  Settings as SettingsIcon,
-  Calendar, Utensils,
-  Menu, X, Home, BarChart3, Users, Leaf, Flame, Lightbulb
+  Moon, Sun, Activity, Dumbbell, Settings as SettingsIcon, User,
+  Calendar, Utensils, Home, BarChart3, Users, Flame, Lightbulb,
 } from 'lucide-react';
 import { useAppState } from './lib/useAppState.js';
 import { LoginScreen } from './components/LoginScreen.jsx';
@@ -31,21 +29,28 @@ import { CommunityPage } from './components/CommunityPage.jsx';
 import { LockedFeature } from './components/shared/LockedFeature.jsx';
 import { useFeatureFlags } from './lib/useFeatureFlags.js';
 import { FullScreenMessage } from './components/shared/FullScreenMessage.jsx';
-import { DataExportCard, DeleteAccountCard } from './components/AccountCards.jsx';
 import { HistoryCard } from './components/HistoryCard.jsx';
-import { useDismiss } from './lib/dismiss.js';
-import { startNativeShell } from './lib/nativeShell.js';
+import { SettingsPage } from './components/SettingsPage.jsx';
+import { PageHeader } from './components/layout/PageHeader.jsx';
+import { OfflineBanner } from './components/shared/OfflineBanner.jsx';
+import { startNativeShell, applyStatusBar } from './lib/nativeShell.js';
+import { useKeyboardAware } from './lib/useKeyboardAware.js';
 
-/** The one definition of the app's sections. The sidebar, the mobile drawer
- *  and the bottom tab bar all read from this. */
+/**
+ * The app's sections. `label` is the desktop sidebar name; `short` is the
+ * phone tab-bar label. `phone: false` sections are not in the tab bar —
+ * five destinations is the most a phone bar holds comfortably — and are
+ * reached from Profile instead.
+ */
 const NAV_TABS = [
-  { id: 'Dashboard', label: 'Dashboard', icon: Home },
-  { id: 'Nutrition', label: 'Nutrition', icon: Utensils },
-  { id: 'Workouts', label: 'Workouts', icon: Dumbbell },
-  { id: 'Progress', label: 'Progress', icon: BarChart3 },
-  { id: 'Community', label: 'Community', icon: Users },
-  { id: 'Settings', label: 'Settings', icon: SettingsIcon },
+  { id: 'Dashboard', label: 'Dashboard', short: 'Home', icon: Home },
+  { id: 'Nutrition', label: 'Nutrition', short: 'Meals', icon: Utensils },
+  { id: 'Workouts', label: 'Workouts', short: 'Activity', icon: Dumbbell },
+  { id: 'Progress', label: 'Progress', short: 'Progress', icon: BarChart3 },
+  { id: 'Community', label: 'Community', short: 'Community', icon: Users, phone: false },
+  { id: 'Settings', label: 'Settings', short: 'Profile', icon: SettingsIcon, phoneIcon: User },
 ];
+const PHONE_TABS = NAV_TABS.filter((t) => t.phone !== false);
 
 /** Warmups suggested on the Workouts page. Static guidance, not a plan. */
 const WARMUPS = [
@@ -68,14 +73,23 @@ function syncStatusLabel(sync, cloud) {
   }
 }
 
-/** Phones get five thumb-sized destinations; Settings stays in the drawer. */
-const BOTTOM_TABS = NAV_TABS.filter((t) => t.id !== 'Settings');
+/** On phones every card stacks in one column, in order of how often it is
+ *  used; on desktop the same cards sit in two columns. `display: contents`
+ *  on the column wrappers lets their children take part in the phone order. */
+// Literal class strings: Tailwind only generates classes it can see in source.
+const PHONE_ORDER = {
+  1: 'order-1 lg:order-none',
+  2: 'order-2 lg:order-none',
+  3: 'order-3 lg:order-none',
+  4: 'order-4 lg:order-none',
+  5: 'order-5 lg:order-none',
+};
+const phoneOrder = (n) => PHONE_ORDER[n];
 
 export default function App() {
   const {
     state,
     update,
-    savedFlash,
     storageFailed,
     cloud,
     authReady,
@@ -91,21 +105,32 @@ export default function App() {
     removeAvailableFood,
     applyPlanFilters
   } = useAppState();
-  // Default to the first new tab 'Dashboard' matching the design mockup screens
-  const [activeTab, setActiveTab] = useState('Dashboard');
+  const [activeTab, setActiveTabRaw] = useState('Dashboard');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  useDismiss(isMobileSidebarOpen, () => setIsMobileSidebarOpen(false));
 
-  // Android back: overlays close first (lib/dismiss.js), then any tab goes
-  // back to the Dashboard, then the app is backgrounded.
-  const activeTabRef = useRef(activeTab);
-  useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
+  // Tab history, so Android back retraces the user's steps instead of
+  // always jumping home.
+  const tabHistory = useRef([]);
+  const setActiveTab = useCallback((id) => {
+    setActiveTabRaw((prev) => {
+      if (prev !== id) tabHistory.current = [...tabHistory.current, prev].slice(-10);
+      return id;
+    });
+  }, []);
+
+  // A new tab starts at its top, like a native screen.
+  useEffect(() => {
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0 });
+  }, [activeTab]);
+
+  // Android back: overlays close first (lib/dismiss.js), then the previous
+  // tab, then the app is backgrounded.
   useEffect(() => {
     startNativeShell({
       onBack: () => {
-        if (activeTabRef.current !== 'Dashboard') {
-          setActiveTab('Dashboard');
+        const prev = tabHistory.current.pop();
+        if (prev) {
+          setActiveTabRaw(prev);
           return true;
         }
         return false;
@@ -114,10 +139,14 @@ export default function App() {
     });
   }, []);
 
+  useKeyboardAware();
+  useEffect(() => { applyStatusBar(!!state.isDarkMode); }, [state.isDarkMode]);
+
   const toggleTheme = () => update((prev) => ({ ...prev, isDarkMode: !prev.isDarkMode }));
   const onSelectDate = (date) => update((prev) => ({ ...prev, currentDate: date }));
 
-  const todayLabel = state.email && state.isOnboarded && state.currentDate === getLocalDateString()
+  const isToday = state.currentDate === getLocalDateString();
+  const todayLabel = state.email && state.isOnboarded && isToday
     ? 'Today'
     : new Date((state.currentDate || getLocalDateString()) + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
@@ -147,7 +176,7 @@ export default function App() {
     return <OnboardingScreen email={state.email} initialState={state} onComplete={completeOnboarding} onLogout={logout} />;
   }
 
-  const username = state.name || (state.email || '').split('@')[0] || 'Teja';
+  const username = state.name || (state.email || '').split('@')[0];
 
   // The workouts page shows the same streak as the dashboard, read from the
   // one implementation rather than counted again here.
@@ -156,13 +185,13 @@ export default function App() {
     freezesAvailable: state.streakFreezes ?? MAX_FREEZES,
   }).streak;
 
-  return (
-    <div className="min-h-screen flex text-[var(--text)] transition-all duration-300" style={{ background: 'var(--bg)' }}>
+  const iconButton = 'flex h-11 w-11 items-center justify-center rounded-xl border transition active:scale-95';
 
-      {/* 1. PERSISTENT SIDEBAR FOR DESKTOP */}
+  return (
+    <div className="min-h-screen flex text-[var(--text)]" style={{ background: 'var(--bg)' }}>
+
+      {/* Desktop: persistent sidebar */}
       <aside className="sidebar-rail hidden lg:flex flex-col fixed top-0 bottom-0 left-0 w-[268px] z-50 flex-shrink-0 animate-fade-in">
-        {/* Leaf artwork anchored to the foot of the rail. aria-hidden and
-            pointer-events-none: it is decoration, not content. */}
         <img
           src="/assets/decor/leaf.png"
           alt=""
@@ -171,21 +200,19 @@ export default function App() {
         />
 
         <div className="relative z-10 flex h-full flex-col px-5 pt-7 pb-6">
-          {/* Brand lockup */}
-          <div className="mb-9 flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('Dashboard')}>
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-lg shrink-0">
+          <button type="button" className="mb-9 flex items-center gap-3 text-left" onClick={() => setActiveTab('Dashboard')}>
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-lg shrink-0">
               <Activity size={22} style={{ color: 'var(--rail-accent)' }} />
-            </div>
-            <div className="leading-tight">
-              <div className="text-[17px] font-black tracking-[0.06em] text-white">TITANTRACK</div>
-              <div className="text-[10px] font-semibold mt-0.5" style={{ color: 'var(--rail-muted)' }}>
+            </span>
+            <span className="leading-tight">
+              <span className="block text-[17px] font-black tracking-[0.06em] text-white">TITANTRACK</span>
+              <span className="block text-[10px] font-semibold mt-0.5" style={{ color: 'var(--rail-muted)' }}>
                 Better Food &middot; Healthier You
-              </div>
-            </div>
-          </div>
+              </span>
+            </span>
+          </button>
 
-          {/* Nav */}
-          <nav className="flex-1 space-y-1.5 overflow-y-auto drawer-scroll -mx-1 px-1">
+          <nav aria-label="Main" className="flex-1 space-y-1.5 overflow-y-auto drawer-scroll -mx-1 px-1">
             {NAV_TABS.map((item) => {
               const Icon = item.icon;
               const active = activeTab === item.id;
@@ -203,14 +230,13 @@ export default function App() {
             })}
           </nav>
 
-          {/* Signed-in identity */}
           <button
             type="button"
             onClick={() => setIsProfileOpen(true)}
             className="mt-3 flex w-full items-center gap-3 rounded-2xl px-1.5 py-2 text-left transition hover:bg-white/5 active:scale-[0.98]"
           >
             <span className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-black text-white shrink-0" style={{ background: 'var(--rail-avatar)' }}>
-              {username.charAt(0).toUpperCase()}
+              {(username || 'U').charAt(0).toUpperCase()}
             </span>
             <span className="overflow-hidden">
               <span className="block truncate text-[13px] font-bold text-white">{username}</span>
@@ -222,111 +248,63 @@ export default function App() {
         </div>
       </aside>
 
-      {/* 2. MOBILE DRAWER SIDEBAR */}
-      {isMobileSidebarOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden animate-fade-in">
-          {/* Backdrop overlay */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsMobileSidebarOpen(false)} />
-          {/* Panel */}
-          <aside className="absolute top-0 bottom-0 left-0 w-64 glass border-r p-6 flex flex-col z-10 animate-slide-in-left" style={{ borderColor: 'var(--border)' }}>
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => { setActiveTab('Dashboard'); setIsMobileSidebarOpen(false); }}>
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary">
-                  <Activity size={16} color="#fff" />
-                </div>
-                <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary">TitanTrack</span>
-              </div>
-              <button onClick={() => setIsMobileSidebarOpen(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] active:scale-95 bg-white/5">
-                <X size={14} />
-              </button>
-            </div>
+      <div className="flex-1 min-w-0 lg:pl-[268px] flex flex-col min-h-screen">
+        <OfflineBanner />
 
-            <nav className="flex-1 space-y-1.5">
-              {[
-                ...NAV_TABS,
-              ].map((item) => {
-                const Icon = item.icon;
-                const active = activeTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => { setActiveTab(item.id); setIsMobileSidebarOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition duration-150 border text-left ${active
-                      ? 'bg-primary-soft text-primary border-primary/25 shadow-sm'
-                      : 'text-[var(--text-dim)] border-transparent hover:text-[var(--text)] hover:bg-white/5'
-                      }`}
-                  >
-                    <Icon size={15} className={active ? 'text-primary' : 'text-[var(--text-faint)]'} />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-
-            <div
-              onClick={() => { setIsProfileOpen(true); setIsMobileSidebarOpen(false); }}
-              className="mt-auto flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 cursor-pointer transition active:scale-95 text-left"
-            >
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-xs font-black text-white shrink-0">
-                {username.charAt(0).toUpperCase()}
-              </div>
-              <div className="overflow-hidden">
-                <p className="text-xs font-black truncate text-[var(--text)]">{username}</p>
-                <p className="text-[8px] font-bold text-primary uppercase">View profile</p>
-              </div>
-            </div>
-          </aside>
-        </div>
-      )}
-
-      {/* 3. MAIN CONTENT LAYER */}
-      <div className="flex-1 min-w-0 lg:pl-[268px] flex flex-col min-h-screen transition-all duration-300">
-        <div className="p-4 sm:p-5 lg:p-6 flex-1 flex flex-col w-full mx-auto">
-
-          {/* SIMPLIFIED TOP HEADER */}
-          <header className="mb-6 flex items-center justify-between gap-4 p-3 sm:px-6 rounded-3xl glass border shadow-sm animate-fade-in" style={{ borderColor: 'var(--border)' }}>
-
-            {/* Left: Mobile hamburger menu toggler (hidden on Desktop) */}
-            <div className="flex items-center gap-3 lg:hidden">
+        {/* Phone: compact sticky top bar — brand, date, theme */}
+        <header className="mobile-topbar lg:hidden px-[calc(var(--space-page)+var(--safe-left))]">
+          <div className="flex items-center justify-between gap-3">
+            <button type="button" onClick={() => setActiveTab('Dashboard')} className="flex min-h-[44px] min-w-0 items-center gap-2" aria-label="TitanTrack home">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl" style={{ background: 'var(--primary)' }}>
+                <Activity size={17} color="#fff" />
+              </span>
+              <span className="truncate text-[15px] font-black tracking-tight" style={{ color: 'var(--text)' }}>TitanTrack</span>
+            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              <CalendarModal state={state} onSelectDate={onSelectDate} />
               <button
-                onClick={() => setIsMobileSidebarOpen(true)}
-                className="w-9 h-9 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-[var(--text)] hover:bg-white/10 transition active:scale-95"
-                style={{ borderColor: 'var(--border)' }}
+                onClick={toggleTheme}
+                className={iconButton}
+                aria-label={state.isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                style={{ borderColor: 'var(--border)', background: 'var(--surface-solid)', color: 'var(--text)' }}
               >
-                <Menu size={16} />
+                {state.isDarkMode ? <Moon size={18} /> : <Sun size={18} />}
               </button>
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">TitanTrack</span>
             </div>
+          </div>
+        </header>
 
-            {/* Left: Breadcrumbs or Active view name (Desktop) */}
-            <div className="hidden lg:flex items-center gap-2 text-xs font-bold">
+        <div className="app-content flex-1 flex flex-col w-full mx-auto pt-2 lg:pt-6 max-w-[1500px]">
+
+          {/* Desktop top bar */}
+          <header className="hidden lg:flex mb-6 items-center justify-between gap-4 p-3 px-6 rounded-3xl glass border shadow-sm animate-fade-in" style={{ borderColor: 'var(--border)' }}>
+            <div className="flex items-center gap-2 text-xs font-bold">
               <span className="text-[var(--text-faint)]">Workspace</span>
               <span className="text-[var(--text-faint)]">/</span>
-              <span className="text-[var(--text)]">{activeTab}</span>
+              <span className="text-[var(--text)]">{NAV_TABS.find((t) => t.id === activeTab)?.label}</span>
             </div>
-
-            {/* Right: Calendar and theme togglers */}
-            <div className="flex items-center gap-3 ml-auto">
-              {/* Theme & Calendar picker */}
-              <div className="flex items-center gap-1.5">
-                <CalendarModal state={state} onSelectDate={onSelectDate} />
-                <button
-                  onClick={toggleTheme}
-                  className="w-8 h-8 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-[var(--text)] hover:text-amber-500 transition active:scale-95"
-                  aria-label="Toggle theme"
-                  style={{ borderColor: 'var(--border)' }}
-                >
-                  {state.isDarkMode ? <Moon size={14} /> : <Sun size={14} />}
-                </button>
-              </div>
+            <div className="flex items-center gap-1.5">
+              <CalendarModal state={state} onSelectDate={onSelectDate} />
+              <button
+                onClick={toggleTheme}
+                className="w-9 h-9 rounded-xl border flex items-center justify-center text-[var(--text)] hover:text-amber-500 transition active:scale-95"
+                aria-label={state.isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                style={{ borderColor: 'var(--border)' }}
+              >
+                {state.isDarkMode ? <Moon size={15} /> : <Sun size={15} />}
+              </button>
             </div>
-
           </header>
 
-          {/* TAB RENDERING VIEWPORT */}
-          <main className="tab-viewport flex-grow">
+          {!isToday && (
+            <div className="mb-3 flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 text-[13px] font-semibold" style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }}>
+              <span>Viewing {todayLabel} — changes apply to that day</span>
+              <button onClick={() => onSelectDate(getLocalDateString())} className="min-h-[36px] shrink-0 rounded-lg px-3 font-bold underline">Back to today</button>
+            </div>
+          )}
 
-            {/* TAB 1: DASHBOARD (Home Page) */}
+          <main className="tab-viewport flex-grow min-w-0">
+
             {activeTab === 'Dashboard' && (
               <Dashboard
                 state={state}
@@ -339,128 +317,106 @@ export default function App() {
               />
             )}
 
-            {/* TAB 2: NUTRITION */}
             {activeTab === 'Nutrition' && (
-              <div className="space-y-4 animate-scale-in">
-                {/* Page header */}
-                <header className="flex items-start gap-3">
-                  <Leaf size={30} style={{ color: 'var(--primary)' }} className="mt-1 shrink-0" strokeWidth={2.2} />
-                  <div>
-                    <h1 className="text-[30px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>
-                      Nutrition
-                    </h1>
-                    <p className="text-[13px] font-medium mt-0.5" style={{ color: 'var(--text-dim)' }}>
-                      Track your meals, stay on target, and fuel your goals.
-                    </p>
-                  </div>
-                </header>
+              <div className="page-stack animate-fade-in">
+                <PageHeader icon={Utensils} title="Meals" subtitle="Log what you eat and keep an eye on your targets." />
 
-                <div className="grid grid-cols-12 gap-4">
-                  <div className="col-span-12 lg:col-span-5 flex flex-col gap-4">
+                <div className="flex flex-col gap-[var(--space-section)] lg:grid lg:grid-cols-12 lg:items-start">
+                  <div className="contents lg:flex lg:col-span-5 lg:flex-col lg:gap-[var(--space-section)]">
                     {/* A "% to goal weight" ring is meaningless for a goal
                         that is not about the scale, so those goals get a
                         consistency streak as their headline instead. */}
-                    {isScaleGoal(state.goal) || state.trackWeight
-                      ? <GoalCard state={state} update={update} />
-                      : <ConsistencyCard state={state} />}
-                    <EnergyCard state={state} />
+                    <div className={phoneOrder(4)}>
+                      {isScaleGoal(state.goal) || state.trackWeight
+                        ? <GoalCard state={state} update={update} />
+                        : <ConsistencyCard state={state} />}
+                    </div>
+                    <div className={phoneOrder(3)}><EnergyCard state={state} /></div>
                   </div>
-                  <div className="col-span-12 lg:col-span-7 flex flex-col gap-4">
-                    <FoodLogCard state={state} update={update} />
-                    <NutritionOverview state={state} onViewDetails={() => setActiveTab('Progress')} />
+                  <div className="contents lg:flex lg:col-span-7 lg:flex-col lg:gap-[var(--space-section)]">
+                    <div className={phoneOrder(1)}><FoodLogCard state={state} update={update} /></div>
+                    <div className={phoneOrder(2)}><NutritionOverview state={state} onViewDetails={() => setActiveTab('Progress')} /></div>
                   </div>
                 </div>
 
-                {/* Personalized Plan Viewport in Nutrition Tab */}
                 <PersonalizedPlanCard
                   state={state}
                   update={update}
                   addAvailableFood={addAvailableFood}
                   removeAvailableFood={removeAvailableFood}
                   applyPlanFilters={applyPlanFilters}
-                  onEditProfile={() => setActiveTab('Progress')}
+                  onEditProfile={() => setIsProfileOpen(true)}
                 />
               </div>
             )}
 
-            {/* TAB 3: WORKOUTS */}
             {activeTab === 'Workouts' && (
-              <div className="grid grid-cols-12 items-start gap-4 animate-scale-in">
-                <div className="col-span-12 lg:col-span-8 flex flex-col gap-4">
-                  {/* Page header */}
-                  <div className="panel-card rounded-[20px] p-5 flex items-center gap-4">
-                    <span
-                      className="flex h-12 w-12 items-center justify-center rounded-2xl shrink-0"
-                      style={{ background: 'var(--primary-soft)' }}
-                    >
-                      <Dumbbell size={24} style={{ color: 'var(--primary)' }} strokeWidth={2.2} />
-                    </span>
-                    <div>
-                      <h1 className="text-[22px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>
-                        Stay Active, Stay Healthy
-                      </h1>
-                      <p className="text-[13px] font-medium mt-0.5" style={{ color: 'var(--text-dim)' }}>
-                        Your workouts help you stay stronger, healthier and more energized.
-                      </p>
+              <div className="page-stack animate-fade-in">
+                <PageHeader icon={Dumbbell} title="Activity" subtitle="Walks, workouts and how today is adding up." />
+
+                <div className="flex flex-col gap-[var(--space-section)] lg:grid lg:grid-cols-12 lg:items-start">
+                  <div className="contents lg:flex lg:col-span-8 lg:flex-col lg:gap-[var(--space-section)]">
+                    <div className={phoneOrder(1)}><ActivityCard state={state} update={update} /></div>
+                    <div className={phoneOrder(3)}>
+                      <MetricRow
+                        state={state}
+                        onOpenNutrition={() => setActiveTab('Nutrition')}
+                        onOpenWorkouts={() => setActiveTab('Workouts')}
+                      />
                     </div>
                   </div>
 
-                  <ActivityCard state={state} update={update} />
-
-                  <MetricRow
-                    state={state}
-                    onOpenNutrition={() => setActiveTab('Nutrition')}
-                    onOpenWorkouts={() => setActiveTab('Workouts')}
-                  />
-                </div>
-
-                <div className="col-span-12 lg:col-span-4 flex flex-col gap-4">
-                  {/* Streak, warm so it does not compete with the brand green */}
-                  <div className="rounded-[20px] p-5" style={{ background: '#FFF8EA', border: '1px solid #F1E3C7' }}>
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.07em]" style={{ color: '#A56212' }}>
-                        <Flame size={14} /> Current Streak
-                      </span>
-                      <Calendar size={16} style={{ color: '#A56212' }} />
+                  <div className="contents lg:flex lg:col-span-4 lg:flex-col lg:gap-[var(--space-section)]">
+                    <div className={`${phoneOrder(2)} m-card flex items-center justify-between gap-3`} style={{ background: 'var(--m-streak-wash)', borderColor: 'var(--m-streak-edge, #F1E3C7)' }}>
+                      <div>
+                        <span className="flex items-center gap-1.5 text-[13px] font-bold" style={{ color: 'var(--m-streak-ink)' }}>
+                          <Flame size={15} /> Current streak
+                        </span>
+                        <p className="mt-1.5 text-[26px] font-extrabold leading-none tracking-tight" style={{ color: 'var(--text)' }}>
+                          {workoutStreak} <span className="text-[14px] font-bold" style={{ color: 'var(--text-dim)' }}>day{workoutStreak === 1 ? '' : 's'}</span>
+                        </p>
+                      </div>
+                      <Calendar size={22} style={{ color: 'var(--m-streak-ink)' }} aria-hidden="true" />
                     </div>
-                    <p className="mt-2 text-[28px] font-bold leading-none tracking-tight" style={{ color: 'var(--text)' }}>
-                      {workoutStreak} <span className="text-[15px] font-bold" style={{ color: 'var(--text-dim)' }}>day{workoutStreak === 1 ? '' : 's'}</span>
-                    </p>
-                    <p className="mt-1 text-[12px] font-medium" style={{ color: 'var(--text-dim)' }}>Keep it going!</p>
-                  </div>
 
-                  <EnergyCard state={state} />
+                    <div className={phoneOrder(4)}><EnergyCard state={state} /></div>
 
-                  <div className="panel-card rounded-[20px] p-5 text-left">
-                    <div className="mb-3 flex items-center gap-2.5">
-                      <Lightbulb size={18} style={{ color: 'var(--primary)' }} strokeWidth={2.2} />
-                      <h4 className="text-[15px] font-black tracking-tight" style={{ color: 'var(--text)' }}>Suggested Warmups</h4>
-                    </div>
-                    <ul className="flex flex-col">
-                      {WARMUPS.map((w, i) => (
-                        <li
-                          key={w}
-                          className="flex items-center gap-3 py-2.5"
-                          style={{ borderBottom: i < WARMUPS.length - 1 ? '1px solid var(--border)' : 'none' }}
-                        >
-                          <span
-                            className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white shrink-0"
-                            style={{ background: 'var(--primary)' }}
+                    <section className={`${phoneOrder(5)} m-card`} aria-label="Suggested warmups">
+                      <div className="mb-2 flex items-center gap-2.5">
+                        <Lightbulb size={18} style={{ color: 'var(--primary)' }} strokeWidth={2.2} />
+                        <h2 className="section-title">Suggested warmups</h2>
+                      </div>
+                      <ul className="flex flex-col">
+                        {WARMUPS.map((w, i) => (
+                          <li
+                            key={w}
+                            className="flex items-center gap-3 py-2.5"
+                            style={{ borderBottom: i < WARMUPS.length - 1 ? '1px solid var(--border)' : 'none' }}
                           >
-                            {i + 1}
-                          </span>
-                          <span className="flex-1 text-[13px] font-semibold" style={{ color: 'var(--text)' }}>{w}</span>
-                        </li>
-                      ))}
-                    </ul>
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white shrink-0" style={{ background: 'var(--primary)' }}>
+                              {i + 1}
+                            </span>
+                            <span className="flex-1 text-[13.5px] font-semibold" style={{ color: 'var(--text)' }}>{w}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* TAB 4: PROGRESS */}
             {activeTab === 'Progress' && (
-              <div className="space-y-4 animate-scale-in">
+              <div className="page-stack animate-fade-in">
+                <PageHeader icon={BarChart3} title="Progress" subtitle="Your history, trends and how you're feeling." />
+                {state.trackWellbeing !== false && (
+                  <WellbeingCard state={state} update={update} />
+                )}
+                <HistoryCard
+                  state={state}
+                  onOpenDay={(date) => { onSelectDate(date); setActiveTab('Nutrition'); }}
+                />
+                <TrendCard state={state} />
                 {/* The body-fat silhouette viewer is opt-in. Showing a gallery
                     of bodies by fat percentage to someone who did not ask for
                     it is the most harmful thing this app could do by default,
@@ -468,260 +424,124 @@ export default function App() {
                 {state.showBodyComposition ? (
                   <BodyCompositionDashboard state={state} update={update} />
                 ) : (
-                  <div
-                    className="rounded-3xl border p-6 text-left"
-                    style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
-                  >
-                    <h3 className="text-sm font-black" style={{ color: 'var(--text)' }}>
-                      Body composition is off
-                    </h3>
-                    <p className="mt-1.5 max-w-xl text-xs" style={{ color: 'var(--text-dim)' }}>
+                  <section className="m-card" aria-label="Body composition">
+                    <h2 className="section-title">Body composition is off</h2>
+                    <p className="mt-1.5 max-w-xl text-[13px] leading-snug" style={{ color: 'var(--text-dim)' }}>
                       Body-fat estimates and the body reference photos are hidden unless you
                       ask for them. Your streaks, food log, activity and wellbeing all work
                       without this.
                     </p>
                     <button
                       onClick={() => update((prev) => ({ ...prev, showBodyComposition: true }))}
-                      className="mt-3 rounded-xl px-3.5 py-2 text-xs font-bold text-white transition hover:scale-105 active:scale-95"
+                      className="mt-3 min-h-[44px] rounded-xl px-4 text-[13px] font-bold text-white transition active:scale-95"
                       style={{ background: 'var(--primary)' }}
                     >
                       Turn on body composition
                     </button>
-                  </div>
+                  </section>
                 )}
-                {state.trackWellbeing !== false && (
-                  <WellbeingCard state={state} update={update} />
-                )}
-                {/* HealthWellnessInsights is a whole seven-card section, not a
-                    card. Sitting it in a two-column grid beside TrendCard
-                    squeezed it into a tall narrow column and stretched the
-                    trend card to match, which is where the huge empty panel
-                    came from. Each now takes the full width. */}
-                <TrendCard state={state} />
-                <HistoryCard
-                  state={state}
-                  onOpenDay={(date) => { onSelectDate(date); setActiveTab('Nutrition'); }}
-                />
                 <HealthWellnessInsights state={state} update={update} />
               </div>
             )}
 
-            {/* TAB 5: COMMUNITY — behind the competitions flag (lib/features.js) */}
+            {/* Community — behind the competitions flag (lib/features.js) */}
             {activeTab === 'Community' && (
-              flags.competitions
-                ? <CommunityPage />
-                : (
-                  <LockedFeature
-                    title="Community & Competitions"
-                    description="Daily challenges, small-group competitions and a weekly leaderboard with your friends."
-                  />
-                )
-            )}
-
-            {/* TAB 6: SETTINGS */}
-            {activeTab === 'Settings' && (
-              <div className="max-w-2xl mx-auto glass rounded-3xl p-6 border border-white/5 shadow-sm text-left space-y-6 animate-scale-in">
-                <div>
-                  <h3 className="text-lg font-black tracking-tight text-[var(--text)]">Settings</h3>
-                  <p className="text-xs text-[var(--text-dim)] font-medium mt-0.5">Manage your preferences and local profile data.</p>
-                </div>
-
-                {/* Theme Settings block */}
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-4">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-[var(--text-dim)]">Preferences</h4>
-                  <div className="flex items-center justify-between text-xs font-bold text-[var(--text)]">
-                    <span>Display Dark Mode</span>
-                    <button onClick={toggleTheme} className="py-2 px-4 rounded-xl bg-white/10 hover:bg-white/20 transition">
-                      {state.isDarkMode ? 'Disable Dark Mode' : 'Enable Dark Mode'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* User settings edit profile button */}
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-4">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-[var(--text-dim)]">Profile Information</h4>
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-bold text-[var(--text)]">
-                    <div>
-                      <p className="font-extrabold text-[var(--text)]">{state.email}</p>
-                      <p className="text-[10px] text-[var(--text-dim)] mt-0.5 font-medium">
-                        {cloud ? 'Cloud account — your data syncs across devices' : 'Local profile — stored in this browser only'}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => update((prev) => ({ ...prev, isOnboarded: false }))}
-                        className="py-2 px-3.5 rounded-xl border border-[var(--border)] text-[var(--text-dim)] hover:text-[var(--text)] hover:border-[var(--border-strong)] transition"
-                      >
-                        Re-run Onboarding
-                      </button>
-                      <button
-                        onClick={() => setIsProfileOpen(true)}
-                        className="py-2 px-4 rounded-xl bg-primary text-white font-bold hover:scale-105 active:scale-95 transition"
-                      >
-                        Edit Profile / Biometrics
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {cloud && (
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3">
-                    <h4 className="text-xs font-black uppercase tracking-wider text-[var(--text-dim)]">Cloud sync</h4>
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-bold text-[var(--text)]">
-                      <div>
-                        <p className="font-extrabold" style={{ color: statusIsBad ? 'var(--danger)' : 'var(--text)' }}>{saveStatusLabel}</p>
-                        <p className="text-[10px] text-[var(--text-dim)] mt-0.5 font-medium">
-                          {syncStatus.lastSyncedAt
-                            ? `Last synced ${new Date(syncStatus.lastSyncedAt).toLocaleString()}`
-                            : 'Not synced yet on this device'}
-                          {syncStatus.error && syncStatus.phase === 'error' ? ` · ${syncStatus.error}` : ''}
-                        </p>
-                      </div>
-                      <button
-                        onClick={syncNow}
-                        disabled={syncStatus.phase === 'syncing'}
-                        className="py-2 px-4 rounded-xl border border-[var(--border)] text-[var(--text)] hover:border-[var(--border-strong)] transition disabled:opacity-50"
-                      >
-                        {syncStatus.phase === 'syncing' ? 'Syncing…' : 'Sync now'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <DataExportCard state={state} />
-
-                {/* Clear history option */}
-                <div className="p-4 rounded-2xl bg-warning-soft border border-warning/10 space-y-4 flex justify-between items-center">
-                  <div>
-                    <p className="text-xs font-black text-warning">Clear Logs History</p>
-                    <p className="text-[10px] text-[var(--text-dim)] mt-0.5 font-medium">
-                      Purge all logged activities, food logs, weights tracking, and water data (keeps today's active values).
-                      {cloud ? ' This also deletes them from your cloud account on every device.' : ''}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (window.confirm("Are you sure you want to purge all historical logs? This action is permanent and cannot be undone.")) {
-                        clearLogsHistory();
-                        window.alert("Historical logs have been cleared successfully!");
-                      }
-                    }}
-                    className="py-2 px-4 rounded-xl bg-[#D9A441] text-white font-bold hover:scale-105 active:scale-95 transition"
-                  >
-                    Clear History
-                  </button>
-                </div>
-
-                {/* Logout button */}
-                <div className="p-4 rounded-2xl bg-rose-500/5 border border-rose-500/10 space-y-4 flex justify-between items-center">
-                  <div>
-                    <p className="text-xs font-black text-rose-400">Sign Out</p>
-                    <p className="text-[10px] text-[var(--text-dim)] mt-0.5 font-medium">
-                      {cloud
-                        ? 'Your data stays safe in your account and is removed from this device.'
-                        : 'Closes this local profile. Its data stays in this browser.'}
-                    </p>
-                  </div>
-                  <button
-                    onClick={logout}
-                    className="py-2 px-4 rounded-xl bg-rose-500 text-white font-bold hover:scale-105 active:scale-95 transition"
-                  >
-                    Logout
-                  </button>
-                </div>
-
-                {cloud && <DeleteAccountCard onDelete={deleteAccount} />}
+              <div className="page-stack animate-fade-in">
+                <PageHeader icon={Users} title="Community" />
+                {flags.competitions
+                  ? <CommunityPage />
+                  : (
+                    <LockedFeature
+                      title="Community & Competitions"
+                      description="Daily challenges, small-group competitions and a weekly leaderboard with your friends."
+                    />
+                  )}
               </div>
             )}
 
+            {activeTab === 'Settings' && (
+              <SettingsPage
+                state={state}
+                cloud={cloud}
+                flags={flags}
+                syncStatus={syncStatus}
+                saveStatusLabel={saveStatusLabel}
+                statusIsBad={statusIsBad}
+                onToggleTheme={toggleTheme}
+                onSyncNow={syncNow}
+                onEditProfile={() => setIsProfileOpen(true)}
+                onRerunOnboarding={() => {
+                  if (window.confirm('Go through setup again? Your logs are kept.')) {
+                    update((prev) => ({ ...prev, isOnboarded: false }));
+                  }
+                }}
+                onOpenCommunity={() => setActiveTab('Community')}
+                onClearHistory={() => {
+                  if (window.confirm('Delete all past days of logs? Today is kept. This cannot be undone.')) {
+                    clearLogsHistory();
+                  }
+                }}
+                onLogout={logout}
+                onDeleteAccount={deleteAccount}
+              />
+            )}
           </main>
 
-          {/* BOTTOM FOOTER CUSTOM STYLED */}
-          <footer className="mt-16 pt-8 border-t border-white/5 animate-fade-in text-left">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: 'var(--primary)' }}>
-                    <Activity size={14} color="#fff" />
-                  </div>
-                  <span className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--primary)' }}>TitanTrack</span>
-                </div>
-                <p className="text-[10px] text-[var(--text-dim)] font-medium leading-relaxed">
-                  Your Health, Our Priority. TitanTrack helps you track workouts, optimize nutrition, and visually analyze your body composition metrics in real-time.
-                </p>
+          {/* Desktop footer only; on a phone it was a screen of marketing
+              text between the content and the tab bar. */}
+          <footer className="hidden lg:block mt-16 pt-8 border-t animate-fade-in text-left" style={{ borderColor: 'var(--border)' }}>
+            <div className="flex items-center justify-between gap-6 pb-4">
+              <div className="flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: 'var(--primary)' }}>
+                  <Activity size={14} color="#fff" />
+                </span>
+                <span className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--primary)' }}>TitanTrack</span>
               </div>
-
-              <div>
-                <h5 className="text-[10px] font-black uppercase tracking-wider text-[var(--text)] mb-3">Quick Links</h5>
-                <ul className="space-y-2 text-[10px] text-[var(--text-dim)] font-bold">
-                  <li><button onClick={() => setActiveTab('Dashboard')} className="hover:text-primary transition">Dashboard</button></li>
-                  <li><button onClick={() => setActiveTab('Nutrition')} className="hover:text-primary transition">Nutrition</button></li>
-                  <li><button onClick={() => setActiveTab('Workouts')} className="hover:text-primary transition">Workouts</button></li>
-                  <li><button onClick={() => setActiveTab('Progress')} className="hover:text-primary transition">Progress</button></li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 py-4 border-t border-white/5 text-[9px] text-[var(--text-faint)] font-bold">
-              <span>© {new Date().getFullYear()} TitanTrack. All rights reserved.</span>
+              <span className="text-[11px] text-[var(--text-faint)] font-bold">© {new Date().getFullYear()} TitanTrack</span>
             </div>
           </footer>
 
-          {/* Sync notification banner */}
-          <footer className="mt-4 flex items-center justify-center gap-2 text-xs" style={{ color: statusIsBad ? 'var(--danger)' : 'var(--text-faint)' }}>
-            <span
-              className="h-1.5 w-1.5 rounded-full animate-pulse-dot"
-              style={{ background: statusIsBad ? 'var(--danger)' : 'var(--primary)' }}
-            />
-            <span>{todayLabel} · {saveStatusLabel}</span>
-          </footer>
-
-          {/* Bottom tab bar — phones only. A left sidebar behind a hamburger
-              puts every destination two taps and a reach away; this audience is
-              phone-first, so the sections belong under the thumb. The spacer
-              below keeps content clear of the fixed bar, and the safe-area
-              inset keeps it clear of the home indicator on notched phones. */}
-          <div className="h-20 lg:hidden" aria-hidden="true" />
-
-          <nav
-            className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch justify-around border-t lg:hidden"
-            style={{
-              background: 'var(--surface-solid)',
-              borderColor: 'var(--border)',
-              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-              boxShadow: '0 -4px 20px rgba(0,0,0,0.06)',
-            }}
+          {/* Save / sync status */}
+          <p
+            role="status"
+            className="mt-6 flex items-center justify-center gap-2 text-center text-[12px]"
+            style={{ color: statusIsBad ? 'var(--danger)' : 'var(--text-faint)' }}
           >
-            {BOTTOM_TABS.map((item) => {
-              const Icon = item.icon;
-              const active = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  aria-current={active ? 'page' : undefined}
-                  className="flex flex-1 flex-col items-center justify-center gap-1 py-2.5 transition active:scale-95"
-                  style={{ color: active ? 'var(--primary)' : 'var(--text-faint)' }}
-                >
-                  <Icon size={19} />
-                  <span className="text-[9px] font-bold tracking-wide">{item.label}</span>
-                  <span
-                    className="h-0.5 w-6 rounded-full transition"
-                    style={{ background: active ? 'var(--grad-primary)' : 'transparent' }}
-                  />
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* Drawer Overlay for Profile Entry */}
-          <ProfileDrawer
-            state={state}
-            update={update}
-            isOpen={isProfileOpen}
-            onClose={() => setIsProfileOpen(false)}
-          />
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full animate-pulse-dot" style={{ background: statusIsBad ? 'var(--danger)' : 'var(--primary)' }} />
+            <span>{todayLabel} · {saveStatusLabel}</span>
+          </p>
         </div>
+
+        {/* Phone: bottom tab bar. The five most-used destinations under the
+            thumb; Community lives in Profile. */}
+        <nav aria-label="Main" className="bottom-nav fixed bottom-0 left-0 right-0 z-40 flex items-stretch lg:hidden">
+          {PHONE_TABS.map((item) => {
+            const Icon = item.phoneIcon || item.icon;
+            const active = activeTab === item.id || (item.id === 'Settings' && activeTab === 'Community');
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                aria-current={active ? 'page' : undefined}
+                aria-label={item.short}
+                className="bottom-nav-item flex flex-1 flex-col items-center justify-center gap-0.5 transition active:scale-95"
+                style={{ color: active ? 'var(--primary)' : 'var(--text-dim)' }}
+              >
+                <span className="bottom-nav-pill flex h-7 w-14 items-center justify-center rounded-full transition">
+                  <Icon size={20} strokeWidth={active ? 2.4 : 2} />
+                </span>
+                <span className="text-[11px] font-bold leading-tight">{item.short}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        <ProfileDrawer
+          state={state}
+          update={update}
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+        />
       </div>
     </div>
   );

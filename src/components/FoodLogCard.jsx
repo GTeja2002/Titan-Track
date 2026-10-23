@@ -268,7 +268,7 @@ export function FoodLogCard({ state, update }) {
   const mealSections = [...MEAL_TYPES, { id: 'other', label: 'Earlier entries' }].filter((m) => groups[m.id].length > 0);
 
   return (
-    <div className="nutrition-panel h-full rounded-[16px] p-5 flex flex-col">
+    <div className="nutrition-panel h-full rounded-[var(--radius-card)] p-[var(--space-card)] flex flex-col">
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
           <Utensils size={14} style={{ color: 'var(--primary)' }} />
@@ -302,7 +302,7 @@ export function FoodLogCard({ state, update }) {
       )}
 
       {/* Which meal new items go into. */}
-      <div className="mb-3 flex flex-wrap items-center gap-1.5" role="radiogroup" aria-label="Meal">
+      <div className="mb-3 grid grid-cols-2 min-[360px]:grid-cols-4 gap-1.5" role="radiogroup" aria-label="Meal">
         {MEAL_TYPES.map((m) => {
           const active = meal === m.id;
           return (
@@ -311,7 +311,7 @@ export function FoodLogCard({ state, update }) {
               role="radio"
               aria-checked={active}
               onClick={() => setMeal(m.id)}
-              className="rounded-full border px-3 py-1.5 text-[12px] font-bold transition active:scale-95"
+              className="min-h-[40px] min-w-0 truncate rounded-full border px-1 text-[12.5px] font-bold transition active:scale-95"
               style={{
                 background: active ? 'var(--primary)' : 'var(--surface)',
                 borderColor: active ? 'var(--primary)' : 'var(--border)',
@@ -324,20 +324,26 @@ export function FoodLogCard({ state, update }) {
         })}
       </div>
 
-      <div className="mb-3 flex flex-wrap gap-2">
+      <div className="mb-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         <button
           onClick={() => setCustomModal({ mode: 'log', initial: name.trim() && !matched ? { name: name.trim() } : {} })}
-          className="flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-[12.5px] font-bold text-white transition active:scale-95"
+          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl px-3.5 text-[13.5px] font-bold text-white transition active:scale-95"
           style={{ background: 'var(--grad-primary-cta)', boxShadow: '0 4px 14px var(--primary-glow)' }}
         >
           <Plus size={15} /> What I Eat
         </button>
         <button
           onClick={() => setMyFoodsOpen(true)}
-          className="flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-[12.5px] font-bold transition active:scale-95"
+          aria-label={myFoods.length ? `My Foods, ${myFoods.length} saved` : 'My Foods'}
+          className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border px-3.5 text-[13.5px] font-bold transition active:scale-95"
           style={{ borderColor: 'var(--border)', color: 'var(--text-dim)', background: 'var(--surface)' }}
         >
-          <BookOpen size={14} /> My Foods{myFoods.length > 0 ? ` (${myFoods.length})` : ''}
+          <BookOpen size={14} /> My Foods
+          {myFoods.length > 0 && (
+            <span className="rounded-full px-1.5 text-[11px] font-black" style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }} aria-hidden="true">
+              {myFoods.length}
+            </span>
+          )}
         </button>
       </div>
 
@@ -386,17 +392,18 @@ export function FoodLogCard({ state, update }) {
         ))}
       </div>
 
-      <div className="grid grid-cols-[1.6fr_0.7fr_0.8fr_auto] items-end gap-2">
-        <div className="relative">
-          <label className="mb-1 block text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-faint)' }}>Food</label>
+      <div className="grid grid-cols-[1fr_1fr_auto] sm:grid-cols-[1.6fr_0.7fr_0.8fr_auto] items-end gap-2">
+        <div className="relative col-span-3 sm:col-span-1">
+          <label htmlFor="food-search" className="mb-1 block text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-faint)' }}>Food</label>
           <input
             value={name}
+            id="food-search"
             onChange={(e) => setName(e.target.value)}
             onFocus={() => setIsSelectOpen(true)}
             onBlur={() => setTimeout(() => setIsSelectOpen(false), 200)}
             placeholder="Search or type..."
             autoComplete="off"
-            className="w-full rounded-xl border bg-transparent px-3 py-2.5 text-sm outline-none"
+            className="w-full min-h-[44px] rounded-xl border bg-transparent px-3 text-sm outline-none"
             style={{ background: 'var(--bg-2)', borderColor: 'var(--border)', color: 'var(--text)' }}
           />
           {/* z-50, not z-55: Tailwind's scale stops at 50 and the config does
@@ -473,8 +480,9 @@ export function FoodLogCard({ state, update }) {
           )}
         </div>
         <div>
-          <label className="mb-1 block text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-faint)' }}>{qtyLabel}</label>
+          <label htmlFor="food-qty" className="mb-1 block text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-faint)' }}>{qtyLabel}</label>
           <input
+            id="food-qty"
             type="number"
             inputMode="decimal"
             min="0"
@@ -482,26 +490,27 @@ export function FoodLogCard({ state, update }) {
             value={qty}
             onChange={(e) => onQtyChange(e.target.value)}
             placeholder="100"
-            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+            className="w-full min-h-[44px] rounded-xl border px-3 text-sm outline-none"
             style={{ background: 'var(--bg-2)', borderColor: 'var(--border)', color: 'var(--text)' }}
           />
         </div>
         <div>
-          <label className="mb-1 block text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-faint)' }}>Cal</label>
+          <label htmlFor="food-cal" className="mb-1 block text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-faint)' }}>Calories</label>
           <input
+            id="food-cal"
             type="number"
             inputMode="decimal"
             min="0"
             value={cal}
             onChange={(e) => setCal(e.target.value)}
             placeholder="kcal"
-            className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+            className="w-full min-h-[44px] rounded-xl border px-3 text-sm outline-none"
             style={{ background: 'var(--bg-2)', borderColor: 'var(--border)', color: 'var(--text)' }}
           />
         </div>
         <button
           onClick={addFood}
-          className="flex items-center justify-center rounded-xl px-3.5 py-2.5 text-white transition hover:scale-105 active:scale-95"
+          className="flex h-[44px] w-[52px] items-center justify-center rounded-xl text-white transition active:scale-95"
           style={{ background: 'var(--grad-primary-cta)', boxShadow: '0 4px 14px var(--primary-glow)' }}
           aria-label={`Add food to ${MEAL_TYPES.find((m) => m.id === meal)?.label}`}
         >
@@ -565,7 +574,7 @@ export function FoodLogCard({ state, update }) {
                             <Utensils size={13} style={{ color: 'var(--text-faint)' }} />
                           </div>
                         )}
-                        <span className="flex-1 min-w-0 truncate font-semibold">{f.name}</span>
+                        <span className="flex-1 min-w-0 font-semibold leading-snug line-clamp-2 break-words">{f.name}</span>
                         <SourceBadge entry={f} />
                         <span className="text-xs" style={{ color: 'var(--text-dim)' }}>
                           {f.qty ? `${f.qty}${unitShort(f.unit)}` : ''}
@@ -576,7 +585,7 @@ export function FoodLogCard({ state, update }) {
                         <button
                           onClick={() => update((prev) => removeEntry(prev, prev.currentDate, f.id))}
                           style={{ color: 'var(--text-faint)' }}
-                          className="transition hover:scale-125 hover:text-[var(--danger)]"
+                          className="-mr-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition hover:text-[var(--danger)]"
                           aria-label={`Remove ${f.name}`}
                         >
                           <X size={15} />

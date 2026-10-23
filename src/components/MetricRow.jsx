@@ -8,17 +8,19 @@ import { MetricCard } from './MetricCard.jsx';
 import { getDailyTotals } from '../lib/dailyTotals.js';
 
 export function MetricRow({ state, onOpenNutrition, onOpenWorkouts }) {
+  // Protein is shown to one decimal at most; long floats read as noise.
   const t = getDailyTotals(state);
 
   return (
-    <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
+    <section className="metric-grid" aria-label="Today's totals">
       <MetricCard
         metric="calories"
         icon={Flame}
         label="Calories"
         value={t.calories}
         target={t.calorieTarget}
-        footnote={t.calories >= t.calorieTarget ? 'Target met!' : `Remaining: ${Math.max(0, t.calorieTarget - t.calories).toLocaleString()} kcal`}
+        unit="kcal"
+        footnote={t.calories >= t.calorieTarget ? 'Target met' : `${Math.max(0, t.calorieTarget - t.calories).toLocaleString()} kcal left`}
         progress={t.caloriesPct}
         onOpen={onOpenNutrition}
       />
@@ -27,10 +29,10 @@ export function MetricRow({ state, onOpenNutrition, onOpenWorkouts }) {
         metric="protein"
         icon={Zap}
         label="Protein"
-        value={t.protein}
+        value={Math.round(t.protein * 10) / 10}
         target={t.proteinTarget}
         unit="g"
-        footnote={t.protein >= t.proteinTarget ? 'Target hit!' : `Remaining: ${Math.max(0, t.proteinTarget - t.protein)}g`}
+        footnote={t.protein >= t.proteinTarget ? 'Target met' : `${Math.round(Math.max(0, t.proteinTarget - t.protein) * 10) / 10} g left`}
         progress={t.proteinPct}
         onOpen={onOpenNutrition}
       />
@@ -42,7 +44,7 @@ export function MetricRow({ state, onOpenNutrition, onOpenWorkouts }) {
         value={t.water}
         target={t.waterTarget}
         unit="ml"
-        footnote={t.water >= t.waterTarget ? 'Hydrated!' : `Remaining: ${Math.max(0, t.waterTarget - t.water).toLocaleString()} ml`}
+        footnote={t.water >= t.waterTarget ? 'Target met' : `${Math.max(0, t.waterTarget - t.water).toLocaleString()} ml left`}
         progress={t.waterPct}
         onOpen={onOpenNutrition}
       />
@@ -53,7 +55,8 @@ export function MetricRow({ state, onOpenNutrition, onOpenWorkouts }) {
         label="Steps"
         value={t.steps}
         target={t.stepsTarget}
-        footnote={t.steps >= t.stepsTarget ? 'Goal reached!' : 'Keep going!'}
+        unit="steps"
+        footnote={t.steps >= t.stepsTarget ? 'Target met' : `${Math.max(0, t.stepsTarget - t.steps).toLocaleString()} to go`}
         progress={t.stepsPct}
         onOpen={onOpenWorkouts}
       />

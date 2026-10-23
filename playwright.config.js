@@ -8,6 +8,8 @@ export default defineConfig({
   testDir: 'e2e',
   timeout: 30000,
   retries: 0,
+  // Windows runners crash Chromium workers under full parallel load.
+  workers: 2,
   use: { baseURL: 'http://localhost:4173', trace: 'retain-on-failure' },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },

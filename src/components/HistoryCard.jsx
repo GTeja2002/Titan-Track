@@ -25,7 +25,7 @@ export function HistoryCard({ state, onOpenDay }) {
     }), [state.logs]);
 
   return (
-    <section className="panel-card rounded-[20px] p-5 text-left" aria-label="History">
+    <section className="panel-card rounded-[var(--radius-card)] p-[var(--space-card)] text-left" aria-label="History">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="flex items-center gap-2 text-[15px] font-black" style={{ color: 'var(--text)' }}>
           <History size={17} style={{ color: 'var(--primary)' }} /> History

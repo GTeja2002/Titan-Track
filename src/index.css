@@ -1408,3 +1408,147 @@ body.dark {
 .nutrition-panel:hover {
   box-shadow: 0 8px 24px rgba(20, 40, 35, 0.07);
 }
+
+/* =====================================================================
+ * Mobile-first layout system
+ * One set of spacing, radius, touch-target and chrome tokens used by the
+ * shell and every page, so screens share rhythm instead of each choosing
+ * its own margins. Phones first; desktop widens the gutters.
+ * ===================================================================== */
+:root {
+  --space-page: 16px;      /* side gutter */
+  --space-section: 14px;   /* gap between cards */
+  --space-card: 16px;      /* card padding */
+  --radius-card: 18px;
+  --radius-control: 12px;
+  --tap: 44px;             /* minimum touch target (Material: 48dp incl. spacing) */
+  --nav-h: 64px;           /* bottom tab bar, excluding the safe area */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+@media (min-width: 1024px) {
+  :root {
+    --space-page: 24px;
+    --space-section: 20px;
+    --space-card: 20px;
+  }
+}
+
+body { -webkit-tap-highlight-color: transparent; }
+
+/* The scrolling content column. On phones it leaves room for the bottom
+ * tab bar and the system gesture area so nothing hides behind them. */
+.app-content {
+  padding-left: calc(var(--space-page) + var(--safe-left));
+  padding-right: calc(var(--space-page) + var(--safe-right));
+  padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 20px);
+}
+@media (min-width: 1024px) {
+  .app-content { padding-bottom: 32px; }
+}
+
+.page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-section);
+  min-width: 0;
+}
+
+.m-card {
+  background: var(--surface-solid);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: var(--space-card);
+  box-shadow: 0 2px 10px rgba(20, 40, 35, 0.04);
+  min-width: 0;
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.section-sub {
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+/* Compact sticky top bar on phones; respects the status bar inset. */
+.mobile-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding-top: calc(var(--safe-top) + 8px);
+  padding-bottom: 8px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px);
+  -webkit-backdrop-filter: saturate(1.4) blur(10px);
+}
+
+.bottom-nav {
+  height: calc(var(--nav-h) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+  background: var(--surface-solid);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+}
+.bottom-nav-item {
+  min-height: var(--tap);
+  -webkit-user-select: none;
+  user-select: none;
+}
+.bottom-nav-item[aria-current='page'] .bottom-nav-pill {
+  background: var(--primary-soft);
+}
+
+/* Responsive tile grid for headline metrics: two columns on a phone, one
+ * column when the system font is large (rem-based minimum), four on wide
+ * screens. Never forces sideways scrolling. */
+.metric-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
+}
+@media (min-width: 1280px) {
+  .metric-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+}
+
+/* Bottom sheet: content scrolls, the action bar stays visible above the
+ * keyboard and the gesture area. */
+.sheet {
+  display: flex;
+  flex-direction: column;
+  max-height: min(92dvh, 92vh);
+  padding-bottom: var(--safe-bottom);
+}
+.sheet-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+.sheet-actions {
+  flex: none;
+  border-top: 1px solid var(--border);
+  background: var(--surface-solid);
+}
+
+/* Inputs: 16px on phones so Android/iOS never zoom the page on focus. */
+@media (max-width: 1023px) {
+  input, select, textarea { font-size: 16px !important; }
+}
+
+.offline-banner {
+  padding-top: calc(var(--safe-top) + 6px);
+}
+
+/* Keyboard up (touch devices): the tab bar steps aside so the field being
+ * typed into keeps the space. */
+body.keyboard-open .bottom-nav { display: none; }
+body.keyboard-open .app-content { padding-bottom: 24px; }

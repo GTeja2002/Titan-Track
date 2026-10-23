@@ -45,10 +45,16 @@ export function CalendarModal({ state, onSelectDate }) {
     <>
       <button
         onClick={() => { setCalDate(new Date(state.currentDate + 'T00:00:00')); setOpen(true); }}
-        className="glass flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition hover:scale-[1.02] active:scale-95"
+        aria-label={`Choose day. Showing ${state.currentDate === todayStr ? 'today' : state.currentDate}`}
+        className="flex min-h-[44px] items-center gap-2 rounded-xl border px-3.5 text-sm font-semibold transition active:scale-95"
+        style={{ borderColor: 'var(--border)', background: 'var(--surface-solid)', color: 'var(--text)' }}
       >
         <Calendar size={16} style={{ color: 'var(--primary)' }} />
-        <span>{state.currentDate === todayStr ? 'Today' : state.currentDate}</span>
+        <span className="whitespace-nowrap">
+          {state.currentDate === todayStr
+            ? 'Today'
+            : new Date(state.currentDate + 'T00:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+        </span>
       </button>
 
       {open && createPortal(

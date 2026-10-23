@@ -139,26 +139,26 @@ export default function WaterTrackerCard({
 
             {/* Variant B: the full hydration panel, to the supplied design. */}
             {variant === 'widget' && (
-                <div className="hydration-card rounded-[26px] p-5 text-left">
+                <div className="hydration-card rounded-[var(--radius-card)] p-[var(--space-card)] text-left">
                     {/* Header: disc, label, reading, edit target */}
                     <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
                             <span
-                                className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl shrink-0"
+                                className="flex h-11 w-11 items-center justify-center rounded-xl shrink-0"
                                 style={{ background: 'var(--surface-solid)', boxShadow: '0 4px 14px var(--m-water-glow)' }}
                             >
-                                <Droplet size={26} style={{ color: 'var(--m-water)' }} className="fill-current" />
+                                <Droplet size={22} style={{ color: 'var(--m-water)' }} className="fill-current" />
                             </span>
-                            <div>
-                                <span className="block text-[11px] font-black uppercase tracking-[0.08em]" style={{ color: 'var(--m-water-ink)' }}>
-                                    Hydration Tracker
+                            <div className="min-w-0">
+                                <span className="block text-[13px] font-bold" style={{ color: 'var(--m-water-ink)' }}>
+                                    Water
                                 </span>
-                                <div className="mt-0.5 flex items-baseline gap-1.5">
-                                    <span className="text-[26px] font-black leading-none tracking-tight" style={{ color: 'var(--text)' }}>
+                                <div className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5">
+                                    <span className="text-[24px] font-extrabold leading-none tracking-tight tabular-nums" style={{ color: 'var(--text)' }}>
                                         {currentMl.toLocaleString()}
                                     </span>
-                                    <span className="text-[15px] font-semibold" style={{ color: 'var(--text-dim)' }}>
-                                        / {safeTarget.toLocaleString()} ml
+                                    <span className="whitespace-nowrap text-[13px] font-semibold" style={{ color: 'var(--text-dim)' }}>
+                                        of {safeTarget.toLocaleString()} ml
                                     </span>
                                 </div>
                             </div>
@@ -167,7 +167,8 @@ export default function WaterTrackerCard({
                         <button
                             type="button"
                             onClick={handleOpenEdit}
-                            className="flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[12px] font-bold transition hover:scale-[1.03] active:scale-95 shrink-0"
+                            aria-label="Edit water target"
+                            className="flex min-h-[40px] items-center gap-1.5 rounded-full px-3 text-[12.5px] font-bold transition active:scale-95 shrink-0"
                             style={{
                                 background: 'var(--surface-solid)',
                                 color: 'var(--m-water-ink)',
@@ -175,7 +176,7 @@ export default function WaterTrackerCard({
                             }}
                         >
                             <Edit3 size={13} />
-                            Edit Target
+                            Target
                         </button>
                     </div>
 
@@ -188,7 +189,7 @@ export default function WaterTrackerCard({
                     </div>
 
                     <div className="mt-2 flex items-center justify-between text-[13px]">
-                        <span className="font-bold" style={{ color: 'var(--text)' }}>Progress ({percentage}%)</span>
+                        <span className="font-bold" style={{ color: 'var(--text)' }}>{percentage}%</span>
                         <span className="font-medium" style={{ color: 'var(--text-dim)' }}>
                             {remainingMl > 0 ? `${remainingMl.toLocaleString()} ml remaining` : statusMessage}
                         </span>
@@ -196,7 +197,7 @@ export default function WaterTrackerCard({
 
                     {/* Custom amount */}
                     <span className="mt-4 block text-[11px] font-bold uppercase tracking-[0.06em]" style={{ color: 'var(--text-dim)' }}>
-                        Log Custom Water Amount
+                        Custom amount
                     </span>
 
                     <form onSubmit={handleAddCustomMl} className="mt-2 flex items-center gap-2.5">
@@ -206,9 +207,9 @@ export default function WaterTrackerCard({
                                 min="1"
                                 value={customMlInput}
                                 onChange={(e) => setCustomMlInput(e.target.value)}
-                                placeholder="Enter amount (e.g. 10, 330, 400)"
+                                placeholder="e.g. 330"
                                 aria-label="Custom water amount in millilitres"
-                                className="w-full rounded-xl py-2.5 pl-3.5 pr-10 text-[13px] outline-none transition"
+                                className="w-full min-h-[44px] rounded-xl pl-3.5 pr-10 text-[13px] outline-none transition"
                                 style={{
                                     background: 'var(--surface-solid)',
                                     border: '1px solid var(--m-water-edge)',
@@ -221,7 +222,7 @@ export default function WaterTrackerCard({
                         </div>
                         <button
                             type="submit"
-                            className="rounded-xl px-4 py-2.5 text-[13px] font-bold text-white transition hover:brightness-105 active:scale-95 shrink-0"
+                            className="min-h-[44px] rounded-xl px-4 text-[13px] font-bold text-white transition hover:brightness-105 active:scale-95 shrink-0"
                             style={{ background: 'var(--grad-water)', boxShadow: '0 6px 16px var(--m-water-glow)' }}
                         >
                             + Add
@@ -238,7 +239,7 @@ export default function WaterTrackerCard({
                                     key={ml}
                                     type="button"
                                     onClick={() => handleQuickAddMl(ml)}
-                                    className="rounded-xl py-2.5 text-[12.5px] font-bold transition hover:scale-[1.03] active:scale-95"
+                                    className="min-h-[44px] rounded-xl text-[12.5px] font-bold transition active:scale-95"
                                     style={primary
                                         ? { background: 'var(--grad-water)', color: '#fff', boxShadow: '0 6px 16px var(--m-water-glow)' }
                                         : { background: 'var(--m-water-soft)', color: 'var(--m-water-ink)' }}

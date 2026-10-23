@@ -22,9 +22,19 @@ async function seedProfile(page) {
   }, { email: EMAIL, today });
 }
 
+// Phone tab-bar labels differ from the desktop sidebar names; Community
+// lives inside Profile on phones.
+const PHONE_LABEL = { Dashboard: 'Home', Nutrition: 'Meals', Workouts: 'Activity', Progress: 'Progress', Settings: 'Profile' };
+
 async function openTab(page, name) {
-  // Desktop: sidebar rail. Phone: bottom tab bar. Both are buttons with the label.
-  await page.getByRole('button', { name, exact: true }).locator('visible=true').first().click();
+  const phone = await page.locator('aside').locator('visible=true').count() === 0;
+  if (phone && name === 'Community') {
+    await page.locator('nav[aria-label="Main"]').getByRole('button', { name: 'Profile', exact: true }).click();
+    await page.getByRole('button', { name: /Community & Competitions/ }).click();
+    return;
+  }
+  const label = phone ? (PHONE_LABEL[name] || name) : name;
+  await page.locator(phone ? 'nav[aria-label="Main"]' : 'aside').getByRole('button', { name: label, exact: true }).click();
 }
 
 test.beforeEach(async ({ page }) => {
@@ -56,7 +66,7 @@ test('log a custom food, see totals update, and keep it after reload', async ({ 
   await page.reload();
   await openTab(page, 'Nutrition');
   await expect(page.getByRole('region', { name: 'Breakfast' }).getByText('Pesarattu')).toBeVisible();
-  await expect(page.getByRole('button', { name: /My Foods \(1\)/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /My Foods, 1 saved/ })).toBeVisible();
 });
 
 test('invalid custom food input shows errors and saves nothing', async ({ page }) => {

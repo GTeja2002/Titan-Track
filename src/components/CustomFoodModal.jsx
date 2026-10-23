@@ -13,7 +13,7 @@ import { useDismiss } from '../lib/dismiss.js';
 import { X, Info } from 'lucide-react';
 import {
   UNITS, MEAL_TYPES, NUTRITION_SOURCES, validateCustomFood, validateQuantity,
-  explainCalculation, findDuplicateCustomFood,
+  explainCalculation, findDuplicateCustomFood, calcNutrition,
 } from '../lib/nutrition.js';
 
 const inputStyle = { background: 'var(--bg-2)', borderColor: 'var(--border)', color: 'var(--text)' };
@@ -100,6 +100,22 @@ export function CustomFoodModal({
   };
 
   const show = (k) => (submitted ? errors[k] : null);
+
+  // The calorie total for what will be logged, shown beside the save button.
+  const qtyNumber = Number(String(qty).replace(',', '.'));
+  const summaryText = !validation.ok || qtyError
+    ? 'Fill in the food to see its calories'
+    : validation.value.calories == null
+      ? 'Calories unknown — you can add them later'
+      : `${calcNutrition(validation.value, qtyNumber).cal} kcal${validation.value.source === 'estimated' ? ' (estimate)' : ''}`;
+
+  // When the Android keyboard opens it shrinks the viewport; keep the field
+  // being typed into in view inside the sheet.
+  const keepFocusedFieldVisible = (e) => {
+    const el = e.target;
+    if (!el || !el.scrollIntoView || !/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) return;
+    setTimeout(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }), 250);
+  };
   const mealLabel = MEAL_TYPES.find((m) => m.id === meal)?.label ?? 'meal';
 
   // Portalled to <body>: inside the page, the tab's entry animation creates a
@@ -116,11 +132,14 @@ export function CustomFoodModal({
         aria-label={mode === 'edit' ? 'Edit my food' : 'What I eat'}
         onSubmit={submit}
         onClick={(e) => e.stopPropagation()}
-        className="w-full sm:max-w-md max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 text-left animate-scale-in"
+        onFocus={keepFocusedFieldVisible}
+        className="sheet w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl text-left animate-scale-in overflow-hidden"
         style={{ background: 'var(--surface-solid)', border: '1px solid var(--border)' }}
         noValidate
       >
-        <div className="mb-4 flex items-start justify-between gap-3">
+        {/* Grab handle: tells a phone user this is a sheet. */}
+        <span aria-hidden="true" className="mx-auto mt-2 block h-1 w-10 rounded-full sm:hidden" style={{ background: 'var(--border-strong)' }} />
+        <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-3 sm:px-6 sm:pt-6">
           <div>
             <h3 className="text-[18px] font-black tracking-tight" style={{ color: 'var(--text)' }}>
               {mode === 'edit' ? 'Edit my food' : '+ What I Eat'}
@@ -136,7 +155,7 @@ export function CustomFoodModal({
           </button>
         </div>
 
-        <div className="space-y-3.5">
+        <div className="sheet-body space-y-3.5 px-5 pb-4 sm:px-6">
           <Field label="Food name" error={show('name')}>
             <input
               autoFocus
@@ -144,7 +163,7 @@ export function CustomFoodModal({
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Pesarattu, Mom's chicken curry"
               maxLength={100}
-              className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+              className="w-full min-h-[44px] rounded-xl border px-3 text-sm outline-none"
               style={inputStyle}
             />
           </Field>
@@ -157,7 +176,7 @@ export function CustomFoodModal({
                   value={qty}
                   onChange={(e) => setQty(e.target.value)}
                   placeholder={basis === 'per100' ? '150' : '1'}
-                  className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+                  className="w-full min-h-[44px] rounded-xl border px-3 text-sm outline-none"
                   style={inputStyle}
                 />
               </Field>
@@ -166,7 +185,7 @@ export function CustomFoodModal({
               <select
                 value={unit}
                 onChange={(e) => setUnit(e.target.value)}
-                className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+                className="w-full min-h-[44px] rounded-xl border px-3 text-sm outline-none"
                 style={inputStyle}
               >
                 {Object.entries(UNITS).map(([id, u]) => <option key={id} value={id}>{u.label}</option>)}
@@ -187,19 +206,19 @@ export function CustomFoodModal({
               disabled={unknownCal}
               onChange={(e) => setCalories(e.target.value)}
               placeholder={unknownCal ? 'Unknown for now' : 'kcal'}
-              className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none disabled:opacity-50"
+              className="w-full min-h-[44px] rounded-xl border px-3 text-sm outline-none disabled:opacity-50"
               style={inputStyle}
             />
           </Field>
 
           <div className="flex flex-col gap-2 text-[12.5px] font-semibold" style={{ color: 'var(--text-dim)' }}>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" checked={unknownCal} onChange={(e) => { setUnknownCal(e.target.checked); if (e.target.checked) setIsEstimate(false); }} />
+            <label className="flex min-h-[40px] items-center gap-2.5">
+              <input type="checkbox" className="h-5 w-5 shrink-0" checked={unknownCal} onChange={(e) => { setUnknownCal(e.target.checked); if (e.target.checked) setIsEstimate(false); }} />
               I don't know the calories yet (fill in later)
             </label>
             {!unknownCal && (
-              <label className="flex items-center gap-2">
-                <input type="checkbox" checked={isEstimate} onChange={(e) => setIsEstimate(e.target.checked)} />
+              <label className="flex min-h-[40px] items-center gap-2.5">
+                <input type="checkbox" className="h-5 w-5 shrink-0" checked={isEstimate} onChange={(e) => setIsEstimate(e.target.checked)} />
                 This is my estimate, not from a label
               </label>
             )}
@@ -230,17 +249,17 @@ export function CustomFoodModal({
             <>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Meal">
-                  <select value={meal} onChange={(e) => setMeal(e.target.value)} className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none" style={inputStyle}>
+                  <select value={meal} onChange={(e) => setMeal(e.target.value)} className="w-full min-h-[44px] rounded-xl border px-3 text-sm outline-none" style={inputStyle}>
                     {MEAL_TYPES.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
                   </select>
                 </Field>
                 <Field label="Time eaten">
-                  <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none" style={inputStyle} />
+                  <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="w-full min-h-[44px] rounded-xl border px-3 text-sm outline-none" style={inputStyle} />
                 </Field>
               </div>
 
-              <label className="flex items-center gap-2 text-[12.5px] font-semibold" style={{ color: 'var(--text-dim)' }}>
-                <input type="checkbox" checked={saveToMyFoods} onChange={(e) => setSaveToMyFoods(e.target.checked)} />
+              <label className="flex min-h-[40px] items-center gap-2.5 text-[12.5px] font-semibold" style={{ color: 'var(--text-dim)' }}>
+                <input type="checkbox" className="h-5 w-5 shrink-0" checked={saveToMyFoods} onChange={(e) => setSaveToMyFoods(e.target.checked)} />
                 Save to My Foods for next time
               </label>
               {saveToMyFoods && duplicate && (
@@ -276,18 +295,27 @@ export function CustomFoodModal({
           )}
         </div>
 
-        <div className="mt-5 flex gap-2.5">
-          <button type="button" onClick={onClose} className="flex-1 rounded-xl border py-3 text-sm font-bold" style={{ borderColor: 'var(--border)', color: 'var(--text-dim)' }}>
+        {/* Always-visible action bar: the save button can never scroll out
+            of reach or hide behind the keyboard or the tab bar. */}
+        <div className="sheet-actions px-5 py-3 sm:px-6">
+          {mode === 'log' && (
+            <p className="mb-2 text-center text-[13px] font-semibold" style={{ color: 'var(--text-dim)' }} aria-live="polite">
+              {summaryText}
+            </p>
+          )}
+          <div className="flex gap-2.5">
+          <button type="button" onClick={onClose} className="min-h-[48px] flex-1 rounded-xl border text-sm font-bold" style={{ borderColor: 'var(--border)', color: 'var(--text-dim)' }}>
             Cancel
           </button>
           <button
             type="submit"
             disabled={mode === 'edit' && !!duplicate}
-            className="flex-[2] rounded-xl py-3 text-sm font-bold text-white transition active:scale-95 disabled:opacity-50"
+            className="min-h-[48px] flex-[2] rounded-xl text-sm font-bold text-white transition active:scale-95 disabled:opacity-50"
             style={{ background: 'var(--grad-primary-cta)' }}
           >
             {mode === 'edit' ? 'Save changes' : `Add to ${mealLabel}`}
           </button>
+          </div>
         </div>
       </form>
     </div>,

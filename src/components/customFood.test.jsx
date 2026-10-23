@@ -141,7 +141,7 @@ describe('+ What I Eat', () => {
     fireEvent.change(within(dialog).getByLabelText(/Calories per 1 srv/), { target: { value: '120' } });
     fireEvent.click(within(dialog).getByRole('button', { name: /^Add to/ }));
 
-    fireEvent.click(screen.getByRole('button', { name: /My Foods \(1\)/ }));
+    fireEvent.click(screen.getByRole('button', { name: /My Foods, 1 saved/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit Protein shake' }));
     dialog = screen.getByRole('dialog', { name: 'Edit my food' });
     fireEvent.change(within(dialog).getByLabelText(/Calories per 1 srv/), { target: { value: '250' } });

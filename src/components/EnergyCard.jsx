@@ -35,14 +35,14 @@ export function EnergyCard({ state }) {
   const pct = Math.max(0, Math.min(100, Math.round((intake / calorieTarget) * 100)));
   const over = remaining < 0;
 
-  const size = 140;
+  const size = 128;
   const stroke = 12;
   const radius = (size - stroke) / 2;
   const circ = 2 * Math.PI * radius;
   const offset = circ - (Math.min(100, pct) / 100) * circ;
 
   return (
-    <div className="nutrition-panel h-full rounded-[16px] p-5 flex flex-col">
+    <div className="nutrition-panel h-full rounded-[var(--radius-card)] p-[var(--space-card)] flex flex-col">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
           <Zap size={14} style={{ color: 'var(--accent)' }} />
@@ -56,7 +56,7 @@ export function EnergyCard({ state }) {
         </span>
       </div>
 
-      <div className="mt-4 flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-4 flex-1 min-w-0">
         <div className="relative shrink-0" style={{ width: size, height: size }}>
           <svg width={size} height={size} className="-rotate-90">
             <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--border)" strokeWidth={stroke} />
@@ -81,7 +81,7 @@ export function EnergyCard({ state }) {
           </div>
         </div>
 
-        <div className="flex-1 min-w-0 space-y-3">
+        <div className="flex-1 min-w-[200px] space-y-3">
           <StatRow icon={<ArrowDownCircle size={16} />} label="Intake" value={intake} unit="kcal" color="var(--primary)" />
           <div className="h-px" style={{ background: 'var(--border)' }} />
           <StatRow icon={<ArrowUpCircle size={16} />} label="Burned" value={totalBurned} unit="kcal" color="var(--danger)" />
