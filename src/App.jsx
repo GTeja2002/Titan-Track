@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import {
   Moon, Sun, Check, Activity, Scale, Dumbbell, User, LogOut,
   Settings as SettingsIcon,
-  ChevronRight, Calendar, Utensils,
+  Calendar, Utensils,
   Menu, X, Home, BarChart3, Users, Leaf, Flame, Lightbulb
 } from 'lucide-react';
 import { useAppState } from './lib/useAppState.js';
@@ -280,7 +280,7 @@ export default function App() {
       )}
 
       {/* 3. MAIN CONTENT LAYER */}
-      <div className="flex-1 lg:pl-[268px] flex flex-col min-h-screen transition-all duration-300">
+      <div className="flex-1 min-w-0 lg:pl-[268px] flex flex-col min-h-screen transition-all duration-300">
         <div className="p-4 sm:p-5 lg:p-6 flex-1 flex flex-col w-full mx-auto">
 
           {/* SIMPLIFIED TOP HEADER */}
@@ -450,7 +450,6 @@ export default function App() {
                             {i + 1}
                           </span>
                           <span className="flex-1 text-[13px] font-semibold" style={{ color: 'var(--text)' }}>{w}</span>
-                          <ChevronRight size={16} style={{ color: 'var(--text-faint)' }} />
                         </li>
                       ))}
                     </ul>

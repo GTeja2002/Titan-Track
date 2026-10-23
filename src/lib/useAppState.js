@@ -66,13 +66,13 @@ export const defaultState = {
   weeklyPlan: {
     Monday: {
       meals: [
-        { name: 'Oats with Fruits & Oats', cal: 450, protein: 12, carbs: 65, fat: 8, fiber: 9, image: '/assets/recipes/oats-and-berry-bowl.png' },
+        { name: 'Oats with Fruits', cal: 450, protein: 12, carbs: 65, fat: 8, fiber: 9, image: '/assets/recipes/oats-and-berry-bowl.png' },
         { name: 'Grilled Chicken Salad', cal: 550, protein: 42, carbs: 10, fat: 12, fiber: 4, image: '/assets/recipes/chickpea-salad.png' },
         { name: 'Greek Yogurt with Berries', cal: 200, protein: 18, carbs: 15, fat: 3, fiber: 2, image: '/assets/food/yogurt.png' },
         { name: 'Quinoa & Veggies Bowl', cal: 450, protein: 14, carbs: 60, fat: 10, fiber: 8, image: '/assets/recipes/quinoa-veg-bowl.png' }
       ],
       workouts: [
-        { id: 'cardio', name: 'Cardiff Cardio', desc: '30 mins endurance run' },
+        { id: 'cardio', name: 'Cardio Session', desc: '30 mins endurance run' },
         { id: 'strength', name: 'Strength Training', desc: '45 mins full body lift' },
         { id: 'core', name: 'Core Workout', desc: '15 mins abdominal reps' },
         { id: 'walk', name: 'Evening Walk', desc: '30 mins recovery stroll' }
@@ -80,13 +80,13 @@ export const defaultState = {
     },
     Tuesday: {
       meals: [
-        { name: 'Oats with Fruits & Oats', cal: 450, protein: 12, carbs: 65, fat: 8, fiber: 9, image: '/assets/recipes/oats-and-berry-bowl.png' },
+        { name: 'Oats with Fruits', cal: 450, protein: 12, carbs: 65, fat: 8, fiber: 9, image: '/assets/recipes/oats-and-berry-bowl.png' },
         { name: 'Grilled Chicken Salad', cal: 550, protein: 42, carbs: 10, fat: 12, fiber: 4, image: '/assets/recipes/chickpea-salad.png' },
         { name: 'Greek Yogurt with Berries', cal: 200, protein: 18, carbs: 15, fat: 3, fiber: 2, image: '/assets/food/yogurt.png' },
         { name: 'Quinoa & Veggies Bowl', cal: 450, protein: 14, carbs: 60, fat: 10, fiber: 8, image: '/assets/recipes/quinoa-veg-bowl.png' }
       ],
       workouts: [
-        { id: 'cardio', name: 'Cardiff Cardio', desc: '30 mins endurance run' },
+        { id: 'cardio', name: 'Cardio Session', desc: '30 mins endurance run' },
         { id: 'strength', name: 'Strength Training', desc: '45 mins full body lift' },
         { id: 'core', name: 'Core Workout', desc: '15 mins abdominal reps' },
         { id: 'walk', name: 'Evening Walk', desc: '30 mins recovery stroll' }
@@ -94,13 +94,13 @@ export const defaultState = {
     },
     Wednesday: {
       meals: [
-        { name: 'Oats with Fruits & Oats', cal: 450, protein: 12, carbs: 65, fat: 8, fiber: 9, image: '/assets/recipes/oats-and-berry-bowl.png' },
+        { name: 'Oats with Fruits', cal: 450, protein: 12, carbs: 65, fat: 8, fiber: 9, image: '/assets/recipes/oats-and-berry-bowl.png' },
         { name: 'Grilled Chicken Salad', cal: 550, protein: 42, carbs: 10, fat: 12, fiber: 4, image: '/assets/recipes/chickpea-salad.png' },
         { name: 'Greek Yogurt with Berries', cal: 200, protein: 18, carbs: 15, fat: 3, fiber: 2, image: '/assets/food/yogurt.png' },
         { name: 'Quinoa & Veggies Bowl', cal: 450, protein: 14, carbs: 60, fat: 10, fiber: 8, image: '/assets/recipes/quinoa-veg-bowl.png' }
       ],
       workouts: [
-        { id: 'cardio', name: 'Cardiff Cardio', desc: '30 mins endurance run' },
+        { id: 'cardio', name: 'Cardio Session', desc: '30 mins endurance run' },
         { id: 'strength', name: 'Strength Training', desc: '45 mins full body lift' },
         { id: 'core', name: 'Core Workout', desc: '15 mins abdominal reps' },
         { id: 'walk', name: 'Evening Walk', desc: '30 mins recovery stroll' }
@@ -108,13 +108,13 @@ export const defaultState = {
     },
     Thursday: {
       meals: [
-        { name: 'Oats with Fruits & Oats', cal: 450, protein: 12, carbs: 65, fat: 8, fiber: 9, image: '/assets/recipes/oats-and-berry-bowl.png' },
+        { name: 'Oats with Fruits', cal: 450, protein: 12, carbs: 65, fat: 8, fiber: 9, image: '/assets/recipes/oats-and-berry-bowl.png' },
         { name: 'Grilled Chicken Salad', cal: 550, protein: 42, carbs: 10, fat: 12, fiber: 4, image: '/assets/recipes/chickpea-salad.png' },
         { name: 'Greek Yogurt with Berries', cal: 200, protein: 18, carbs: 15, fat: 3, fiber: 2, image: '/assets/food/yogurt.png' },
         { name: 'Quinoa & Veggies Bowl', cal: 450, protein: 14, carbs: 60, fat: 10, fiber: 8, image: '/assets/recipes/quinoa-veg-bowl.png' }
       ],
       workouts: [
-        { id: 'cardio', name: 'Cardiff Cardio', desc: '30 mins endurance run' },
+        { id: 'cardio', name: 'Cardio Session', desc: '30 mins endurance run' },
         { id: 'strength', name: 'Strength Training', desc: '45 mins full body lift' },
         { id: 'core', name: 'Core Workout', desc: '15 mins abdominal reps' },
         { id: 'walk', name: 'Evening Walk', desc: '30 mins recovery stroll' }
@@ -122,13 +122,13 @@ export const defaultState = {
     },
     Friday: {
       meals: [
-        { name: 'Oats with Fruits & Oats', cal: 450, protein: 12, carbs: 65, fat: 8, fiber: 9, image: '/assets/recipes/oats-and-berry-bowl.png' },
+        { name: 'Oats with Fruits', cal: 450, protein: 12, carbs: 65, fat: 8, fiber: 9, image: '/assets/recipes/oats-and-berry-bowl.png' },
         { name: 'Grilled Chicken Salad', cal: 550, protein: 42, carbs: 10, fat: 12, fiber: 4, image: '/assets/recipes/chickpea-salad.png' },
         { name: 'Greek Yogurt with Berries', cal: 200, protein: 18, carbs: 15, fat: 3, fiber: 2, image: '/assets/food/yogurt.png' },
         { name: 'Quinoa & Veggies Bowl', cal: 450, protein: 14, carbs: 60, fat: 10, fiber: 8, image: '/assets/recipes/quinoa-veg-bowl.png' }
       ],
       workouts: [
-        { id: 'cardio', name: 'Cardiff Cardio', desc: '30 mins endurance run' },
+        { id: 'cardio', name: 'Cardio Session', desc: '30 mins endurance run' },
         { id: 'strength', name: 'Strength Training', desc: '45 mins full body lift' },
         { id: 'core', name: 'Core Workout', desc: '15 mins abdominal reps' },
         { id: 'walk', name: 'Evening Walk', desc: '30 mins recovery stroll' }
@@ -136,13 +136,13 @@ export const defaultState = {
     },
     Saturday: {
       meals: [
-        { name: 'Oats with Fruits & Oats', cal: 450, protein: 12, carbs: 65, fat: 8, fiber: 9, image: '/assets/recipes/oats-and-berry-bowl.png' },
+        { name: 'Oats with Fruits', cal: 450, protein: 12, carbs: 65, fat: 8, fiber: 9, image: '/assets/recipes/oats-and-berry-bowl.png' },
         { name: 'Grilled Chicken Salad', cal: 550, protein: 42, carbs: 10, fat: 12, fiber: 4, image: '/assets/recipes/chickpea-salad.png' },
         { name: 'Greek Yogurt with Berries', cal: 200, protein: 18, carbs: 15, fat: 3, fiber: 2, image: '/assets/food/yogurt.png' },
         { name: 'Quinoa & Veggies Bowl', cal: 450, protein: 14, carbs: 60, fat: 10, fiber: 8, image: '/assets/recipes/quinoa-veg-bowl.png' }
       ],
       workouts: [
-        { id: 'cardio', name: 'Cardiff Cardio', desc: '30 mins endurance run' },
+        { id: 'cardio', name: 'Cardio Session', desc: '30 mins endurance run' },
         { id: 'strength', name: 'Strength Training', desc: '45 mins full body lift' },
         { id: 'core', name: 'Core Workout', desc: '15 mins abdominal reps' },
         { id: 'walk', name: 'Evening Walk', desc: '30 mins recovery stroll' }
@@ -150,13 +150,13 @@ export const defaultState = {
     },
     Sunday: {
       meals: [
-        { name: 'Oats with Fruits & Oats', cal: 450, protein: 12, carbs: 65, fat: 8, fiber: 9, image: '/assets/recipes/oats-and-berry-bowl.png' },
+        { name: 'Oats with Fruits', cal: 450, protein: 12, carbs: 65, fat: 8, fiber: 9, image: '/assets/recipes/oats-and-berry-bowl.png' },
         { name: 'Grilled Chicken Salad', cal: 550, protein: 42, carbs: 10, fat: 12, fiber: 4, image: '/assets/recipes/chickpea-salad.png' },
         { name: 'Greek Yogurt with Berries', cal: 200, protein: 18, carbs: 15, fat: 3, fiber: 2, image: '/assets/food/yogurt.png' },
         { name: 'Quinoa & Veggies Bowl', cal: 450, protein: 14, carbs: 60, fat: 10, fiber: 8, image: '/assets/recipes/quinoa-veg-bowl.png' }
       ],
       workouts: [
-        { id: 'cardio', name: 'Cardiff Cardio', desc: '30 mins endurance run' },
+        { id: 'cardio', name: 'Cardio Session', desc: '30 mins endurance run' },
         { id: 'strength', name: 'Strength Training', desc: '45 mins full body lift' },
         { id: 'core', name: 'Core Workout', desc: '15 mins abdominal reps' },
         { id: 'walk', name: 'Evening Walk', desc: '30 mins recovery stroll' }

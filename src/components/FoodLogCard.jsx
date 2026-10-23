@@ -1,6 +1,7 @@
 /* ---------------- components/FoodLogCard.jsx ---------------- */
 
 import { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, X, Search, Utensils, RotateCcw, History, BookOpen, Pencil, Trash2 } from 'lucide-react';
 import { FOOD_DB, QUICK_CHIPS, findFood, calculateProteinTarget } from '../lib/calculations.js';
 import { MacroBar } from './shared/MacroBar.jsx';
@@ -61,7 +62,7 @@ function CompleteCalories({ entry, onSave }) {
 
 function MyFoodsModal({ foods, onEdit, onDelete, onClose, covered }) {
   useDismiss(!covered, onClose);
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-label="My foods" onClick={(e) => e.stopPropagation()} className="w-full sm:max-w-md max-h-[85vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl p-5 text-left" style={{ background: 'var(--surface-solid)', border: '1px solid var(--border)' }}>
         <div className="mb-3 flex items-center justify-between">
@@ -99,7 +100,8 @@ function MyFoodsModal({ foods, onEdit, onDelete, onClose, covered }) {
           </ul>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

@@ -13,7 +13,8 @@
     "android:open": "cap open android",
     "android:apk:debug": "npm run android:sync && cd android && gradlew assembleDebug",
     "android:apk:release": "npm run android:sync && cd android && gradlew assembleRelease",
-    "android:icons": "python scripts/android-icons.py"
+    "android:icons": "python scripts/android-icons.py",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@capacitor/android": "^7.6.9",
@@ -28,6 +29,7 @@
   "devDependencies": {
     "@capacitor/cli": "^7.6.9",
     "@electric-sql/pglite": "^0.2.17",
+    "@playwright/test": "1.48",
     "@testing-library/react": "^16.3.3",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.6.1",

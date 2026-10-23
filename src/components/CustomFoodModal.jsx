@@ -8,6 +8,7 @@
  * estimate. Nothing here presents a guess as a measured fact.
  */
 import { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useDismiss } from '../lib/dismiss.js';
 import { X, Info } from 'lucide-react';
 import {
@@ -101,7 +102,9 @@ export function CustomFoodModal({
   const show = (k) => (submitted ? errors[k] : null);
   const mealLabel = MEAL_TYPES.find((m) => m.id === meal)?.label ?? 'meal';
 
-  return (
+  // Portalled to <body>: inside the page, the tab's entry animation creates a
+  // stacking context that put this sheet under the phone's bottom tab bar.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in"
       style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)' }}
@@ -287,6 +290,7 @@ export function CustomFoodModal({
           </button>
         </div>
       </form>
-    </div>
+    </div>,
+    document.body
   );
 }

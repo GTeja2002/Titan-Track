@@ -9,10 +9,10 @@ export function StatRow({ icon, label, value, unit, color }) {
       <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: 'var(--surface)', color }}>
         {icon}
       </div>
-      <div className="flex-1">
-        <div className="text-xs" style={{ color: 'var(--text-dim)' }}>{label}</div>
+      <div className="flex-1 min-w-0">
+        <div className="truncate text-xs" style={{ color: 'var(--text-dim)' }}>{label}</div>
       </div>
-      <div className="text-right">
+      <div className="text-right whitespace-nowrap">
         <span className="text-lg font-bold" style={{ color }}>{value}</span>
         <span className="ml-1 text-xs" style={{ color: 'var(--text-dim)' }}>{unit}</span>
       </div>
@@ -58,7 +58,7 @@ export function EnergyCard({ state }) {
         </span>
       </div>
 
-      <div className="mt-4 flex items-center gap-6 flex-1">
+      <div className="mt-4 flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
         <div className="relative shrink-0" style={{ width: size, height: size }}>
           <svg width={size} height={size} className="-rotate-90">
             <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--border)" strokeWidth={stroke} />
@@ -83,7 +83,7 @@ export function EnergyCard({ state }) {
           </div>
         </div>
 
-        <div className="flex-1 space-y-3">
+        <div className="flex-1 min-w-0 space-y-3">
           <StatRow icon={<ArrowDownCircle size={16} />} label="Intake" value={intake} unit="kcal" color="var(--primary)" />
           <div className="h-px" style={{ background: 'var(--border)' }} />
           <StatRow icon={<ArrowUpCircle size={16} />} label="Burned" value={totalBurned} unit="kcal" color="var(--danger)" />
