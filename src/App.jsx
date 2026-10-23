@@ -2,9 +2,9 @@
 import { useState } from 'react';
 import {
   Moon, Sun, Check, Activity, Scale, Dumbbell, User, LogOut,
-  Bell, Heart, MessageSquare, Share2, Compass, Settings as SettingsIcon,
-  ChevronRight, Calendar, Sparkles, HelpCircle, Utensils, Search,
-  Menu, X, Crown, Home, BarChart3, Users, Leaf, Flame, Lightbulb
+  Settings as SettingsIcon,
+  ChevronRight, Calendar, Utensils,
+  Menu, X, Home, BarChart3, Users, Leaf, Flame, Lightbulb
 } from 'lucide-react';
 import { useAppState } from './lib/useAppState.js';
 import { supabase } from './lib/supabaseClient.js';
@@ -28,6 +28,9 @@ import { NutritionOverview } from './components/NutritionOverview.jsx';
 import { getLocalDateString } from './lib/date.js';
 import { computeStreak, MAX_FREEZES } from './lib/streak.js';
 import { MetricRow } from './components/MetricRow.jsx';
+import { CommunityPage } from './components/CommunityPage.jsx';
+import { LockedFeature } from './components/shared/LockedFeature.jsx';
+import { useFeatureFlags } from './lib/useFeatureFlags.js';
 
 /** The one definition of the app's sections. The sidebar, the mobile drawer
  *  and the bottom tab bar all read from this. */
@@ -85,16 +88,7 @@ export default function App() {
       ? 'synced to cloud'
       : 'auto-saved locally';
 
-  // Community Feed State & Mock data
-  const [likes, setLikes] = useState({ 1: 24, 2: 15, 3: 42 });
-  const [hasLiked, setHasLiked] = useState({ 1: false, 2: false, 3: false });
-  const handleLike = (id) => {
-    setHasLiked(prev => {
-      const nextLiked = !prev[id];
-      setLikes(l => ({ ...l, [id]: l[id] + (nextLiked ? 1 : -1) }));
-      return { ...prev, [id]: nextLiked };
-    });
-  };
+  const flags = useFeatureFlags();
 
   if (!state.email) {
     return <LoginScreen onLogin={login} />;
@@ -160,19 +154,6 @@ export default function App() {
             })}
           </nav>
 
-          {/* Premium card */}
-          <button
-            type="button"
-            onClick={() => setIsProfileOpen(true)}
-            className="rail-premium mt-5 w-full flex items-center gap-3 rounded-2xl px-4 py-3.5 text-left transition active:scale-[0.98]"
-          >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full shrink-0" style={{ background: 'var(--rail-gold)' }}>
-              <Crown size={17} color="#3B2A06" />
-            </span>
-            <span className="flex-1 text-[15px] font-bold text-white">Premium</span>
-            <ChevronRight size={18} style={{ color: 'var(--rail-muted)' }} />
-          </button>
-
           {/* Signed-in identity */}
           <button
             type="button"
@@ -184,8 +165,8 @@ export default function App() {
             </span>
             <span className="overflow-hidden">
               <span className="block truncate text-[13px] font-bold text-white">{username}</span>
-              <span className="block text-[10px] font-bold tracking-[0.12em] uppercase mt-0.5" style={{ color: 'var(--rail-gold)' }}>
-                Premium
+              <span className="block text-[10px] font-bold tracking-[0.12em] uppercase mt-0.5" style={{ color: 'var(--rail-muted)' }}>
+                View profile
               </span>
             </span>
           </button>
@@ -242,7 +223,7 @@ export default function App() {
               </div>
               <div className="overflow-hidden">
                 <p className="text-xs font-black truncate text-[var(--text)]">{username}</p>
-                <p className="text-[8px] font-bold text-primary uppercase">Premium</p>
+                <p className="text-[8px] font-bold text-primary uppercase">View profile</p>
               </div>
             </div>
           </aside>
@@ -275,26 +256,10 @@ export default function App() {
               <span className="text-[var(--text)]">{activeTab}</span>
             </div>
 
-            {/* Right: Search, Notifications, Calendar togglers */}
+            {/* Right: Calendar and theme togglers */}
             <div className="flex items-center gap-3 ml-auto">
-              {/* Search mock bar */}
-              <div className="relative hidden sm:block">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-40 rounded-xl px-3.5 py-1.5 text-xs bg-white/5 border border-white/10 outline-none text-[var(--text)] placeholder-white/25 focus:w-48 transition-all"
-                />
-                <Search size={12} className="absolute right-3.5 top-2.5 text-[var(--text-dim)]" />
-              </div>
-
-              {/* Notification bell */}
-              <button className="relative w-8 h-8 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-[var(--text)] hover:bg-white/10 transition active:scale-95" style={{ borderColor: 'var(--border)' }}>
-                <Bell size={14} />
-                <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-rose-500" />
-              </button>
-
               {/* Theme & Calendar picker */}
-              <div className="flex items-center gap-1.5 border-l pl-3 border-white/10">
+              <div className="flex items-center gap-1.5">
                 <CalendarModal state={state} onSelectDate={onSelectDate} />
                 <button
                   onClick={toggleTheme}
@@ -321,6 +286,7 @@ export default function App() {
                 addAvailableFood={addAvailableFood}
                 removeAvailableFood={removeAvailableFood}
                 applyPlanFilters={applyPlanFilters}
+                flags={flags}
               />
             )}
 
@@ -488,95 +454,16 @@ export default function App() {
               </div>
             )}
 
-            {/* TAB 5: COMMUNITY */}
+            {/* TAB 5: COMMUNITY — behind the competitions flag (lib/features.js) */}
             {activeTab === 'Community' && (
-              <div className="grid grid-cols-12 gap-5 animate-scale-in text-left">
-                {/* Main Community feed */}
-                <div className="col-span-12 lg:col-span-8 space-y-5">
-                  <h3 className="text-lg font-black tracking-tight text-[var(--text)] mb-2">Community challenges & feed</h3>
-
-                  {/* Challenge Card */}
-                  <div className="bg-white dark:bg-[#1C211E] rounded-3xl p-6 border border-[#E7E6E0] dark:border-[#2C332E] shadow-sm relative overflow-hidden flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div className="space-y-2">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-[#BD6034] bg-primary-soft px-2 py-0.5 rounded-full inline-block">Active Challenge</span>
-                      <h4 className="text-sm font-black text-[#171817] dark:text-[#F4F5F2]">Hydration Hero Weekend! 💦</h4>
-                      <p className="text-xs text-[#555954] dark:text-[#B3BAB4] font-medium max-w-md">Log 8 glasses of water daily this Saturday & Sunday to unlock the Weekend Hydrator badge + 100 points.</p>
-                    </div>
-                    <button className="py-2.5 px-4 rounded-xl bg-primary text-white font-bold text-xs hover:scale-105 transition shadow-md shadow-primary/10">
-                      Join Challenge
-                    </button>
-                  </div>
-
-                  {/* Feed item 1 */}
-                  <div className="glass rounded-3xl p-5 border border-white/5 shadow-sm space-y-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-xs font-bold text-white">S</div>
-                      <div>
-                        <p className="text-xs font-black text-[var(--text)]">Sarah Connor</p>
-                        <p className="text-[9px] text-[var(--text-dim)] font-bold">2 hours ago</p>
-                      </div>
-                    </div>
-                    <p className="text-xs text-[var(--text-dim)] font-semibold">
-                      Crushed my weight goals this week! Lost 1.5kg and logged my breakfast oats every day. Keep going everyone! 🏃‍♀️✨
-                    </p>
-                    <div className="flex items-center gap-4 text-xs font-bold text-[var(--text-dim)] pt-2 border-t border-white/5">
-                      <button onClick={() => handleLike(1)} className={`flex items-center gap-1.5 transition ${hasLiked[1] ? 'text-primary' : 'hover:text-primary'}`}>
-                        <Heart size={14} className={hasLiked[1] ? 'fill-primary' : ''} />
-                        <span>{likes[1]} Likes</span>
-                      </button>
-                      <span className="flex items-center gap-1.5"><MessageSquare size={14} /> <span>3 Comments</span></span>
-                    </div>
-                  </div>
-
-                  {/* Feed item 2 */}
-                  <div className="glass rounded-3xl p-5 border border-white/5 shadow-sm space-y-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center text-xs font-bold text-white">A</div>
-                      <div>
-                        <p className="text-xs font-black text-[var(--text)]">Alex Mercer</p>
-                        <p className="text-[9px] text-[var(--text-dim)] font-bold">5 hours ago</p>
-                      </div>
-                    </div>
-                    <p className="text-xs text-[var(--text-dim)] font-semibold">
-                      Finished a 45-minute strength builder workout. My muscles are feeling it! Protein target hit for the day! 💪🥩
-                    </p>
-                    <div className="flex items-center gap-4 text-xs font-bold text-[var(--text-dim)] pt-2 border-t border-white/5">
-                      <button onClick={() => handleLike(2)} className={`flex items-center gap-1.5 transition ${hasLiked[2] ? 'text-primary' : 'hover:text-primary'}`}>
-                        <Heart size={14} className={hasLiked[2] ? 'fill-primary' : ''} />
-                        <span>{likes[2]} Likes</span>
-                      </button>
-                      <span className="flex items-center gap-1.5"><MessageSquare size={14} /> <span>1 Comments</span></span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Sidebar Leaderboard */}
-                <div className="col-span-12 lg:col-span-4 space-y-5">
-                  <h3 className="text-lg font-black tracking-tight text-[var(--text)] mb-2">Weekly Leaderboard</h3>
-                  <div className="glass rounded-3xl p-5 border border-white/5 shadow-sm space-y-4">
-                    {[
-                      { rank: 1, name: 'Teja (You)', points: '14,200 pts', active: true },
-                      { rank: 2, name: 'Alex Mercer', points: '13,800 pts', active: false },
-                      { rank: 3, name: 'Sarah Connor', points: '12,100 pts', active: false },
-                      { rank: 4, name: 'Mike Miller', points: '10,950 pts', active: false },
-                      { rank: 5, name: 'Emily Rose', points: '9,800 pts', active: false }
-                    ].map((user) => (
-                      <div
-                        key={user.rank}
-                        className={`flex items-center justify-between p-3 rounded-2xl border transition ${user.active ? 'bg-primary-soft border border-primary/20' : 'bg-transparent border-white/5'}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-black ${user.rank === 1 ? 'bg-amber-400 text-black' : user.rank === 2 ? 'bg-slate-300 text-black' : 'bg-white/10 text-[var(--text-dim)]'}`}>
-                            {user.rank}
-                          </span>
-                          <span className="text-xs font-extrabold text-[var(--text)]">{user.name}</span>
-                        </div>
-                        <span className="text-[10px] font-black text-primary">{user.points}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              flags.competitions
+                ? <CommunityPage />
+                : (
+                  <LockedFeature
+                    title="Community & Competitions"
+                    description="Daily challenges, small-group competitions and a weekly leaderboard with your friends."
+                  />
+                )
             )}
 
             {/* TAB 6: SETTINGS */}
@@ -662,7 +549,7 @@ export default function App() {
 
           {/* BOTTOM FOOTER CUSTOM STYLED */}
           <footer className="mt-16 pt-8 border-t border-white/5 animate-fade-in text-left">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: 'var(--primary)' }}>
@@ -684,39 +571,10 @@ export default function App() {
                   <li><button onClick={() => setActiveTab('Progress')} className="hover:text-primary transition">Progress</button></li>
                 </ul>
               </div>
-
-              <div>
-                <h5 className="text-[10px] font-black uppercase tracking-wider text-[var(--text)] mb-3">Resources</h5>
-                <ul className="space-y-2 text-[10px] text-[var(--text-dim)] font-bold">
-                  <li><a href="#" className="hover:text-primary transition">Blog</a></li>
-                  <li><a href="#" className="hover:text-primary transition">Recipes</a></li>
-                  <li><a href="#" className="hover:text-primary transition">Guides</a></li>
-                  <li><a href="#" className="hover:text-primary transition">Support</a></li>
-                </ul>
-              </div>
-
-              <div className="space-y-3 text-left">
-                <h5 className="text-[10px] font-black uppercase tracking-wider text-[var(--text)]">Stay Updated</h5>
-                <p className="text-[10px] text-[var(--text-dim)] font-medium">Get tips, recipes & updates straight to your inbox.</p>
-                <div className="flex gap-2">
-                  <input
-                    type="email"
-                    placeholder="Enter your email"
-                    className="rounded-xl px-3 py-2 text-xs bg-white/5 border border-white/10 outline-none text-[var(--text)] w-full"
-                  />
-                  <button className="py-2 px-3 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-hover transition">
-                    Subscribe
-                  </button>
-                </div>
-              </div>
             </div>
 
             <div className="flex flex-col sm:flex-row justify-between items-center gap-3 py-4 border-t border-white/5 text-[9px] text-[var(--text-faint)] font-bold">
-              <span>© 2026 TitanTrack. All rights reserved.</span>
-              <div className="flex gap-4">
-                <a href="#" className="hover:text-primary transition">Privacy Policy</a>
-                <a href="#" className="hover:text-primary transition">Terms of Service</a>
-              </div>
+              <span>© {new Date().getFullYear()} TitanTrack. All rights reserved.</span>
             </div>
           </footer>
 

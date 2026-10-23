@@ -77,8 +77,7 @@ export function AchievementsCard({ state, update }) {
                 currentProgress: totalMealsLoggedCount > 0 ? 1 : 0,
                 targetValue: 1,
                 isUnlocked: totalMealsLoggedCount > 0,
-                unlockedDate: 'Aug 10',
-                communityStatus: 'Owned by 98% of Titan Community'
+                unlockedDate: null
             },
             {
                 id: 'streak_3',
@@ -94,8 +93,7 @@ export function AchievementsCard({ state, update }) {
                 currentProgress: streakDays,
                 targetValue: 3,
                 isUnlocked: streakDays >= 3,
-                unlockedDate: 'Aug 12',
-                communityStatus: 'Top 45% Community Streak'
+                unlockedDate: null
             },
             {
                 id: 'streak_7',
@@ -111,8 +109,7 @@ export function AchievementsCard({ state, update }) {
                 currentProgress: streakDays,
                 targetValue: 7,
                 isUnlocked: streakDays >= 7,
-                unlockedDate: null,
-                communityStatus: 'Top 15% Elite Community Badge'
+                unlockedDate: null
             },
             {
                 id: 'hydration_single',
@@ -128,8 +125,7 @@ export function AchievementsCard({ state, update }) {
                 currentProgress: currentWaterMl,
                 targetValue: 2500,
                 isUnlocked: currentWaterMl >= 2500,
-                unlockedDate: 'Aug 11',
-                communityStatus: 'Owned by 72% of Hydration Champions'
+                unlockedDate: null
             },
             {
                 id: 'hydration_10k',
@@ -145,8 +141,7 @@ export function AchievementsCard({ state, update }) {
                 currentProgress: totalCumulativeWaterMl,
                 targetValue: 10000,
                 isUnlocked: totalCumulativeWaterMl >= 10000,
-                unlockedDate: null,
-                communityStatus: 'Legendary Hydration Status'
+                unlockedDate: null
             },
             {
                 id: 'protein_power',
@@ -162,8 +157,7 @@ export function AchievementsCard({ state, update }) {
                 currentProgress: foodsLogged.reduce((sum, f) => sum + (f.protein || 0), 0),
                 targetValue: Math.round(activeWeight * 0.8),
                 isUnlocked: foodsLogged.reduce((sum, f) => sum + (f.protein || 0), 0) >= Math.round(activeWeight * 0.8),
-                unlockedDate: null,
-                communityStatus: 'Top 30% Muscle Recovery Badge'
+                unlockedDate: null
             },
             {
                 id: 'meal_master',
@@ -179,8 +173,7 @@ export function AchievementsCard({ state, update }) {
                 currentProgress: totalMealsLoggedCount,
                 targetValue: 5,
                 isUnlocked: totalMealsLoggedCount >= 5,
-                unlockedDate: null,
-                communityStatus: 'Community Food Log Leader'
+                unlockedDate: null
             },
             {
                 id: 'iron_warrior',
@@ -196,8 +189,7 @@ export function AchievementsCard({ state, update }) {
                 currentProgress: (currentLog.gym > 0 || currentLog.walk > 0) ? 1 : 0,
                 targetValue: 1,
                 isUnlocked: (currentLog.gym > 0 || currentLog.walk > 0),
-                unlockedDate: 'Aug 10',
-                communityStatus: 'Fitness Community Active Member'
+                unlockedDate: null
             },
             {
                 id: 'transformation_init',
@@ -213,8 +205,7 @@ export function AchievementsCard({ state, update }) {
                 currentProgress: (state.weight > 0 && state.goal) ? 1 : 0,
                 targetValue: 1,
                 isUnlocked: Boolean(state.weight > 0 && state.goal),
-                unlockedDate: 'Aug 10',
-                communityStatus: 'Verified Titan Profile'
+                unlockedDate: null
             },
             {
                 id: 'calorie_master',
@@ -230,8 +221,7 @@ export function AchievementsCard({ state, update }) {
                 currentProgress: 1,
                 targetValue: 1,
                 isUnlocked: true,
-                unlockedDate: 'Aug 10',
-                communityStatus: 'Top Calorie Discipline'
+                unlockedDate: null
             },
             {
                 id: 'community_advocate',
@@ -247,8 +237,7 @@ export function AchievementsCard({ state, update }) {
                 currentProgress: 1,
                 targetValue: 1,
                 isUnlocked: true,
-                unlockedDate: 'Aug 10',
-                communityStatus: 'Community Leader Tier'
+                unlockedDate: null
             },
             {
                 id: 'legendary_titan',
@@ -264,8 +253,7 @@ export function AchievementsCard({ state, update }) {
                 currentProgress: 0, // calculated dynamically below
                 targetValue: 6,
                 isUnlocked: false, // calculated dynamically below
-                unlockedDate: null,
-                communityStatus: 'Top 5% Global Community Legend'
+                unlockedDate: null
             }
         ];
     }, [streakDays, totalCumulativeWaterMl, totalMealsLoggedCount, currentWaterMl, foodsLogged, activeWeight, currentLog, state]);
@@ -589,9 +577,6 @@ export function AchievementsCard({ state, update }) {
                                         <p className="text-xs text-[#555954] dark:text-[#B3BAB4] font-medium leading-relaxed">
                                             {ach.desc}
                                         </p>
-                                        <div className="text-[10px] text-amber-500 font-extrabold flex items-center gap-1 pt-1">
-                                            <Sparkles size={12} /> {ach.communityStatus}
-                                        </div>
                                     </div>
 
                                     <div className="space-y-2">

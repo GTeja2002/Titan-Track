@@ -2,7 +2,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Flame, Droplet, Footprints, Check, Play, ChevronLeft, ChevronRight,
-  TrendingUp, ArrowRight, Bell, Star, Trash2, X, CalendarDays, ChevronDown,
+  TrendingUp, ArrowRight, Star, Trash2, X, CalendarDays, ChevronDown,
   Zap, Utensils, Database, Scale, Dumbbell, BarChart3, Heart, Clock,
   Leaf, Target
 } from 'lucide-react';
@@ -14,6 +14,7 @@ import { PersonalizedPlanCard } from './PersonalizedPlanCard.jsx';
 import WaterTrackerCard from './WaterTrackerCard.jsx';
 import { MetricCard } from './MetricCard.jsx';
 import { AchievementsCard } from './AchievementsCard.jsx';
+import { LockedFeature } from './shared/LockedFeature.jsx';
 
 /** Metric hue per meal slot, cycled down the daily list so the rows read as a
  *  sequence rather than four identical cards. */
@@ -40,7 +41,8 @@ export function Dashboard({
   onNavigate,
   addAvailableFood,
   removeAvailableFood,
-  applyPlanFilters
+  applyPlanFilters,
+  flags = {}
 }) {
   // Navigation helper to switch parent tabs
   const goToTab = (tabName) => {
@@ -502,14 +504,6 @@ export function Dashboard({
         </div>
 
         <div className="flex items-center gap-3 sm:gap-4">
-          <button
-            type="button"
-            className="relative flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-black/5"
-            aria-label="Notifications"
-          >
-            <Bell size={19} style={{ color: 'var(--text-dim)' }} />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full" style={{ background: 'var(--danger)' }} />
-          </button>
           <button
             type="button"
             onClick={() => onNavigate && onNavigate('Settings')}
@@ -1271,9 +1265,6 @@ export function Dashboard({
       <section className="space-y-4 text-left">
         <div className="flex items-center justify-between border-b pb-2 border-[#E7E6E0] dark:border-[#2C332E]">
           <h2 className="text-lg font-black tracking-tight text-[#171817] dark:text-[#F4F5F2]">Tips & Knowledge</h2>
-          <button onClick={() => goToTab('Nutrition')} className="text-xs font-bold text-primary hover:underline hover:text-primary-hover">
-            View All Articles &gt;
-          </button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
@@ -1335,8 +1326,18 @@ export function Dashboard({
         )}
       </section>
 
-      {/* 8. Achievements & Gamification Section */}
-      <AchievementsCard state={state} update={update} />
+      {/* 8. Achievements & Gamification Section — behind the achievements
+          flag (lib/features.js). Locked, it renders no badges and evaluates
+          nothing. */}
+      {flags.achievements ? (
+        <AchievementsCard state={state} update={update} />
+      ) : (
+        <LockedFeature
+          compact
+          title="Achievements"
+          description="Badges and milestones for your streaks, hydration and food logging."
+        />
+      )}
 
       {/* 9. CTA Banner bottom */}
       < section
