@@ -19,6 +19,9 @@ export function useHealthSteps({ enabled, update }) {
   const native = isNativeApp();
   const active = native && enabled;
   const [status, setStatus] = useState(native ? 'checking' : 'unsupported');
+  // What the last read actually returned, shown on the Activity card so a
+  // "0 steps" or a Health Connect error is visible instead of silent.
+  const [lastRead, setLastRead] = useState({ at: null, steps: null, error: null });
   const busy = useRef(false);
 
   const refresh = useCallback(async () => {
@@ -27,12 +30,17 @@ export function useHealthSteps({ enabled, update }) {
     try {
       const access = await getStepAccess();
       setStatus(access);
+      if (access === 'error') {
+        setLastRead({ at: new Date().toISOString(), steps: null, error: 'Could not reach Health Connect.' });
+      }
       if (access === 'connected') {
         const steps = await readTodaySteps();
+        setLastRead({ at: new Date().toISOString(), steps, error: null });
         update((prev) => applyTodaySteps(prev, steps));
       }
-    } catch {
+    } catch (err) {
       setStatus('error');
+      setLastRead({ at: new Date().toISOString(), steps: null, error: err?.message || String(err) });
     } finally {
       busy.current = false;
     }
@@ -67,6 +75,7 @@ export function useHealthSteps({ enabled, update }) {
 
   return {
     status,
+    lastRead,
     refresh,
     requestAccess,
     askOnce,

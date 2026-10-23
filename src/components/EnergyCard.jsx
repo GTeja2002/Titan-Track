@@ -3,6 +3,7 @@
 import { Zap, ArrowDownCircle, ArrowUpCircle, Target, Flame } from 'lucide-react';
 import { calculateWalkCalories } from '../lib/calculations.js';
 import { getCalorieTarget } from '../lib/dailyTotals.js';
+import { walkingKmForDay } from '../lib/activity.js';
 
 export function StatRow({ icon, label, value, unit, color }) {
   return (
@@ -29,7 +30,8 @@ export function EnergyCard({ state }) {
 
   const log = state.logs[state.currentDate];
   const intake = log ? log.foods.reduce((s, f) => s + (f.cal || 0), 0) : 0;
-  const walkBurn = calculateWalkCalories(log?.walk || 0, activeWeight);
+  // Steps distance or a hand-logged walk, whichever is larger (never both).
+  const walkBurn = calculateWalkCalories(walkingKmForDay(log, state).km, activeWeight);
   const totalBurned = walkBurn + (log?.gym || 0);
   const remaining = calorieTarget - (intake - totalBurned);
   const pct = Math.max(0, Math.min(100, Math.round((intake / calorieTarget) * 100)));

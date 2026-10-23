@@ -2,37 +2,30 @@
 
 import { useRef } from 'react';
 import { Scale, Dumbbell, Footprints, RotateCcw, Zap, ArrowRight, PersonStanding, Target } from 'lucide-react';
-import { calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCalories, calculateWalkCalories } from '../lib/calculations.js';
-import { getLocalDateString } from '../lib/date.js';
+import { calculateWalkCalories } from '../lib/calculations.js';
+import { walkingKmForDay } from '../lib/activity.js';
 import { createEmptyLog } from '../lib/useAppState.js';
 
-export function ActivityCard({ state, update }) {
+export function ActivityCard({ state, update, health = null, onEditProfile }) {
   const log = state.logs[state.currentDate];
   const walkInputRef = useRef(null);
 
+  // Walk (km) and gym (minutes) for the viewed day. Weight is no longer
+  // edited here — it belongs to the profile editor (one source of truth).
   const setField = (field, value) => {
     const val = value === '' ? '' : (parseFloat(value) || 0);
     update((prev) => {
       const date = prev.currentDate;
       const currentLog = prev.logs[date] || createEmptyLog();
-      const updatedLog = { ...currentLog, [field]: val };
-      const next = { ...prev, logs: { ...prev.logs, [date]: updatedLog } };
-
-      if (field === 'weight' && typeof val === 'number' && val > 0) {
-        const todayStr = getLocalDateString();
-        if (date === todayStr) {
-          next.weight = val;
-          const bmr = calculateBMR(next.gender, next.age, next.weight, next.height);
-          const tdee = calculateTDEE(bmr, next.activityLevel);
-          const days = getRemainingDays(next.currentDate, next.goalTargetDate);
-          next.calorieTarget = calculateDailyCalories(next.goal, tdee, next.weight, next.goalWeight, days);
-        }
-      }
-      return next;
+      return { ...prev, logs: { ...prev.logs, [date]: { ...currentLog, [field]: val } } };
     });
   };
 
-  const walkBurn = calculateWalkCalories(log?.walk || 0, state.weight ?? 70);
+  // Distance from steps (estimated from height) and the walking distance
+  // used for calories: steps or a manual walk, whichever is larger.
+  const steps = log?.steps || 0;
+  const walking = walkingKmForDay(log, state);
+  const walkBurn = calculateWalkCalories(walking.km, state.weight ?? 70);
 
   return (
     <div className="panel-card h-full rounded-[var(--radius-card)] p-[var(--space-card)] flex flex-col text-left">
@@ -98,9 +91,16 @@ export function ActivityCard({ state, update }) {
             style={{ color: 'var(--text)' }}
           />
           <div className="mt-0.5 flex items-center justify-between text-[12px]" style={{ color: 'var(--text-dim)' }}>
-            <span>km</span>
+            <span>km logged by hand</span>
             {walkBurn > 0 && <span style={{ color: 'var(--m-water-ink)' }}>~{walkBurn} kcal</span>}
           </div>
+          {walking.fromSteps > 0 && (
+            <p className="mt-1.5 text-[12px] leading-snug" style={{ color: 'var(--text-dim)' }}>
+              {walking.source === 'steps'
+                ? <>Using <strong style={{ color: 'var(--text)' }}>{walking.fromSteps} km</strong> from your steps for calories.</>
+                : <>Steps ≈ {walking.fromSteps} km; your logged walk is longer, so that is used.</>}
+            </p>
+          )}
 
           <button
             type="button"
@@ -122,17 +122,15 @@ export function ActivityCard({ state, update }) {
             <label className="mb-1.5 flex items-center gap-2 text-[13px] font-semibold" style={{ color: 'var(--text-dim)' }}>
               <Scale size={15} style={{ color: 'var(--m-steps)' }} /> Weight
             </label>
-            <input
-              type="number"
-              step="0.1"
-              value={log?.weight || ''}
-              onChange={(e) => setField('weight', e.target.value)}
-              placeholder="0"
-              aria-label="Weight in kilograms"
-              className="w-full bg-transparent text-[28px] font-bold outline-none"
-              style={{ color: 'var(--text)' }}
-            />
-            <div className="mt-0.5 text-[12px]" style={{ color: 'var(--text-dim)' }}>kg today</div>
+            <p className="text-[28px] font-bold leading-tight" style={{ color: (log?.weight || state.weight) ? 'var(--text)' : 'var(--text-faint)' }}>
+              {log?.weight || state.weight || '—'}
+            </p>
+            <div className="mt-0.5 text-[12px]" style={{ color: 'var(--text-dim)' }}>kg{log?.weight ? ' today' : ' (profile)'}</div>
+            {onEditProfile && (
+              <button type="button" onClick={onEditProfile} className="mt-2 w-fit min-h-[36px] rounded-lg px-3 text-[12px] font-bold" style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }}>
+                Update weight
+              </button>
+            )}
           </div>
 
           <div
@@ -152,6 +150,69 @@ export function ActivityCard({ state, update }) {
           </div>
         </div>
       </div>
+
+      <StepsPanel steps={steps} km={walking.fromSteps} health={health} />
     </div>
+  );
+}
+
+/** Today's steps, the distance they add up to, and — on Android — what
+ *  Health Connect last returned, so a problem is visible rather than silent. */
+function StepsPanel({ steps, km, health }) {
+  const status = health?.status;
+  const read = health?.lastRead || {};
+  const timeLabel = read.at ? new Date(read.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null;
+  const onAndroid = status && status !== 'unsupported';
+
+  let note = null;
+  if (onAndroid) {
+    if (status === 'connected' && read.steps === 0) {
+      note = 'Health Connect has no steps for today yet. Make sure an app that counts steps (Google Fit, Samsung Health, Fitbit or your phone’s fitness app) is set to share steps with Health Connect.';
+    } else if (status === 'error') {
+      note = `Couldn’t read steps: ${read.error || 'Health Connect did not answer.'}`;
+    } else if (status === 'needs_permission') {
+      note = 'TitanTrack doesn’t have permission to read your steps yet.';
+    } else if (status === 'not_installed') {
+      note = 'Health Connect isn’t installed on this phone.';
+    }
+  }
+
+  return (
+    <section className="mt-3.5 rounded-[16px] border p-4" style={{ background: 'var(--m-steps-wash)', borderColor: 'var(--m-steps-edge, var(--border))' }} aria-label="Steps today">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="flex items-center gap-2 text-[13px] font-bold" style={{ color: 'var(--m-steps-ink)' }}>
+            <Footprints size={15} /> Steps today
+          </p>
+          <p className="mt-1 text-[26px] font-extrabold leading-none tabular-nums" style={{ color: 'var(--text)' }}>{steps.toLocaleString()}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-[12px] font-semibold" style={{ color: 'var(--text-dim)' }}>Distance (est.)</p>
+          <p className="text-[20px] font-extrabold leading-tight tabular-nums" style={{ color: 'var(--text)' }}>{km} km</p>
+        </div>
+      </div>
+
+      {onAndroid && (
+        <p className="mt-2 text-[12px]" style={{ color: 'var(--text-dim)' }}>
+          Health Connect: {status === 'connected' ? 'connected' : status.replace('_', ' ')}
+          {timeLabel ? ` · last read ${timeLabel}` : ''}
+          {read.steps != null ? ` · ${read.steps.toLocaleString()} steps found` : ''}
+        </p>
+      )}
+      {note && <p className="mt-1.5 text-[12.5px] leading-snug" style={{ color: 'var(--text)' }}>{note}</p>}
+
+      {onAndroid && (
+        <div className="mt-2.5 flex flex-wrap gap-2">
+          {status === 'needs_permission' && (
+            <button type="button" onClick={health.requestAccess} className="min-h-[40px] rounded-lg px-3 text-[12.5px] font-bold text-white" style={{ background: 'var(--m-steps)' }}>Allow steps</button>
+          )}
+          {status === 'not_installed' && (
+            <button type="button" onClick={health.install} className="min-h-[40px] rounded-lg px-3 text-[12.5px] font-bold text-white" style={{ background: 'var(--m-steps)' }}>Install Health Connect</button>
+          )}
+          <button type="button" onClick={health.refresh} className="min-h-[40px] rounded-lg border px-3 text-[12.5px] font-bold" style={{ borderColor: 'var(--border)', color: 'var(--text)', background: 'var(--surface-solid)' }}>Refresh steps</button>
+          <button type="button" onClick={health.openSettings} className="min-h-[40px] rounded-lg border px-3 text-[12.5px] font-bold" style={{ borderColor: 'var(--border)', color: 'var(--text)', background: 'var(--surface-solid)' }}>Open Health Connect</button>
+        </div>
+      )}
+    </section>
   );
 }

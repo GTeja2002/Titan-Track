@@ -1,41 +1,16 @@
 /* ---------------- components/BodyCompositionDashboard.jsx ---------------- */
 
 import { useMemo } from 'react';
-import { Activity, Scale, User, TrendingUp } from 'lucide-react';
+import { Activity, Scale, User, TrendingUp, Pencil } from 'lucide-react';
 import { calculateBMI, calculateBodyFat, calculateLeanMass, calculateFatMass, calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCalories, calculateIdealWeight, getBMICategory, getHealthSummary, getNearestBodyImage } from '../lib/calculations.js';
-import { getLocalDateString } from '../lib/date.js';
-import { createEmptyLog } from '../lib/useAppState.js';
 
-export function BodyCompositionDashboard({ state, update }) {
+export function BodyCompositionDashboard({ state, update, onEditProfile }) {
   const activeWeight = (state.logs[state.currentDate]?.weight !== undefined && state.logs[state.currentDate]?.weight !== null && state.logs[state.currentDate]?.weight !== '') ? state.logs[state.currentDate].weight : (state.weight ?? 70);
 
+  // Only the body-composition display settings are changed here (view angle,
+  // known body-fat %). User information is edited in the profile editor.
   const handleFieldChange = (field, value) => {
-    update((prev) => {
-      // Clone logs too: a shallow { ...prev } shares the same logs object, so
-      // writing into it mutates previous state in place and leaves state.logs
-      // reference-equal — silently staling every useMemo keyed on it.
-      const next = { ...prev, logs: { ...prev.logs } };
-
-      if (field === 'weight') {
-        const todayStr = getLocalDateString();
-        if (next.currentDate === todayStr) next.weight = value;
-        const date = next.currentDate;
-        if (!next.logs[date]) {
-          next.logs[date] = createEmptyLog();
-        }
-        next.logs[date] = { ...next.logs[date], weight: value };
-      } else {
-        next[field] = value;
-      }
-
-      const w = typeof next.weight === 'number' && next.weight > 0 ? next.weight : 70;
-      const gw = typeof next.goalWeight === 'number' && next.goalWeight > 0 ? next.goalWeight : 70;
-      const bmr = calculateBMR(next.gender, next.age, w, next.height);
-      const tdee = calculateTDEE(bmr, next.activityLevel);
-      const days = getRemainingDays(next.currentDate, next.goalTargetDate);
-      next.calorieTarget = calculateDailyCalories(next.goal, tdee, w, gw, days);
-      return next;
-    });
+    update((prev) => ({ ...prev, [field]: value }));
   };
 
   const stats = useMemo(() => {
@@ -57,30 +32,6 @@ export function BodyCompositionDashboard({ state, update }) {
     return { bmi, bfPercent, leanMass, fatMass, bmr, tdee, dailyCalories, idealWeight, summary, bmiCategory, imgPath };
   }, [state.gender, state.age, state.height, activeWeight, state.goal, state.activityLevel, state.overrideBodyFat, state.manualBodyFat, state.currentView, state.goalWeight, state.currentDate, state.goalTargetDate]);
 
-  const handleReset = () => {
-    update((prev) => {
-      const next = {
-        ...prev,
-        gender: 'male',
-        age: 42,
-        height: 175,
-        weight: 97.5,
-        goalWeight: 90,
-        startWeight: 96,
-        goal: 'lose-fat',
-        activityLevel: 'Moderate',
-        overrideBodyFat: false,
-        manualBodyFat: 18,
-        currentView: 'Front',
-      };
-      const bmr = calculateBMR(next.gender, next.age, next.weight, next.height);
-      const tdee = calculateTDEE(bmr, next.activityLevel);
-      const days = getRemainingDays(next.currentDate, next.goalTargetDate);
-      next.calorieTarget = calculateDailyCalories(next.goal, tdee, next.weight, next.goalWeight, days);
-      return next;
-    });
-  };
-
   return (
     <div className="grid grid-cols-12 gap-4 lg:gap-5">
       {/* USER INFO PANEL */}
@@ -91,139 +42,32 @@ export function BodyCompositionDashboard({ state, update }) {
             User Information
           </h2>
 
-          <div className="form-group flex flex-col gap-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]">Gender</label>
-            <div className="segmented-group">
-              <div
-                className={`segment-card ${state.gender === 'male' ? 'active' : ''}`}
-                onClick={() => handleFieldChange('gender', 'male')}
-              >
-                Male
+          <dl className="flex flex-col">
+            {[
+              ['Gender', state.gender === 'male' ? 'Male' : state.gender === 'female' ? 'Female' : 'Not set'],
+              ['Age', state.age ? `${state.age} years` : 'Not set'],
+              ['Height', state.height ? `${state.height} cm` : 'Not set'],
+              ['Starting weight', state.startWeight ? `${state.startWeight} kg` : 'Not set'],
+              ['Current weight', activeWeight ? `${activeWeight} kg` : 'Not set'],
+              ['Goal weight', state.goalWeight ? `${state.goalWeight} kg` : 'Not set'],
+              ['Activity level', state.activityLevel || 'Not set'],
+            ].map(([label, value], i) => (
+              <div key={label} className="flex items-center justify-between gap-3 py-2" style={{ borderTop: i ? '1px solid var(--border)' : 'none' }}>
+                <dt className="text-[13px]" style={{ color: 'var(--text-dim)' }}>{label}</dt>
+                <dd className="text-[13.5px] font-bold" style={{ color: value === 'Not set' ? 'var(--text-faint)' : 'var(--text)' }}>{value}</dd>
               </div>
-              <div
-                className={`segment-card ${state.gender === 'female' ? 'active' : ''}`}
-                onClick={() => handleFieldChange('gender', 'female')}
-              >
-                Female
-              </div>
-            </div>
-          </div>
-
-          <div className="form-group flex flex-col gap-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]" htmlFor="age-input">Age</label>
-            <input
-              id="age-input"
-              type="number"
-              min="10"
-              max="100"
-              value={state.age}
-              onChange={(e) => handleFieldChange('age', parseInt(e.target.value) || 0)}
-              className="rounded-xl border px-3 py-2.5 text-sm bg-[var(--bg-2)] border-[var(--border)] text-[var(--text)] outline-none"
-            />
-          </div>
-
-          <div className="form-group flex flex-col gap-1.5">
-            <div className="flex justify-between items-center">
-              <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]">Height</label>
-              <span className="text-sm font-bold text-[var(--primary)]">{state.height} cm</span>
-            </div>
-            <div className="input-with-unit">
-              <input
-                type="range"
-                min="100"
-                max="250"
-                value={state.height}
-                onChange={(e) => handleFieldChange('height', parseInt(e.target.value) || 100)}
-                className="w-full accent-[var(--primary)]"
-              />
-            </div>
-          </div>
-
-          <div className="form-group flex flex-col gap-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]" htmlFor="start-weight-input">Starting Weight</label>
-            <div className="input-with-unit">
-              <input
-                id="start-weight-input"
-                type="number"
-                min="30"
-                max="250"
-                value={state.startWeight || activeWeight}
-                onChange={(e) => handleFieldChange('startWeight', parseFloat(e.target.value) || 0)}
-                className="rounded-xl border px-3 py-2.5 text-sm bg-[var(--bg-2)] border-[var(--border)] text-[var(--text)] outline-none w-full"
-              />
-              <span>kg</span>
-            </div>
-          </div>
-
-          <div className="form-group flex flex-col gap-1.5">
-            <div className="flex justify-between items-center">
-              <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]">Current Weight</label>
-              <span className="text-sm font-bold text-[var(--primary)]">{activeWeight} kg</span>
-            </div>
-            <input
-              type="range"
-              min="30"
-              max="250"
-              value={activeWeight}
-              onChange={(e) => handleFieldChange('weight', parseFloat(e.target.value) || 30)}
-              className="w-full accent-[var(--primary)]"
-            />
-          </div>
-
-          <div className="form-group flex flex-col gap-1.5">
-            <div className="flex justify-between items-center">
-              <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]">Goal Weight</label>
-              <span className="text-sm font-bold text-[var(--primary)]">{state.goalWeight} kg</span>
-            </div>
-            <input
-              type="range"
-              min="30"
-              max="250"
-              value={state.goalWeight}
-              onChange={(e) => handleFieldChange('goalWeight', parseFloat(e.target.value) || 30)}
-              className="w-full accent-[var(--primary)]"
-            />
-          </div>
-
-          <div className="form-group flex flex-col gap-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]">Fitness Goal</label>
-            <div className="chip-grid">
-              <div
-                className={`chip-card ${state.goal === 'lose-fat' ? 'active' : ''}`}
-                onClick={() => handleFieldChange('goal', 'lose-fat')}
-              >
-                Lose Fat
-              </div>
-              <div
-                className={`chip-card ${state.goal === 'maintain' ? 'active' : ''}`}
-                onClick={() => handleFieldChange('goal', 'maintain')}
-              >
-                Maintain
-              </div>
-              <div
-                className={`chip-card ${state.goal === 'gain-muscle' ? 'active' : ''}`}
-                onClick={() => handleFieldChange('goal', 'gain-muscle')}
-              >
-                Gain Muscle
-              </div>
-            </div>
-          </div>
-
-          <div className="form-group flex flex-col gap-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-dim)]" htmlFor="activity-compose">Activity Level</label>
-            <select
-              id="activity-compose"
-              value={state.activityLevel}
-              onChange={(e) => handleFieldChange('activityLevel', e.target.value)}
-              className="rounded-xl border px-3 py-2 text-sm bg-[var(--bg-2)] border-[var(--border)] text-[var(--text)] outline-none"
+            ))}
+          </dl>
+          {onEditProfile && (
+            <button
+              type="button"
+              onClick={onEditProfile}
+              className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl text-[13px] font-bold"
+              style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }}
             >
-              <option value="Sedentary">Sedentary</option>
-              <option value="Light">Light</option>
-              <option value="Moderate">Moderate</option>
-              <option value="Active">Active</option>
-              <option value="Athlete">Athlete</option>
-            </select>
-          </div>
+              <Pencil size={14} /> Edit profile
+            </button>
+          )}
 
           <div className="form-group flex flex-col pt-1">
             <label className="flex items-center gap-2 cursor-pointer text-sm">
@@ -405,16 +249,6 @@ export function BodyCompositionDashboard({ state, update }) {
             </ul>
           </div>
 
-          <div className="flex gap-2.5 mt-2">
-            <button
-              type="button"
-              onClick={handleReset}
-              className="rounded-xl py-3 text-xs font-bold transition hover:brightness-95 active:scale-95 w-full"
-              style={{ background: 'var(--chip-bg)', color: 'var(--text-dim)' }}
-            >
-              Reset Settings
-            </button>
-          </div>
         </div>
       </div>
     </div>

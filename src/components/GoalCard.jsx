@@ -1,11 +1,12 @@
 /* ---------------- components/GoalCard.jsx ---------------- */
 
-import { TrendingDown, Scale, Target } from 'lucide-react';
-import { calculateBMR, calculateTDEE, getRemainingDays, calculateDailyCalories, DEFAULT_GOAL_HORIZON_DAYS } from '../lib/calculations.js';
+import { TrendingDown, Scale, Target, Pencil } from 'lucide-react';
+import { DEFAULT_GOAL_HORIZON_DAYS } from '../lib/calculations.js';
 import { getLocalDateString, shiftDateString } from '../lib/date.js';
-import { createEmptyLog } from '../lib/useAppState.js';
 
-export function GoalCard({ state, update }) {
+/** Read-only: weight and goal are edited only in the profile editor
+ *  (onEditProfile), so values here can never drift from the profile. */
+export function GoalCard({ state, onEditProfile }) {
   const activeWeight = (state.logs[state.currentDate]?.weight !== undefined && state.logs[state.currentDate]?.weight !== null && state.logs[state.currentDate]?.weight !== '') ? state.logs[state.currentDate].weight : (state.weight ?? 70);
   const startW = state.startWeight || activeWeight;
   const goalW = state.goalWeight || activeWeight;
@@ -58,36 +59,6 @@ export function GoalCard({ state, update }) {
     paceText = 'Challenging';
   }
 
-  const handleWeightChange = (field, val) => {
-    update((prev) => {
-      // Clone logs too: a shallow { ...prev } shares the same logs object, so
-      // writing into it mutates previous state in place and leaves state.logs
-      // reference-equal — silently staling every useMemo keyed on it.
-      const next = { ...prev, logs: { ...prev.logs } };
-
-      if (field === 'weight') {
-        const todayStr = getLocalDateString();
-        if (next.currentDate === todayStr) next.weight = val;
-        const date = next.currentDate;
-        if (!next.logs[date]) {
-          next.logs[date] = createEmptyLog();
-        }
-        next.logs[date] = { ...next.logs[date], weight: val };
-      } else {
-        next[field] = val;
-      }
-
-      const w = typeof next.weight === 'number' && next.weight > 0 ? next.weight : 70;
-      const gw = typeof next.goalWeight === 'number' && next.goalWeight > 0 ? next.goalWeight : 70;
-      const bmr = calculateBMR(next.gender, next.age, w, next.height);
-      const tdee = calculateTDEE(bmr, next.activityLevel);
-      const days = getRemainingDays(next.currentDate, next.goalTargetDate);
-      next.calorieTarget = calculateDailyCalories(next.goal, tdee, w, gw, days);
-
-      return next;
-    });
-  };
-
   return (
     <div className="nutrition-panel h-full rounded-[var(--radius-card)] p-[var(--space-card)] flex flex-col">
       <div className="flex items-center justify-between">
@@ -95,7 +66,13 @@ export function GoalCard({ state, update }) {
           <TrendingDown size={14} style={{ color: 'var(--primary)' }} />
           Goal Progress
         </div>
-        <Scale size={16} style={{ color: 'var(--text-faint)' }} />
+        {onEditProfile ? (
+          <button type="button" onClick={onEditProfile} className="flex min-h-[36px] items-center gap-1 rounded-lg px-2.5 text-[12px] font-bold" style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }}>
+            <Pencil size={13} /> Edit
+          </button>
+        ) : (
+          <Scale size={16} style={{ color: 'var(--text-faint)' }} />
+        )}
       </div>
 
       <div className="my-4 flex flex-col items-center justify-center flex-1">
@@ -135,40 +112,20 @@ export function GoalCard({ state, update }) {
         <div>
           <div className="text-[10px] uppercase font-bold tracking-wider mb-2" style={{ color: 'var(--text-faint)' }}>Start</div>
           <div className="text-sm font-extrabold pb-1.5" style={{ color: 'var(--text-dim)' }}>
-            {startW} <span className="text-[10px] font-normal">kg</span>
+            {state.startWeight ? <>{state.startWeight} <span className="text-[10px] font-normal">kg</span></> : '—'}
           </div>
         </div>
         <div className="rounded-xl py-1 px-1" style={{ background: 'var(--primary-soft)' }}>
           <div className="text-[10px] uppercase font-bold tracking-wider mb-1" style={{ color: 'var(--primary)' }}>Current</div>
           <div className="flex items-center justify-center gap-0.5">
-            <input
-              type="number"
-              step="0.1"
-              value={activeWeight === 0 || activeWeight === '' || activeWeight === null || activeWeight === undefined ? '' : activeWeight}
-              onChange={(e) => {
-                const val = e.target.value;
-                handleWeightChange('weight', val === '' ? '' : (parseFloat(val) || 0));
-              }}
-              className="w-16 text-center bg-transparent border-b border-[var(--primary-glow)] outline-none text-base font-extrabold"
-              style={{ color: 'var(--primary)' }}
-            />
+            <span className="text-base font-extrabold" style={{ color: 'var(--primary)' }}>{activeWeight || '—'}</span>
             <span className="text-[10px] font-bold" style={{ color: 'var(--primary)' }}>kg</span>
           </div>
         </div>
         <div>
           <div className="text-[10px] uppercase font-bold tracking-wider mb-1" style={{ color: 'var(--text-faint)' }}>Target</div>
           <div className="flex items-center justify-center gap-0.5">
-            <input
-              type="number"
-              step="0.1"
-              value={goalW === 0 || goalW === '' || goalW === null || goalW === undefined ? '' : goalW}
-              onChange={(e) => {
-                const val = e.target.value;
-                handleWeightChange('goalWeight', val === '' ? '' : (parseFloat(val) || 0));
-              }}
-              className="w-16 text-center bg-transparent border-b border-[var(--border)] outline-none text-base font-bold"
-              style={{ color: 'var(--text)' }}
-            />
+            <span className="text-base font-bold" style={{ color: 'var(--text)' }}>{state.goalWeight || '—'}</span>
             <span className="text-[10px]" style={{ color: 'var(--text-dim)' }}>kg</span>
           </div>
         </div>
@@ -177,12 +134,11 @@ export function GoalCard({ state, update }) {
       <div className="mt-4 pt-3 border-t border-[var(--border)] flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 text-xs">
           <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-faint)' }}>Target Date</span>
-          <input
-            type="date"
-            value={targetDateStr}
-            onChange={(e) => update((prev) => ({ ...prev, goalTargetDate: e.target.value }))}
-            className="bg-transparent border-none outline-none font-bold text-xs cursor-pointer text-[var(--text)]"
-          />
+          <span className="font-bold text-xs text-[var(--text)]">
+            {state.goalTargetDate
+              ? new Date(`${state.goalTargetDate}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+              : 'Not set'}
+          </span>
         </div>
         <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/5 border border-[var(--border)]">
           <span

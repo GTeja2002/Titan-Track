@@ -6,6 +6,7 @@
 import { Flame, Zap, Droplet, Footprints } from 'lucide-react';
 import { MetricCard } from './MetricCard.jsx';
 import { getDailyTotals } from '../lib/dailyTotals.js';
+import { stepsToKm } from '../lib/activity.js';
 
 export function MetricRow({ state, onOpenNutrition, onOpenWorkouts }) {
   // Protein is shown to one decimal at most; long floats read as noise.
@@ -56,7 +57,7 @@ export function MetricRow({ state, onOpenNutrition, onOpenWorkouts }) {
         value={t.steps}
         target={t.stepsTarget}
         unit="steps"
-        footnote={`${t.steps >= t.stepsTarget ? 'Target met' : `${Math.max(0, t.stepsTarget - t.steps).toLocaleString()} to go`}${t.stepsSource === 'health_connect' ? ' · Health Connect' : ''}`}
+        footnote={`${t.steps > 0 ? `≈ ${stepsToKm(t.steps, state.height, state.gender)} km · ` : ''}${t.steps >= t.stepsTarget ? 'Target met' : `${Math.max(0, t.stepsTarget - t.steps).toLocaleString()} to go`}${t.stepsSource === 'health_connect' ? ' · Health Connect' : ''}`}
         progress={t.stepsPct}
         onOpen={onOpenWorkouts}
       />

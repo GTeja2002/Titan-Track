@@ -1,5 +1,6 @@
 /* ---------------- components/Dashboard.jsx ---------------- */
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Flame, Droplet, Footprints, Check, Play, ChevronLeft, ChevronRight,
   TrendingUp, ArrowRight, Star, Trash2, X, CalendarDays, ChevronDown,
@@ -1265,37 +1266,52 @@ export function Dashboard({
           ))}
         </div>
 
-        {/* Inline Tip Detail Box */}
-        {activeTipModal && (
-          <div className="mt-4 p-5 rounded-3xl bg-[#FAF9F5] dark:bg-[#161B18] border border-[#E7E6E0] dark:border-[#2C332E] space-y-4 animate-fade-in text-left relative col-span-full">
-            <button
-              onClick={() => setActiveTipModal(null)}
-              className="absolute top-4 right-4 p-1.5 px-3 rounded-xl text-xs font-extrabold bg-[#EBEAE3] dark:bg-[#2B322D] hover:bg-[#DCDCD5] dark:hover:bg-[#38423B] transition text-[#171817] dark:text-[#F4F5F2]"
+        {/* Tip reader: a sheet over the screen (portalled to <body>) so it opens
+            where the user is looking, instead of below all four tips. */}
+        {activeTipModal && createPortal(
+          <div
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in"
+            style={{ background: 'rgba(0,0,0,0.55)' }}
+            onClick={() => setActiveTipModal(null)}
+          >
+            <article
+              role="dialog"
+              aria-modal="true"
+              aria-label={activeTipModal.title}
+              onClick={(e) => e.stopPropagation()}
+              className="sheet w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl text-left overflow-hidden animate-scale-in"
+              style={{ background: 'var(--surface-solid)', border: '1px solid var(--border)' }}
             >
-              ✕ Close Reader
-            </button>
-            <div className="flex flex-col md:flex-row gap-5">
-              <div className="md:w-1/4 shrink-0">
+              <span aria-hidden="true" className="mx-auto mt-2 block h-1 w-10 rounded-full sm:hidden" style={{ background: 'var(--border-strong)' }} />
+              <div className="sheet-body px-5 pb-5 pt-3 sm:p-6">
                 <img
                   src={activeTipModal.image}
-                  alt={activeTipModal.title}
-                  className="w-full h-32 object-cover rounded-2xl border border-[var(--border)]"
+                  alt=""
+                  className="h-40 w-full rounded-2xl object-cover"
+                  style={{ border: '1px solid var(--border)' }}
                   onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/onboarding-bg.webp"; }}
                 />
-              </div>
-              <div className="flex-1 space-y-3">
-                <div>
-                  <h3 className="text-sm font-black text-[#171817] dark:text-[#F4F5F2] leading-snug">{activeTipModal.title}</h3>
-                  <span className="text-[9px] text-[#939C96] font-bold block mt-0.5">📜 Health & Wellness Advice • {activeTipModal.readTime}</span>
-                </div>
-                <div className="space-y-2 text-xs text-[#555954] dark:text-[#B3BAB4] font-medium leading-relaxed">
+                <h3 className="mt-4 text-[17px] font-black leading-snug" style={{ color: 'var(--text)' }}>{activeTipModal.title}</h3>
+                <p className="mt-0.5 text-[12px] font-semibold" style={{ color: 'var(--text-faint)' }}>Health &amp; wellness advice · {activeTipModal.readTime}</p>
+                <div className="mt-3 space-y-2.5 text-[14px] leading-relaxed" style={{ color: 'var(--text-dim)' }}>
                   {activeTipModal.content.map((p, i) => (
                     <p key={i}>{p}</p>
                   ))}
                 </div>
               </div>
-            </div>
-          </div>
+              <div className="sheet-actions px-5 py-3 sm:px-6">
+                <button
+                  type="button"
+                  onClick={() => setActiveTipModal(null)}
+                  className="min-h-[48px] w-full rounded-xl text-sm font-bold"
+                  style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }}
+                >
+                  Close
+                </button>
+              </div>
+            </article>
+          </div>,
+          document.body
         )}
       </section>
 

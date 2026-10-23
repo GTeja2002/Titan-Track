@@ -332,7 +332,7 @@ export default function App() {
                         consistency streak as their headline instead. */}
                     <div className={phoneOrder(4)}>
                       {isScaleGoal(state.goal) || state.trackWeight
-                        ? <GoalCard state={state} update={update} />
+                        ? <GoalCard state={state} onEditProfile={() => setIsProfileOpen(true)} />
                         : <ConsistencyCard state={state} />}
                     </div>
                     <div className={phoneOrder(3)}><EnergyCard state={state} /></div>
@@ -360,7 +360,7 @@ export default function App() {
 
                 <div className="flex flex-col gap-[var(--space-section)] lg:grid lg:grid-cols-12 lg:items-start">
                   <div className="contents lg:flex lg:col-span-8 lg:flex-col lg:gap-[var(--space-section)]">
-                    <div className={phoneOrder(1)}><ActivityCard state={state} update={update} /></div>
+                    <div className={phoneOrder(1)}><ActivityCard state={state} update={update} health={health} onEditProfile={() => setIsProfileOpen(true)} /></div>
                     <div className={phoneOrder(3)}>
                       <MetricRow
                         state={state}
@@ -420,13 +420,13 @@ export default function App() {
                   state={state}
                   onOpenDay={(date) => { onSelectDate(date); setActiveTab('Nutrition'); }}
                 />
-                <TrendCard state={state} />
+                <TrendCard state={state} onEditProfile={() => setIsProfileOpen(true)} />
                 {/* The body-fat silhouette viewer is opt-in. Showing a gallery
                     of bodies by fat percentage to someone who did not ask for
                     it is the most harmful thing this app could do by default,
                     and this audience skews young. */}
                 {state.showBodyComposition ? (
-                  <BodyCompositionDashboard state={state} update={update} />
+                  <BodyCompositionDashboard state={state} update={update} onEditProfile={() => setIsProfileOpen(true)} />
                 ) : (
                   <section className="m-card" aria-label="Body composition">
                     <h2 className="section-title">Body composition is off</h2>
