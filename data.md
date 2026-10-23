@@ -30,7 +30,7 @@ This document outlines the planned feature updates, UX enhancements, and structu
     - Set, Rep, and Weight logging per exercise.
     - Total volume calculation (kg lifted) and Personal Record (PR) tracking.
 
-- [ ] **4. Custom Recipe & Meal Creator** <!-- id: update-4 -->
+- [ ] **4. Custom Recipe & Meal Creator** <!-- id: update-4 --> *(single custom foods done via "+ What I Eat"; multi-ingredient recipes still to do)*
   - **Goal**: Allow users to save custom multi-ingredient recipes.
   - **Features**:
     - Recipe creator modal to combine ingredients from `FOOD_DB`.
@@ -106,14 +106,14 @@ loss the implicit identity of the product before the user had said anything.
 
 ### Blocked — needs a decision or a key, not just code
 
-- [ ] **A8. Real authentication** <!-- id: genz-8 -->
+- [x] **A8. Real authentication** <!-- id: genz-8 --> *(done: Supabase Auth + owner-only RLS, see docs/DEPLOYMENT.md)*
   - Login is a local profile key: typing any email opens that profile, and the
     Supabase RLS policy lets anyone with the anon key read or write any row.
     The six-digit code shown at sign-in is generated and checked in the browser.
   - **This blocks everything social.** Nobody should share health data through
     an account anyone can open. Needs Supabase Auth and a scoped RLS policy.
 
-- [ ] **A9. Real social, in small groups** <!-- id: genz-9 -->
+- [ ] **A9. Real social, in small groups** <!-- id: genz-9 --> *(fake feed removed; Community + Achievements locked behind feature flags until there are enough users)*
   - The Community tab is hardcoded: fake users, fake likes, a "Join Challenge"
     button with no handler.
   - Build friend-invite links and 3–6 person challenges rather than a public

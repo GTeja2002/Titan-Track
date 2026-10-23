@@ -1,0 +1,49 @@
+# Daily encrypted database backup — an independent copy that does not
+# depend on your Supabase plan's own backups.
+#
+# Secrets (GitHub → Settings → Secrets and variables → Actions):
+#   SUPABASE_DB_URL       Supabase → Project Settings → Database → Connection
+#                         string (URI, session pooler), with your DB password.
+#   BACKUP_PASSPHRASE     A long random passphrase. The dump is encrypted with
+#                         it before upload. KEEP IT SAFE — without it the
+#                         backups cannot be restored.
+#
+# Restore:  gpg -d titantrack-YYYY-MM-DD.sql.gz.gpg | gunzip | psql "$SUPABASE_DB_URL"
+name: Database backup
+
+on:
+  schedule:
+    - cron: '30 21 * * *'   # 03:00 IST daily
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install PostgreSQL 17 client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -qq postgresql-client-17
+
+      - name: Dump, compress, encrypt
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          test -n "$DB_URL" || { echo "::error::SUPABASE_DB_URL secret missing"; exit 1; }
+          test -n "$PASSPHRASE" || { echo "::error::BACKUP_PASSPHRASE secret missing"; exit 1; }
+          f="titantrack-$(date -u +%F).sql.gz.gpg"
+          /usr/lib/postgresql/17/bin/pg_dump "$DB_URL" --no-owner --no-privileges \
+            --schema=public --schema=auth \
+            | gzip -9 \
+            | gpg --batch --yes --symmetric --cipher-algo AES256 --passphrase "$PASSPHRASE" -o "$f"
+          ls -lh "$f"
+          echo "FILE=$f" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.FILE }}
+          path: ${{ env.FILE }}
+          retention-days: 90
