@@ -28,6 +28,7 @@ import { LockedFeature } from './components/shared/LockedFeature.jsx';
 import { useFeatureFlags } from './lib/useFeatureFlags.js';
 import { FullScreenMessage } from './components/shared/FullScreenMessage.jsx';
 import { HistoryCard } from './components/HistoryCard.jsx';
+import { HydrationCard } from './components/HydrationCard.jsx';
 import { WeeklySummaryCard } from './components/WeeklySummaryCard.jsx';
 import { DayDetailSheet } from './components/DayDetailSheet.jsx';
 import { SettingsPage } from './components/SettingsPage.jsx';
@@ -320,6 +321,7 @@ export default function App() {
                 applyPlanFilters={applyPlanFilters}
                 flags={flags}
                 health={health}
+                onEditProfile={() => setIsProfileOpen(true)}
               />
             )}
 
@@ -337,6 +339,7 @@ export default function App() {
                         ? <GoalCard state={state} onEditProfile={() => setIsProfileOpen(true)} />
                         : <ConsistencyCard state={state} />}
                     </div>
+                    <div className={phoneOrder(2)}><HydrationCard state={state} update={update} /></div>
                     <div className={phoneOrder(3)}><EnergyCard state={state} /></div>
                   </div>
                   <div className="contents lg:flex lg:col-span-7 lg:flex-col lg:gap-[var(--space-section)]">

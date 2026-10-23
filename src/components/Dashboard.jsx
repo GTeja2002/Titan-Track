@@ -14,7 +14,6 @@ import { getCalorieTarget, getDailyTotals } from '../lib/dailyTotals.js';
 import { createMealEntry, defaultMealForTime, planMealAsFood } from '../lib/nutrition.js';
 import { recipes, tips } from '../lib/wellnessContent.js';
 import { PersonalizedPlanCard } from './PersonalizedPlanCard.jsx';
-import WaterTrackerCard from './WaterTrackerCard.jsx';
 import { MetricRow } from './MetricRow.jsx';
 import { TodayCard } from './TodayCard.jsx';
 import { HealthConnectCard } from './HealthConnectCard.jsx';
@@ -58,7 +57,8 @@ export function Dashboard({
   removeAvailableFood,
   applyPlanFilters,
   flags = {},
-  health = null
+  health = null,
+  onEditProfile
 }) {
   // Navigation helper to switch parent tabs
   const goToTab = (tabName) => {
@@ -698,205 +698,14 @@ export function Dashboard({
           onLogMeal={() => goToTab('Nutrition')}
           onAddWater={() => handleWaterChange(250)}
           onLogActivity={() => goToTab('Workouts')}
+          onLogWeight={onEditProfile}
         />
       </div>
 
-      {/* 4. Daily meals, motivation and hydration */}
-      <section className="contents lg:grid lg:grid-cols-12 lg:gap-4">
-
-        {/* Left Column: Your Daily Meal Plan (Connected to Nutrition & Food Log) */}
-        <div className="order-8 lg:order-none lg:col-span-7 panel-card rounded-[var(--radius-card)] p-[var(--space-card)] text-left">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
-            <div className="flex items-start gap-3">
-              <Utensils size={28} style={{ color: 'var(--primary)' }} className="mt-1 shrink-0" strokeWidth={2.2} />
-              <div>
-                <h3 className="text-[17px] font-black tracking-tight leading-tight" style={{ color: 'var(--text)' }}>Your Daily Meals</h3>
-                <p className="text-[13.5px] font-medium mt-1" style={{ color: 'var(--text-dim)' }}>
-                  Planned meals for your day. Logged meals sync directly with your Nutrition target.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => goToTab('Nutrition')}
-              className="flex items-center gap-2 text-[13.5px] font-bold px-4 py-2.5 rounded-full transition hover:brightness-[0.97] active:scale-95 shrink-0"
-              style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }}
-            >
-              <span>Customize in Nutrition</span>
-              <ArrowRight size={14} />
-            </button>
-          </div>
-
-          {/* Weekday Selector Row */}
-          <div className="flex flex-wrap gap-2 mb-5">
-            {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => {
-              const isCurrentDay = day === getWeekdayName(state.currentDate);
-              const isSelected = day === selectedPlanWeekday;
-              return (
-                <button
-                  key={day}
-                  type="button"
-                  onClick={() => setSelectedPlanWeekday(day)}
-                  aria-current={isSelected ? 'true' : undefined}
-                  className="day-pill text-[12px] font-bold px-[15px] py-1.5 rounded-full transition"
-                  style={isSelected
-                    ? { background: 'var(--primary)', color: '#fff', boxShadow: '0 4px 12px var(--primary-glow)' }
-                    : {
-                      background: 'var(--chip-bg)',
-                      color: 'var(--text-dim)',
-                      outline: isCurrentDay ? '1.5px solid var(--primary)' : 'none',
-                      outlineOffset: '-1.5px',
-                    }}
-                >
-                  {day.substring(0, 3)}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Meals List for Selected Weekday */}
-          <div className="space-y-3">
-            {defaultMeals.length === 0 ? (
-              <p className="text-xs text-[var(--text-dim)] py-6 text-center">No meals planned for this day. Click "Customize in Nutrition" to add meals.</p>
-            ) : (
-              defaultMeals.map((meal, mealIndex) => {
-                const logged = isMealIncluded(meal.name);
-                // A colour per slot, cycling the metric hues, so the list reads
-                // as a sequence of meals rather than four identical rows.
-                const slot = MEAL_SLOTS[mealIndex % MEAL_SLOTS.length];
-                const dot = `var(--m-${slot})`;
-                return (
-                  <div
-                    key={meal.name}
-                    onClick={() => handleToggleMeal(meal)}
-                    role="button"
-                    tabIndex={0}
-                    aria-pressed={logged}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggleMeal(meal); }
-                    }}
-                    className="meal-row flex items-center gap-3.5 rounded-[14px] px-3.5 py-2.5 transition cursor-pointer"
-                    style={{
-                      background: 'var(--surface-solid)',
-                      border: `1px solid ${logged ? 'var(--primary)' : 'var(--border)'}`,
-                    }}
-                  >
-                    {/* Square thumbnail with a thin ring in the slot's hue. The
-                        ring is a box-shadow rather than a border so it does not
-                        eat into the image box. */}
-                    <img
-                      src={meal.image || '/assets/placeholders/food.png'}
-                      alt={meal.name}
-                      className="h-[50px] w-[50px] rounded-[11px] object-cover shrink-0"
-                      style={{ boxShadow: `0 0 0 2px ${dot}` }}
-                      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/placeholders/food.png"; }}
-                    />
-
-                    <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: dot }} aria-hidden="true" />
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[14px] font-bold line-clamp-2 break-words leading-snug" style={{ color: 'var(--text)' }}>
-                        {meal.name}
-                      </p>
-                      <p className="text-[12px] font-medium mt-0.5" style={{ color: 'var(--text-dim)' }}>
-                        {meal.cal} kcal
-                      </p>
-                    </div>
-
-                    {/* Logged state */}
-                    <span
-                      className="flex h-[26px] w-[26px] items-center justify-center rounded-full shrink-0 transition"
-                      style={{
-                        background: logged ? 'var(--primary)' : 'var(--surface-solid)',
-                        border: `1.5px solid ${logged ? 'var(--primary)' : 'var(--border-strong)'}`,
-                        color: '#fff',
-                      }}
-                    >
-                      {logged && <Check size={16} strokeWidth={3} />}
-                    </span>
-
-                    {/* Open in Nutrition. Stops propagation so it does not also
-                        toggle the row it sits in. */}
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); goToTab('Nutrition'); }}
-                      aria-label={`Open ${meal.name} in Nutrition`}
-                      className="flex h-[32px] w-[32px] items-center justify-center rounded-full shrink-0 transition hover:brightness-95 active:scale-95"
-                      style={{ background: 'var(--chip-bg)' }}
-                    >
-                      <ChevronRight size={19} style={{ color: 'var(--text)' }} />
-                    </button>
-                  </div>
-                );
-              })
-            )}
-
-            <button
-              onClick={() => setIsFullMenuExpanded(!isFullMenuExpanded)}
-              aria-expanded={isFullMenuExpanded}
-              className="mt-3 flex h-[40px] w-full items-center justify-center gap-2.5 rounded-[13px] text-[13px] font-semibold transition hover:brightness-[0.97] active:scale-[0.99]"
-              style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }}
-            >
-              <Database size={18} />
-              <span>{isFullMenuExpanded ? 'Collapse Full Food Database' : 'View Quick Add Food Database'}</span>
-              <ArrowRight size={16} />
-            </button>
-
-            {isFullMenuExpanded && (
-              <div className="mt-3 p-3 rounded-2xl bg-[#FAF9F5] dark:bg-[#161B18] border border-[#E7E6E0] dark:border-[#2C332E] space-y-2 text-left">
-                <span className="text-[10px] font-extrabold text-[#555954] dark:text-[#B3BAB4] uppercase block mb-1">Food Database</span>
-                <div className="max-h-52 overflow-y-auto space-y-1.5 scrollbar-thin">
-                  {FOOD_DB.map((food) => {
-                    const logged = isMealIncluded(food.name);
-                    return (
-                      <div
-                        key={food.name}
-                        onClick={() => {
-                          const cal = food.unit === 'piece' ? (food.calPerPiece ?? 70) : (food.calPer100 ?? 100);
-                          const meal = {
-                            name: food.name,
-                            cal,
-                            protein: food.unit === 'piece' ? (food.proteinPerPiece ?? 0) : (food.proteinPer100 ?? 0),
-                            carbs: food.unit === 'piece' ? (food.carbsPerPiece ?? 0) : (food.carbsPer100 ?? 0),
-                            fat: food.unit === 'piece' ? (food.fatPerPiece ?? 0) : (food.fatPer100 ?? 0),
-                            fiber: food.unit === 'piece' ? (food.fiberPerPiece ?? 0) : (food.fiberPer100 ?? 0),
-                            image: food.image || '/assets/placeholders/food.png'
-                          };
-                          handleToggleMeal(meal);
-                        }}
-                        className={`flex items-center justify-between rounded-xl p-2 border transition cursor-pointer text-xs bg-white dark:bg-[#1C211E] ${logged ? 'border-success' : 'border-[#E7E6E0] dark:border-[#2C332E] hover:border-primary/40'}`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <img
-                            src={food.image || '/assets/placeholders/food.png'}
-                            alt={food.name}
-                            className="h-8 w-8 rounded-lg object-cover"
-                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/placeholders/food.png"; }}
-                          />
-                          <div>
-                            <p className="font-extrabold text-[#171817] dark:text-[#F4F5F2] leading-tight">{food.name}</p>
-                            <p className="text-[9px] text-[#555954] dark:text-[#B3BAB4] font-medium mt-0.5">{food.unit === 'piece' ? `${food.calPerPiece || 70} kcal/piece` : `${food.calPer100 || 100} kcal/100g`}</p>
-                          </div>
-                        </div>
-                        <div
-                          className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${logged ? 'bg-success border-success text-white' : 'border-[#E7E6E0] dark:border-[#2C332E]'}`}
-                        >
-                          {logged && <Check size={11} strokeWidth={3} />}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Right Column: Daily Motivation Banner + Water Tracker Cup interface */}
-        <div className="order-4 lg:order-none lg:col-span-5 flex flex-col gap-4">
-          {/* Motivation card widget — decorative, so desktop only */}
-          {/* The photo is the card, not a thumbnail beside it: it bleeds to
-              the edges and a dark gradient runs in from the left so the text
-              keeps its contrast over the bright sunrise. */}
+      {/* 4. Motivation banner — decorative, desktop only. (The generic
+          weekly meal plan was removed from Home; the full water tracker now
+          lives on the Meals page, and Home keeps the one-tap +250 ml.) */}
+      <section className="hidden lg:block">
           <div className="motivation-card relative overflow-hidden rounded-[20px] min-h-[138px] group hidden lg:block">
             <img
               src="/assets/homepage/running.png"
@@ -919,18 +728,6 @@ export function Dashboard({
               </p>
             </div>
           </div>
-
-          {/* Dedicated Hydration Tracker Widget Card */}
-          <WaterTrackerCard
-            variant="widget"
-            water={waterLog}
-            target={waterTarget}
-            weight={activeWeight}
-            onWaterChange={handleWaterChange}
-            onTargetChange={handleWaterTargetChange}
-          />
-        </div>
-
       </section>
 
       {/* 5. Your Progress */}
@@ -1051,6 +848,9 @@ export function Dashboard({
 
       </section>
 
+
+      {/* Discover: recipes and tips, grouped at the bottom of Home. */}
+      <h2 className="order-9 lg:order-none mt-2 text-[20px] font-black tracking-tight" style={{ color: 'var(--text)' }}>Discover</h2>
 
       {/* 6. Healthy Recipes Carousel for You */}
       <section className="order-9 lg:order-none space-y-4 text-left min-w-0">
@@ -1351,168 +1151,6 @@ export function Dashboard({
         </button>
       </section >
 
-      {/* 10. Weekly Plan Editor Modal */}
-      {
-        isPlanModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-            <div
-              className="w-full max-w-3xl rounded-3xl p-6 glass text-left shadow-2xl relative flex flex-col max-h-[85vh] overflow-hidden"
-              style={{ borderColor: 'var(--border)' }}
-            >
-              {/* Modal Header */}
-              <div className="flex justify-between items-center pb-4 border-b border-[#E7E6E0] dark:border-[#2C332E] shrink-0">
-                <h3 className="text-lg font-black text-[#171817] dark:text-[#F4F5F2]">Weekly Schedule Editor</h3>
-                <button
-                  onClick={() => setIsPlanModalOpen(false)}
-                  className="w-8 h-8 rounded-full border border-[var(--border)] flex items-center justify-center hover:bg-[var(--bg-2)] transition"
-                >
-                  <X size={15} style={{ color: 'var(--text)' }} />
-                </button>
-              </div>
-
-              {/* Modal Day Selector Row */}
-              <div className="flex gap-1 overflow-x-auto py-3 border-b border-[#E7E6E0] dark:border-[#2C332E] shrink-0 scrollbar-none">
-                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => {
-                      setEditorWeekday(day);
-                      setMealSearch('');
-                    }}
-                    className={`text-xs font-bold px-3 py-1.5 rounded-xl transition ${editorWeekday === day ? 'bg-primary text-white shadow-sm' : 'bg-[var(--bg-2)] border border-[var(--border)] text-[var(--text-dim)] hover:text-[var(--text)]'}`}
-                  >
-                    {day}
-                  </button>
-                ))}
-              </div>
-
-              {/* Modal Two-Column Content Area */}
-              <div className="flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-
-                {/* Column 1: Planned Meals */}
-                <div className="space-y-4">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-[var(--text-dim)]">Meals Planned for {editorWeekday}</h4>
-                  <div className="space-y-2">
-                    {((state.weeklyPlan && state.weeklyPlan[editorWeekday] && state.weeklyPlan[editorWeekday].meals) || []).map((meal, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between rounded-2xl p-2.5 border border-[#E7E6E0] dark:border-[#2C332E] bg-[var(--surface)] text-[var(--text)]"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <img
-                            src={meal.image}
-                            alt={meal.name}
-                            className="h-8 w-8 rounded-lg object-cover"
-                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/assets/placeholders/food.png"; }}
-                          />
-                          <div className="text-left">
-                            <p className="text-xs font-extrabold leading-tight">{meal.name}</p>
-                            <p className="text-[9px] text-[var(--text-faint)] font-bold mt-0.5">{meal.cal} kcal</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleDeletePlannedMeal(editorWeekday, index)}
-                          className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                    {((state.weeklyPlan && state.weeklyPlan[editorWeekday]?.meals) || []).length === 0 && (
-                      <p className="text-xs text-[var(--text-faint)] py-2">No meals planned. Add some below!</p>
-                    )}
-                  </div>
-
-                  {/* Add Meal Search Box */}
-                  <div className="pt-2 border-t border-[#E7E6E0] dark:border-[#2C332E] space-y-2 relative">
-                    <span className="text-[10px] font-bold text-[var(--text-dim)] uppercase block">Add a Meal</span>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Search or select recipes..."
-                        value={mealSearch}
-                        onFocus={() => setIsSearchFocused(true)}
-                        onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                        onChange={(e) => setMealSearch(e.target.value)}
-                        className="w-full text-xs rounded-xl border border-[var(--border)] bg-[var(--bg-2)] text-[var(--text)] px-3 py-2 outline-none"
-                      />
-                      {(isSearchFocused || mealSearch.trim() !== '') && (
-                        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl shadow-xl max-h-48 overflow-y-auto p-1 text-left flex flex-col gap-0.5">
-                          {(mealSearch.trim() === ''
-                            ? FOOD_DB
-                            : FOOD_DB.filter(f => f.name.toLowerCase().includes(mealSearch.toLowerCase()))
-                          ).map(food => (
-                            <div
-                              key={food.name}
-                              onClick={() => {
-                                handleAddPlannedMeal(editorWeekday, food);
-                                setMealSearch('');
-                              }}
-                              className="flex items-center justify-between text-xs p-2 rounded-xl cursor-pointer hover:bg-primary-soft hover:text-primary transition"
-                            >
-                              <span className="font-extrabold">{food.name}</span>
-                              <span className="text-[10px] text-[var(--text-faint)] font-mono">{food.calPerPiece || food.calPer100} kcal</span>
-                            </div>
-                          ))}
-                          {mealSearch.trim() !== '' && FOOD_DB.filter(f => f.name.toLowerCase().includes(mealSearch.toLowerCase())).length === 0 && (
-                            <span className="text-xs text-[var(--text-faint)] p-2">No matching foods found.</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Column 2: Planned Workouts */}
-                <div className="space-y-4 border-t pt-4 md:border-t-0 md:pt-0 md:border-l md:pl-6 border-[#E7E6E0] dark:border-[#2C332E]">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-[var(--text-dim)]">Workouts Planned for {editorWeekday}</h4>
-                  <div className="space-y-3">
-                    {[
-                      { id: 'cardio', name: 'Cardiff Cardio', desc: '30 mins endurance run' },
-                      { id: 'strength', name: 'Strength Training', desc: '45 mins full body lift' },
-                      { id: 'core', name: 'Core Workout', desc: '15 mins abdominal reps' },
-                      { id: 'walk', name: 'Evening Walk', desc: '30 mins recovery stroll' }
-                    ].map((tpl) => {
-                      const isPlanned = ((state.weeklyPlan && state.weeklyPlan[editorWeekday] && state.weeklyPlan[editorWeekday].workouts) || []).some(w => w.id === tpl.id);
-                      return (
-                        <div
-                          key={tpl.id}
-                          onClick={() => handleTogglePlannedWorkout(editorWeekday, tpl)}
-                          className={`flex items-center justify-between rounded-2xl p-3 border transition cursor-pointer ${isPlanned ? 'border-primary bg-primary-soft/50 text-[var(--text)]' : 'border-[#E7E6E0] dark:border-[#2C332E] hover:border-[#DCDCD5] dark:hover:border-[#38423B] text-[var(--text-dim)]'}`}
-                        >
-                          <div className="text-left">
-                            <p className="text-xs font-extrabold">{tpl.name}</p>
-                            <p className="text-[9px] text-[var(--text-faint)] mt-0.5">{tpl.desc}</p>
-                          </div>
-                          <div
-                            className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${isPlanned ? 'bg-primary border-primary text-white' : 'border-[var(--border)]'}`}
-                          >
-                            {isPlanned && <Check size={12} strokeWidth={3} />}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Modal Footer */}
-              <div className="pt-4 border-t border-[#E7E6E0] dark:border-[#2C332E] flex justify-end shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setIsPlanModalOpen(false)}
-                  className="px-5 py-2 rounded-xl bg-primary text-white text-xs font-black shadow-lg shadow-[var(--primary-glow)] hover:scale-105 active:scale-95 transition"
-                >
-                  Done Editing
-                </button>
-              </div>
-
-            </div>
-          </div>
-        )
-      }
     </div >
   );
 }

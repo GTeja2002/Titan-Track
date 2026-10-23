@@ -3,7 +3,7 @@
  * what has actually been eaten today, by meal. Everything shown comes from
  * the day's log — no placeholder meals or invented numbers.
  */
-import { Utensils, Droplet, Footprints, ChevronRight } from 'lucide-react';
+import { Utensils, Droplet, Footprints, ChevronRight, Scale } from 'lucide-react';
 import { MEAL_TYPES, groupByMeal, sumEntries } from '../lib/nutrition.js';
 
 function Action({ icon: Icon, label, sub, onClick, metric }) {
@@ -21,7 +21,7 @@ function Action({ icon: Icon, label, sub, onClick, metric }) {
   );
 }
 
-export function TodayCard({ foods = [], onLogMeal, onAddWater, onLogActivity }) {
+export function TodayCard({ foods = [], onLogMeal, onAddWater, onLogActivity, onLogWeight }) {
   const groups = groupByMeal(foods);
   const rows = [...MEAL_TYPES, { id: 'other', label: 'Earlier entries' }]
     .map((m) => ({ ...m, items: groups[m.id], totals: sumEntries(groups[m.id]) }))
@@ -29,10 +29,11 @@ export function TodayCard({ foods = [], onLogMeal, onAddWater, onLogActivity }) 
 
   return (
     <section className="m-card" aria-label="Today">
-      <div className="grid grid-cols-3 gap-2">
+      <div className={`grid gap-2 ${onLogWeight ? 'grid-cols-2 min-[360px]:grid-cols-4' : 'grid-cols-3'}`}>
         <Action icon={Utensils} label="Log meal" onClick={onLogMeal} metric="calories" />
         <Action icon={Droplet} label="+250 ml" sub="water" onClick={onAddWater} metric="water" />
         <Action icon={Footprints} label="Activity" onClick={onLogActivity} metric="steps" />
+        {onLogWeight && <Action icon={Scale} label="Weight" sub="update" onClick={onLogWeight} metric="protein" />}
       </div>
 
       <div className="mt-4 flex items-center justify-between">
