@@ -28,6 +28,7 @@ import { NutritionOverview } from './components/NutritionOverview.jsx';
 import { getLocalDateString } from './lib/date.js';
 import { computeStreak, MAX_FREEZES } from './lib/streak.js';
 import { MetricRow } from './components/MetricRow.jsx';
+import { CharacterBackground, CharacterBackgroundSettings, useCharacterBackground } from './features/character-background/index.js';
 
 /** The one definition of the app's sections. The sidebar, the mobile drawer
  *  and the bottom tab bar all read from this. */
@@ -68,6 +69,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const characterBackground = useCharacterBackground(state.isDarkMode);
 
   const toggleTheme = () => update((prev) => ({ ...prev, isDarkMode: !prev.isDarkMode }));
   const onSelectDate = (date) => update((prev) => ({ ...prev, currentDate: date }));
@@ -114,7 +116,8 @@ export default function App() {
   }).streak;
 
   return (
-    <div className="min-h-screen flex text-[var(--text)] transition-all duration-300" style={{ background: 'var(--bg)' }}>
+    <div className={`tt-character-app ${characterBackground.isActive ? 'tt-character-app--active' : ''} min-h-screen flex text-[var(--text)] transition-all duration-300`} style={{ background: 'var(--bg)' }}>
+      <CharacterBackground preferences={characterBackground.preferences} isDarkMode={state.isDarkMode} />
 
       {/* 1. PERSISTENT SIDEBAR FOR DESKTOP */}
       <aside className="sidebar-rail hidden lg:flex flex-col fixed top-0 bottom-0 left-0 w-[268px] z-50 flex-shrink-0 animate-fade-in">
@@ -250,7 +253,7 @@ export default function App() {
       )}
 
       {/* 3. MAIN CONTENT LAYER */}
-      <div className="flex-1 lg:pl-[268px] flex flex-col min-h-screen transition-all duration-300">
+      <div className="tt-character-content flex-1 lg:pl-[268px] flex flex-col min-h-screen transition-all duration-300">
         <div className="p-4 sm:p-5 lg:p-6 flex-1 flex flex-col w-full mx-auto">
 
           {/* SIMPLIFIED TOP HEADER */}
@@ -597,6 +600,14 @@ export default function App() {
                     </button>
                   </div>
                 </div>
+
+                <CharacterBackgroundSettings
+                  preferences={characterBackground.preferences}
+                  onChange={characterBackground.updatePreferences}
+                  isDarkMode={state.isDarkMode}
+                  onEnableDarkMode={() => update((prev) => ({ ...prev, isDarkMode: true }))}
+                  storageFailed={characterBackground.storageFailed}
+                />
 
                 {/* User settings edit profile button */}
                 <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-4">
