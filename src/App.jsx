@@ -37,6 +37,7 @@ import { OfflineBanner } from './components/shared/OfflineBanner.jsx';
 import { startNativeShell, applyStatusBar } from './lib/nativeShell.js';
 import { useKeyboardAware } from './lib/useKeyboardAware.js';
 import { useHealthSteps } from './lib/useHealthSteps.js';
+import { CharacterBackground, CharacterBackgroundSettings, useCharacterBackground } from './features/character-background/index.js';
 
 /**
  * The app's sections. `label` is the desktop sidebar name; `short` is the
@@ -165,6 +166,8 @@ export default function App() {
   const statusIsBad = storageFailed || syncStatus.phase === 'error';
 
   const flags = useFeatureFlags();
+  // Above the early returns: hooks must run on every render.
+  const characterBackground = useCharacterBackground(state.isDarkMode);
 
   if (!authReady) {
     return <FullScreenMessage title="TitanTrack" body="Checking your sign-in…" />;
@@ -194,7 +197,8 @@ export default function App() {
   const iconButton = 'flex h-11 w-11 items-center justify-center rounded-xl border transition active:scale-95';
 
   return (
-    <div className="min-h-screen flex text-[var(--text)]" style={{ background: 'var(--bg)' }}>
+    <div className={`tt-character-app ${characterBackground.isActive ? 'tt-character-app--active' : ''} min-h-screen flex text-[var(--text)]`} style={{ background: 'var(--bg)' }}>
+      <CharacterBackground preferences={characterBackground.preferences} isDarkMode={state.isDarkMode} />
 
       {/* Desktop: persistent sidebar */}
       <aside className="sidebar-rail hidden lg:flex flex-col fixed top-0 bottom-0 left-0 w-[268px] z-50 flex-shrink-0 animate-fade-in">
@@ -254,7 +258,7 @@ export default function App() {
         </div>
       </aside>
 
-      <div className="flex-1 min-w-0 lg:pl-[268px] flex flex-col min-h-screen">
+      <div className="tt-character-content flex-1 min-w-0 lg:pl-[268px] flex flex-col min-h-screen">
         <OfflineBanner />
 
         {/* Phone: compact sticky top bar — brand, date, theme */}
@@ -482,6 +486,15 @@ export default function App() {
                 saveStatusLabel={saveStatusLabel}
                 statusIsBad={statusIsBad}
                 onToggleTheme={toggleTheme}
+                characterBackgroundSettings={
+                  <CharacterBackgroundSettings
+                    preferences={characterBackground.preferences}
+                    onChange={characterBackground.updatePreferences}
+                    isDarkMode={state.isDarkMode}
+                    onEnableDarkMode={() => update((prev) => ({ ...prev, isDarkMode: true }))}
+                    storageFailed={characterBackground.storageFailed}
+                  />
+                }
                 onSyncNow={syncNow}
                 onEditProfile={() => setIsProfileOpen(true)}
                 onRerunOnboarding={() => {

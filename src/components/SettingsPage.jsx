@@ -52,7 +52,7 @@ function Switch({ on, label }) {
 
 export function SettingsPage({
   state, cloud, flags, syncStatus, saveStatusLabel, statusIsBad,
-  onToggleTheme, onSyncNow, onEditProfile, onRerunOnboarding, onOpenCommunity,
+  onToggleTheme, characterBackgroundSettings, onSyncNow, onEditProfile, onRerunOnboarding, onOpenCommunity,
   onClearHistory, onLogout, onDeleteAccount,
 }) {
   const name = state.name || (state.email || '').split('@')[0];
@@ -81,6 +81,8 @@ export function SettingsPage({
       <Group title="Preferences">
         <Row first icon={Moon} label="Dark mode" onClick={onToggleTheme} right={<Switch on={!!state.isDarkMode} label="Dark mode" />} />
       </Group>
+
+      {characterBackgroundSettings}
 
       {cloud && (
         <Group title="Cloud sync">
